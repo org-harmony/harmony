@@ -1,0 +1,58 @@
+A-1-1 Das System EIFFEL muss dem Anwender ermöglichen, einen neuen Schablonensatz mit Hilfe einer Eingabemaske (A-1-6, A-1-7) anzulegen, damit Schablonen innerhalb des Schablonensatzes gruppiert werden können.
+A-1-2 Das System EIFFEL muss dem Anwender ermöglichen, einen bestehenden Schablonensatz zu löschen, damit fehlerhaft angelegte Schablonensätze nicht im System verweilen.
+A-1-3 Wenn ein Anwender versucht einen Schablonensatz zu löschen muss das System EIFFEL selbständig einen Warnungsdialog ausgeben, der den Anwender darauf hinweist, das sämtliche Schablonen eines Schablonensatzes gelöscht werden, wenn der Schablonensatz in dem sie liegen gelöscht wird.
+A-1-4 Wenn ein Anwender im Löschdialog (A-1-3) den Löschvorgang eines Schablonensatzes abbricht muss das System EIFFEL selbständig den Löschvorgang abbrechen und den Schablonensatz unverändert lassen.
+A-1-5 Wenn ein Anwender im Löschdialog (A-1-3) den Löschvorgang eines Schablonensatzes beginnt muss das System EIFFEL selbständig den ausgewählten Schablonensatz samt aller beinhalteter Schablonen löschen.
+A-1-6 Das System EIFFEL muss dem Anwender ermöglichen, die Pflichtangaben eines Schablonensatzes zu bearbeiten, um sicherzustellen, dass alle notwendigen Informationen für den Schablonensatz erfasst und aktuell sind.
+A-1-7 Das System EIFFEL muss dem Anwender ermöglichen, optionale Angaben eines Schablonensatzes zu bearbeiten, um zusätzliche, nicht zwingend erforderliche Informationen zum Schablonensatz hinzuzufügen und aktuell zu halten.
+A-1-8 Wenn ein Schablonensatz nicht als "archiviert" markiert ist (A-1-19) muss das System EIFFEL dem Anwender ermöglichen, einen bestehenden Schablonensatz mit Hilfe einer Eingabemaske (A-1-6, A-1-7) zu bearbeiten, damit Änderungen an den Schablonensatzinformationen vorgenommen werden können.
+A-1-9 Wenn ein Schablonensatz gespeichert ist, muss das System EIFFEL dem Anwender ermöglichen, einen einzelnen Schablonensatz anzuzeigen, der sowohl die Pflichtfelder als auch optionale Felder (A-1-6, A-1-7) und statische Felder (Erstellungsdatum, Ersteller, Zuletzt verändert Datum) enthält, damit detaillierte Informationen über den Schablonensatz eingesehen werden können.
+A-1-10 Das System EIFFEL muss dem Anwender ermöglichen, eine Übersicht über alle Schablonensätze anzuzeigen, die Namen, Versionsnummer, Erstellungsdatum und Ersteller für jeden Schablonensatz enthält, damit ein schneller Überblick über alle vorhandenen Schablonensätze möglich ist.
+A-1-11 Das System EIFFEL muss dem Anwender ermöglichen, aus der Übersicht der Schablonensätze einen spezifischen Schablonensatz auszuwählen und diesen zur Ansicht und Bearbeitung zu öffnen, damit Änderungen an den Schablonensatzinformationen vorgenommen werden können.
+A-1-12 Auf der Übersichtsseite sollte das System EIFFEL dem Anwender ermöglichen, nach bestimmten Schablonensätzen anhand des Namens zu suchen, um gezielt bestimmte Schablonensätze schneller finden zu können.
+A-1-13 Das System EIFFEL muss dem Anwender ermöglichen, Schablonensätze organisationsweit zu teilen, damit alle Anwender einer Organisation Zugriff auf die relevanten Schablonensätze haben.
+A-1-14 Das System EIFFEL muss dem Anwender ermöglichen, einen bereits angelegten Schablonensatz zu kopieren, um eine Basis für neue oder modifizierte Schablonensätze zu schaffen, ohne den Originalsatz zu verändern.
+A-1-15 Das System EIFFEL sollte dem Anwender ermöglichen, einen Schablonensatz in Form einer hochladbaren Datei zu importieren, um die Integration von extern erstellten oder gespeicherten Schablonensätzen zu erleichtern.
+A-1-16 Das System EIFFEL sollte dem Anwender ermöglichen, einen Schablonensatz in Form einer herunterladbaren Datei zu exportieren, um die Sicherung, Weitergabe oder Nutzung in anderen Systemen zu erleichtern.
+A-1-17 Das System EIFFEL muss dem Anwender ermöglichen, einen Schablonensatz zu archivieren, damit alle Schablonen innerhalb dieses Schablonensatzes automatisch archiviert werden und somit nicht mehr zur Auswahl stehen.
+A-1-18 Wenn ein Schablonensatz archiviert wird, muss das System EIFFEL selbständig alle Schablonen innerhalb dieses Schablonensatzes archivieren, damit sie nicht mehr zur Auswahl stehen.
+A-1-19 Wenn alle Schablonen innerhalb eines Schablonensatzes archiviert sind, muss das System EIFFEL selbständig, den entsprechenden Schablonensatz als "archiviert" anzeigen, damit die Nutzer den Status des Schablonensatzes erkennen können.
+A-1-20 Das System EIFFEL muss dem Anwender ermöglichen, die Pflichtangaben (G-4) eines Schablonensatzes anzuzeigen.
+A-1-21 Das System EIFFEL muss dem Anwender ermöglichen, optionale Angaben (G-5) eines Schablonensatzes anzuzeigen.
+A-1-22 Das System EIFFEL muss dem Anwender ermöglichen, statische Angaben (G-6) eines Schablonensatzes anzuzeigen.
+A-1-23 Wenn einem Anwender ein Schablonensatz organisationsweit geteilt wurde, muss das System EIFFEL ihm ermöglichen, diesen Schablonensatz zu bearbeiten, archivieren, kopieren, löschen und einzusehen.
+A-1-24 Wenn ein Anwender einen Schablonensatz selbst angelegt hat, muss das System EIFFEL ihm ermöglichen, diesen Schablonensatz zu bearbeiten, archivieren, kopieren, löschen und einzusehen.
+A-1-25 Wenn ein Anwender versucht, einen Schablonensatz zu bearbeiten, archivieren, kopieren, löschen oder einzusehen, den er weder selbst angelegt hat noch der ihm organisationsweit geteilt wurde, muss das System EIFFEL selbständig den Zugriff verweigern.
+A-1-26 Wenn ein Anwender versucht, einen neuen Schablonensatz anzulegen, muss das System EIFFEL selbständig sicherstellen, dass alle Pflichtangaben eingegeben wurden, bevor der Schablonensatz gespeichert werden kann.
+
+A-2-1 Das System EIFFEL muss dem Anwender ermöglichen, alle Schablonen innerhalb des Schablonensatzes anzuzeigen, damit er einen Überblick über die zugehörigen Schablonen erhält.
+A-2-2 Das System EIFFEL muss dem Anwender ermöglichen, eine Schablone einem Schablonensatz zuzuweisen.
+A-2-3 Das System EIFFEL muss dem Anwender ermöglichen, die Zuweisung einer Schablone zu einem Schablonensatz zu verändern.
+A-2-4 Das System EIFFEL muss dem Anwender ermöglichen, eine neue Schablone zu erstellen.
+A-2-5 Das System EIFFEL muss dem Anwender ermöglichen, eine existierende Schablone zu bearbeiten, um deren Inhalte zu aktualisieren.
+A-2-6 Das System EIFFEL muss dem Anwender ermöglichen, die statischen Angaben (G-6) einer Schablone anzuzeigen.
+A-2-7 Das System EIFFEL muss dem Anwender ermöglichen, die Schablone zu löschen.
+A-2-8 Wenn ein Anwender eine Schablone löscht, muss das System EIFFEL selbständig einen Warnungsdialog ausgeben, um den Anwender darauf hinzuweisen, dass die Schablone unwiderruflich gelöscht wird.
+A-2-9 Wenn ein Anwender im Warnungsdialog zum Löschen einer Schablone die Abbrechen-Option auswählt, muss das System EIFFEL selbständig den Dialog schließen und das Löschen abbrechen.
+A-2-10 Wenn ein Anwender im Warnungsdialog zum Löschen einer Schablone die Löschen-Option auswählt, muss das System EIFFEL selbständig den Dialog schließen und die Schablone löschen.
+A-2-11 Das System EIFFEL muss dem Anwender ermöglichen, eine Schablone zu archivieren, damit sie nicht mehr zur Erfassung neuer Anforderungen genutzt werden kann.
+A-2-12 Das System EIFFEL muss dem Anwender ermöglichen, das Archivieren einer Schablone rückgängig zu machen, damit sie erneut zur Erfassung von Anforderungen genutzt werden kann.
+A-2-13 Das System EIFFEL muss dem Anwender ermöglichen, eine Schablone zu kopieren, um eine Basis für neue oder modifizierte Schablonen zu schaffen, ohne die Originalschablone zu verändern.
+A-2-14 Das System EIFFEL muss dem Anwender ermöglichen, die Pflichtangaben einer Schablone zu bearbeiten, um sicherzustellen, dass alle notwendigen Informationen für die Schablone erfasst und aktuell sind.
+A-2-15 Das System EIFFEL muss dem Anwender ermöglichen, die Pflichtangaben einer Schablone anzuzeigen, damit er die notwendigen Informationen der Schablone einsehen kann.
+A-2-16 Das System EIFFEL muss dem Anwender ermöglichen, optionale Angaben einer Schablone zu bearbeiten, um zusätzliche, nicht zwingend erforderliche Informationen zur Schablone hinzuzufügen und aktuell zu halten.
+A-2-17 Das System EIFFEL muss dem Anwender ermöglichen, optionale Angaben einer Schablone anzuzeigen, damit er zusätzliche Informationen der Schablone einsehen kann.
+A-2-18 Wenn ein Anwender versucht, eine neue Schablone anzulegen, muss das System EIFFEL selbständig sicherstellen, dass alle Pflichtangaben eingegeben wurden, bevor die Schablone gespeichert werden kann.
+A-2-19 Wenn ein Schablonensatz einem Anwender organisationsweit geteilt wurde, muss das System EIFFEL diesem Anwender ermöglichen, vollen Zugriff auf alle Schablonen innerhalb dieses Schablonensatzes auszuüben, sodass der Nutzer die Schablone einsehen, bearbeiten, löschen und archivieren darf.
+A-2-20 Wenn ein Anwender einen Schablonensatz selbst angelegt hat, muss das System EIFFEL diesem Anwender ermöglichen, vollen Zugriff auf alle Schablonen innerhalb dieses Schablonensatzes auszuüben, sodass der Nutzer die Schablone einsehen, bearbeiten, löschen und archivieren darf.
+A-2-21 Wenn ein Anwender versucht, eine Schablone einzusehen, zu bearbeiten, löschen, archivieren oder für einen Schablonensatz anzulegen, der nicht von ihm angelegt wurde und ihm auch nicht organisationsweit geteilt wurde, muss das System EIFFEL selbständig den Zugriff verweigern.
+A-2-22 Das System EIFFEL sollte dem Anwender ermöglichen, eine Schablone in Form einer herunterladbaren Datei zu exportieren, um die Sicherung, Weitergabe oder Nutzung in anderen Systemen zu erleichtern.
+A-2-23 Das System EIFFEL sollte dem Anwender ermöglichen, eine Schablone in Form einer hochladbaren Datei zu importieren, um die Integration von extern erstellten oder gespeicherten Schablonen zu erleichtern.
+A-2-24 Wenn eine Schablone archiviert wurde, muss das System EIFFEL diese Schablone dem Anwender als "archiviert" anzeigen, damit der Nutzer den Status der Schablone erkennen kann.
+
+G-1 Schablone (engl. Template) bedeutet im System EIFFEL eine vordefinierte Struktur oder Formatierung, nach der Anforderungen formuliert und überprüft werden können.
+G-2 Schablonensatz (Synonym: T-Set) (engl. Template Set) bedeutet im System EIFFEL eine Gruppe von Schablonen, die zusammengefasst und gemeinsam verwaltet werden können.
+G-3 Anwender (Synonym: Benutzer) (engl. User) bedeutet im System EIFFEL eine Person, die Zugriff auf das System hat und dieses zur Anforderungserfassung und -prüfung nach Schablonensätzen nutzt.
+G-4 Pflichtangaben am Schablonensatz bedeutet im System EIFFEL Werte, die zwingend eingegeben werden müssen, um einen Schablonensatz korrekt zu definieren. Die Pflichtangaben sind: Name, Versionsnummer und Sichtbarkeit für die Organisation.
+G-5 Optionale Angaben am Schablonensatz bedeutet im System EIFFEL Werte, die an einem Schablonensatz definiert werden können, aber nicht zwingend erforderlich sind. Diese ist die Beschreibung.
+G-6 Statische Angaben bedeutet im System EIFFEL Informationen, die automatisch vom System an einem Datensatz gespeichert und nicht vom Anwender geändert werden können. Diese sind: Erstellungsdatum, Ersteller und das Datum der letzten Änderung.
