@@ -13,31 +13,31 @@ import (
 const MOD = "sys.web.main"
 
 func main() {
+	var errs []error
 	ctx := context.Background()
 	args := core.ModLifecycleArgs{
 		Logger: trace.NewStdLogger(),
 	}
+	m := core.Manager()
 
-	var err error
-	ctx, err = core.Modules.Setup(&args, ctx)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to setup modules: %v", err))
+	errs = m.Setup(&args, ctx)
+	if errs != nil {
+		args.Logger.Error(MOD, "Failed to setup modules: %v", errs)
 	}
 
-	ctx, err = core.Modules.Start(&args, ctx)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to start modules: %v", err))
+	errs = m.Start(&args, ctx)
+	if errs != nil {
+		args.Logger.Error(MOD, "Failed to start modules: %v", errs)
 	}
-	defer core.Modules.Stop(&args, ctx)
-
-	args.Logger.Info(MOD, "started all modules")
+	defer m.Stop(&args)
 
 	s := web.NewServer(&web.ServerConfig{
 		Logger: args.Logger,
 		Addr:   ":8080",
 	}, ctx)
-	err = s.Serve(ctx)
+
+	err := s.Serve(ctx)
 	if err != nil {
-		panic(fmt.Sprintf("Serve failed: %v", err))
+		panic(fmt.Sprintf("Serve failed: %v", errs))
 	}
 }
