@@ -8,7 +8,7 @@ import (
 	"github.com/org-harmony/harmony/trace"
 )
 
-const MOD = "sys.server"
+const MOD = "sys.web.server"
 
 type StdServer struct {
 	r      chi.Router

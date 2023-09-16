@@ -2,64 +2,114 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
 	"github.com/org-harmony/harmony/trace"
 )
 
+const MOD = "sys.core.module"
+
 type Module interface {
 	ID() string
-	Setup(args *ModLifecycleArgs, ctx context.Context) (context.Context, error)
-	Start(args *ModLifecycleArgs, ctx context.Context) (context.Context, error)
-	Stop(args *ModLifecycleArgs, ctx context.Context) error
+	Setup(args *ModLifecycleArgs, ctx context.Context) error
+	Start(args *ModLifecycleArgs, ctx context.Context) error
+	Stop(args *ModLifecycleArgs) error
 }
 
-type ModuleLoader struct {
-	modules []Module
+type ModuleManager struct {
+	mu      sync.Mutex
+	modules map[string]Module
+	setup   bool
 }
 
 type ModLifecycleArgs struct {
 	Logger trace.Logger
 }
 
-func NewManager() *ModuleLoader {
-	return &ModuleLoader{}
+var modules = NewManager()
+
+func Manager() *ModuleManager {
+	return modules
 }
 
-func (m *ModuleLoader) Register(modules ...Module) {
-	m.modules = append(m.modules, modules...)
-}
-
-func (m *ModuleLoader) Setup(args *ModLifecycleArgs, ctx context.Context) (context.Context, error) {
-	for _, module := range m.modules {
-		var err error
-		ctx, err = module.Setup(args, ctx)
-		if err != nil {
-			return ctx, err
-		}
+func NewManager() *ModuleManager {
+	return &ModuleManager{
+		modules: make(map[string]Module),
 	}
-	return ctx, nil
 }
 
-func (m *ModuleLoader) Start(args *ModLifecycleArgs, ctx context.Context) (context.Context, error) {
-	for _, module := range m.modules {
-		var err error
-		ctx, err = module.Start(args, ctx)
-		if err != nil {
-			return ctx, err
-		}
+func (m *ModuleManager) Register(modules ...Module) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.setup {
+		panic("can't register new modules after they've been setup")
 	}
-	return ctx, nil
+
+	for _, module := range modules {
+		if _, exists := m.modules[module.ID()]; exists {
+			panic(fmt.Sprintf("module with ID %s already registered", module.ID()))
+		}
+		m.modules[module.ID()] = module
+	}
 }
 
-func (m *ModuleLoader) Stop(args *ModLifecycleArgs, ctx context.Context) []error {
+func (m *ModuleManager) Setup(args *ModLifecycleArgs, ctx context.Context) []error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.setup {
+		panic("modules have already been setup")
+	}
+
+	m.setup = true
+
 	var errs []error
 	for _, module := range m.modules {
-		err := module.Stop(args, ctx)
+		if err := module.Setup(args, ctx); err != nil {
+			errs = append(errs, fmt.Errorf("failed to setup module %s: %w", module.ID(), err))
+		}
+	}
+
+	return errs
+}
+
+func (m *ModuleManager) Start(args *ModLifecycleArgs, ctx context.Context) []error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if !m.setup {
+		panic("modules must be setup before they can be started")
+	}
+
+	var errs []error
+	for _, module := range m.modules {
+		if err := module.Start(args, ctx); err != nil {
+			errs = append(errs, fmt.Errorf("failed to start module %s: %w", module.ID(), err))
+		}
+	}
+
+	return errs
+}
+
+func (m *ModuleManager) Stop(args *ModLifecycleArgs) []error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if !m.setup {
+		panic("modules must be setup before they can be stopped")
+	}
+
+	var errs []error
+	for _, module := range m.modules {
+		err := module.Stop(args)
 		if err != nil {
+			args.Logger.Error(MOD, "failed to stop module:", module.ID(), "Error:", err)
 			errs = append(errs, err)
+		} else {
+			args.Logger.Info(MOD, "successfully stopped module:", module.ID())
 		}
 	}
 	return errs
 }
-
-var Modules = NewManager()
