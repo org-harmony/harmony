@@ -8,7 +8,7 @@ import (
 	"github.com/org-harmony/harmony/trace"
 )
 
-const MOD = "sys.core.module"
+const MODULE_MOD = "sys.core.module"
 
 type Module interface {
 	ID() string
@@ -105,10 +105,7 @@ func (m *ModuleManager) Stop(args *ModLifecycleArgs) []error {
 	for _, module := range m.modules {
 		err := module.Stop(args)
 		if err != nil {
-			args.Logger.Error(MOD, "failed to stop module:", module.ID(), "Error:", err)
-			errs = append(errs, err)
-		} else {
-			args.Logger.Info(MOD, "successfully stopped module:", module.ID())
+			errs = append(errs, fmt.Errorf("failed to stop module %s: %w", module.ID(), err))
 		}
 	}
 	return errs
