@@ -8,7 +8,7 @@ import (
 	"github.com/org-harmony/harmony/trace"
 )
 
-const MOD = "sys.web.server"
+const SERVER_MOD = "sys.web.server"
 
 type StdServer struct {
 	r      chi.Router
@@ -38,7 +38,7 @@ func NewServer(config *ServerConfig, ctx context.Context) *StdServer {
 }
 
 func (s *StdServer) Serve(ctx context.Context) error {
-	s.config.Logger.Info(MOD, "starting web server...")
+	s.config.Logger.Info(SERVER_MOD, "starting web server...")
 
 	return http.ListenAndServe(s.config.Addr, s.r)
 }
