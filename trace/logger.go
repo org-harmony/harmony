@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"testing"
 )
 
 const LOG_MOD_KEY = "module"
@@ -44,4 +45,30 @@ func (l *StdLogger) Warn(mod, msg string, args ...any) {
 
 func (l *StdLogger) Error(mod, msg string, args ...any) {
 	l.Log(slog.LevelError, mod, msg, args...)
+}
+
+type TestLogger struct {
+	test *testing.T
+}
+
+func NewTestLogger(t *testing.T) Logger {
+	return &TestLogger{
+		test: t,
+	}
+}
+
+func (l *TestLogger) Debug(mod, msg string, args ...any) {
+	l.test.Logf("DEBUG %s: %s | %v", mod, msg, args)
+}
+
+func (l *TestLogger) Info(mod, msg string, args ...any) {
+	l.test.Logf("INFO %s: %s | %v", mod, msg, args)
+}
+
+func (l *TestLogger) Warn(mod, msg string, args ...any) {
+	l.test.Logf("WARN %s: %s | %v", mod, msg, args)
+}
+
+func (l *TestLogger) Error(mod, msg string, args ...any) {
+	l.test.Errorf("ERROR %s: %s | %v", mod, msg, args)
 }
