@@ -16,10 +16,13 @@ type Logger interface {
 	Error(mod, msg string, args ...any)
 }
 
+// StdLogger is the system's default logger.
 type StdLogger struct {
+	// slog is the underlying structured logger used by the StdLogger.
 	slog *slog.Logger
 }
 
+// NewStdLogger creates a new standard logger that writes to stdout.
 func NewStdLogger() Logger {
 	return &StdLogger{
 		slog: slog.New(slog.NewTextHandler(os.Stdout, nil)),
@@ -47,6 +50,7 @@ func (l *StdLogger) Error(mod, msg string, args ...any) {
 	l.Log(slog.LevelError, mod, msg, args...)
 }
 
+// TestLogger is a logger that writes to the test's log.
 type TestLogger struct {
 	test *testing.T
 }
