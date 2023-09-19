@@ -10,6 +10,12 @@ import (
 
 const EVENT_MOD = "sys.core.event"
 
+// DEFAULT_EVENT_PRIORITY can be used as a general default priority for an event subscriber.
+// The priority is used to determine the order in which subscribers are called.
+// A higher priority means that the subscriber is called earlier.
+// If you do not care about the order in which subscribers are called, use this constant.
+const DEFAULT_EVENT_PRIORITY = 0
+
 // EVENT_BUFFER_SIZE is the size of the buffer for event channels.
 // The buffer size is used when creating channels for events.
 // If the buffer size is too small publishing an event will block until the event is handled.
@@ -209,13 +215,14 @@ func handle(e chan pc, l trace.Logger, doneChan chan []error) {
 
 // safePublish is a wrapper around the publish function of a subscriber.
 // It recovers from panics in the subscriber and returns an error if a panic occurred.
-func safePublish(s Subscriber, e Event, args *PublishArgs) error {
+func safePublish(s Subscriber, e Event, args *PublishArgs) (err error) {
 	// recover from panics in subscribers
-	defer func() error {
+	// the named return value err is necessary to return the error from the deferred function,
+	// as the return value from the deferred function is discarded
+	defer func() {
 		if r := recover(); r != nil {
-			return fmt.Errorf("subscriber panicked: %v", r)
+			err = fmt.Errorf("subscriber panicked: %v", r)
 		}
-		return nil
 	}()
 	return s.publish(e, args)
 }
