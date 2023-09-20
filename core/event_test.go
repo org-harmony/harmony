@@ -2,6 +2,8 @@ package core
 
 import (
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/org-harmony/harmony/trace"
@@ -354,6 +356,116 @@ func TestErrorHandling(t *testing.T) {
 	})
 }
 
-// TODO: Test to ensure multiple events published concurrently are all processed.
-// TODO: Test to ensure multiple subscribers registered concurrently are all invoked when an event is published.
-// TODO: Test mixed operations of concurrent publishing and subscribing.
+func TestConcurrentOperations(t *testing.T) {
+	logger := trace.NewTestLogger(t)
+
+	t.Run("concurrent event publishing", func(t *testing.T) {
+		em := NewEventManager(logger)
+
+		var count int32
+
+		em.Subscribe("test.event.concurrent.publish", func(e Event, args *PublishArgs) error {
+			atomic.AddInt32(&count, 1)
+			return nil
+		}, DEFAULT_EVENT_PRIORITY)
+
+		var wg sync.WaitGroup
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+
+			go func() {
+				defer wg.Done()
+
+				event := NewMockEvent("test.event.concurrent.publish")
+				dc := make(chan []error)
+				em.Publish(event, dc)
+
+				<-dc
+			}()
+		}
+		wg.Wait()
+
+		if atomic.LoadInt32(&count) != 100 {
+			t.Errorf("Expected 100 processed events but got %d", count)
+		}
+	})
+
+	t.Run("concurrent subscriber registration", func(t *testing.T) {
+		em := NewEventManager(logger)
+
+		var count int32
+
+		var wg sync.WaitGroup
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+
+			go func(num int) {
+				defer wg.Done()
+
+				em.Subscribe(fmt.Sprintf("test.event.concurrent.subscribe.%d", num), func(e Event, args *PublishArgs) error {
+					atomic.AddInt32(&count, 1)
+					return nil
+				}, DEFAULT_EVENT_PRIORITY)
+			}(i)
+		}
+		wg.Wait()
+
+		for i := 0; i < 100; i++ {
+			event := NewMockEvent(fmt.Sprintf("test.event.concurrent.subscribe.%d", i))
+			dc := make(chan []error)
+			em.Publish(event, dc)
+
+			<-dc
+		}
+
+		if atomic.LoadInt32(&count) != 100 {
+			t.Errorf("Expected 100 subscribers to be invoked but got %d", count)
+		}
+	})
+
+	t.Run("mixed operations of concurrent publishing and subscribing", func(t *testing.T) {
+		em := NewEventManager(logger)
+
+		var pubCount int32
+		var subCount int32
+
+		var wg sync.WaitGroup
+
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+
+			c := i
+
+			go func() {
+				defer wg.Done()
+
+				em.Subscribe(fmt.Sprintf("test.event.concurrent.mixed.%d", c), func(e Event, args *PublishArgs) error {
+					atomic.AddInt32(&subCount, 1)
+					return nil
+				}, DEFAULT_EVENT_PRIORITY)
+
+				event := NewMockEvent(fmt.Sprintf("test.event.concurrent.mixed.%d", c))
+				dc := make(chan []error)
+				em.Publish(event, dc)
+
+				<-dc
+
+				atomic.AddInt32(&pubCount, 1)
+			}()
+		}
+
+		wg.Wait()
+
+		if atomic.LoadInt32(&pubCount) != 100 {
+			t.Errorf("Expected 100 published events but got %d", pubCount)
+		}
+
+		if atomic.LoadInt32(&subCount) != 100 {
+			t.Errorf("Expected 100 processed events by subscribers but got %d", subCount)
+		}
+	})
+}
+
+// todo  test for nil function as subscriber func
+// todo maybe stress testing concurrent execution with a lot of subscribers and events (e.g. 1.000.000.000)?
+// todo test order of subscribers in highly concurrent scenarios
