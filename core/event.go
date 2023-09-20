@@ -67,10 +67,11 @@ type EventManager struct {
 }
 
 // pc (publish container) is a struct that holds information about a published event.
-// It captures the event and the subscribers that are subscribed to the event.
+// It captures the event, subscribers that are subscribed to the event and the done channel.
 type pc struct {
-	e Event
-	s []Subscriber
+	e  Event
+	s  []Subscriber
+	dc chan []error
 }
 
 // PublishArgs is a struct that holds arguments that are passed to subscribers when an event is published.
@@ -127,7 +128,7 @@ func (em *EventManager) Subscribe(eventID string, publish func(Event, *PublishAr
 // Through the done channel the caller may retrieve any errors from execution of the subscribers.
 //
 // Awaiting the done channel is optional but the only way to be sure all subscribers have handled the
-// event before proceeding. Still, it is very viable to not wait for the done channel and continue:
+// event before proceeding. Still, it is very viable not to wait for the done channel and continue:
 // "fire and forget".
 //
 // Furthermore, Events are lazily registered.
@@ -145,12 +146,13 @@ func (em *EventManager) Publish(event Event, doneChan chan []error) {
 	defer em.mu.Unlock()
 
 	if _, exists := em.events[event.ID()]; !exists {
-		em.register(event, doneChan)
+		em.register(event)
 	}
 
 	em.events[event.ID()] <- pc{
-		e: event,
-		s: em.subscriber[event.ID()],
+		e:  event,
+		s:  em.subscriber[event.ID()],
+		dc: doneChan,
 	}
 
 	em.logger.Debug(EVENT_MOD, "published event", "eventID", event.ID())
@@ -160,7 +162,7 @@ func (em *EventManager) Publish(event Event, doneChan chan []error) {
 // Also, register boots up a goroutine to handle published events for the event ID.
 //
 // Register is *NOT* safe to call concurrently. It is expected that the caller locks the event manager beforehand.
-func (em *EventManager) register(e Event, doneChan chan []error) {
+func (em *EventManager) register(e Event) {
 	if _, exists := em.events[e.ID()]; exists {
 		return
 	}
@@ -169,16 +171,16 @@ func (em *EventManager) register(e Event, doneChan chan []error) {
 	em.events[e.ID()] = make(chan pc, EVENT_BUFFER_SIZE)
 
 	// start a goroutine to handle published events for a given event ID through the channel
-	go handle(em.events[e.ID()], em.logger, doneChan)
+	go handle(em.events[e.ID()], em.logger)
 
 	em.logger.Debug(EVENT_MOD, "registered event and created channel", "eventID", e.ID())
 }
 
 // handle handles events published to the given channel.
-// Through the channel the handle function receives a [pc] and published the event to the subscribers.
+// Through the channel the handle function receives a [pc] and publishes the event to the subscribers.
 // If the done channel is not nil, the handle function will signal that the event has been handled through the done channel.
 // After the event has been handled, the done channel is closed.
-func handle(e chan pc, l trace.Logger, doneChan chan []error) {
+func handle(e chan pc, l trace.Logger) {
 	for {
 		pc := <-e
 
@@ -202,14 +204,15 @@ func handle(e chan pc, l trace.Logger, doneChan chan []error) {
 
 		l.Info(EVENT_MOD, fmt.Sprintf("handled event with %d error(s)", len(errs)), "eventID", pc.e.ID(), "errors", errs)
 
-		if doneChan == nil {
+		dc := pc.dc
+		if dc == nil {
 			l.Debug(EVENT_MOD, "no done channel for event", "eventID", pc.e.ID())
 			return
 		}
 
 		// signal that the event has been handled
-		doneChan <- errs
-		close(doneChan)
+		dc <- errs
+		close(dc)
 	}
 }
 
