@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-const LOG_MOD_KEY = "module"
+const LogModKey = "module"
 
 type Logger interface {
 	Debug(mod, msg string, args ...any)
@@ -30,7 +30,7 @@ func NewStdLogger() Logger {
 }
 
 func (l *StdLogger) Log(level slog.Level, mod string, msg string, args ...any) {
-	a := append([]any{slog.String(LOG_MOD_KEY, mod)}, args...)
+	a := append([]any{slog.String(LogModKey, mod)}, args...)
 	l.slog.Log(context.Background(), level, msg, a...)
 }
 

@@ -58,7 +58,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 			return nil
 		}
 
-		em.Subscribe("test.event", subscriberFunc, DEFAULT_EVENT_PRIORITY)
+		em.Subscribe("test.event", subscriberFunc, DefaultEventPriority)
 
 		event := NewMockEvent("test.event")
 		dc := make(chan []error)
@@ -83,8 +83,8 @@ func TestBasicEventSubscribing(t *testing.T) {
 			return nil
 		}
 
-		em.Subscribe("test.event.multiple", subscriberFunc, DEFAULT_EVENT_PRIORITY)
-		em.Subscribe("test.event.multiple", subscriberFunc, DEFAULT_EVENT_PRIORITY)
+		em.Subscribe("test.event.multiple", subscriberFunc, DefaultEventPriority)
+		em.Subscribe("test.event.multiple", subscriberFunc, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.multiple")
 		dc := make(chan []error)
@@ -104,7 +104,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 			return nil
 		}
 
-		em.Subscribe("test.event.fire", subscriberFunc, DEFAULT_EVENT_PRIORITY)
+		em.Subscribe("test.event.fire", subscriberFunc, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.fire")
 		em.Publish(event, nil)
@@ -117,7 +117,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 			return nil
 		}
 
-		em.Subscribe("test.event.channel", subscriberFunc, DEFAULT_EVENT_PRIORITY)
+		em.Subscribe("test.event.channel", subscriberFunc, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.channel")
 		dc := make(chan []error)
@@ -199,7 +199,7 @@ func TestBasicPublishing(t *testing.T) {
 		em.Subscribe("test.event.payload", func(e Event, args *PublishArgs) error {
 			e.Payload().(*mockPayload).data = "modified"
 			return nil
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.payload")
 		dc := make(chan []error)
@@ -220,12 +220,12 @@ func TestBasicPublishing(t *testing.T) {
 		em.Subscribe("test.event.multiple", func(e Event, args *PublishArgs) error {
 			received = append(received, 1)
 			return nil
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		em.Subscribe("test.event.multiple", func(e Event, args *PublishArgs) error {
 			received = append(received, 2)
 			return nil
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.multiple")
 		dc := make(chan []error)
@@ -247,7 +247,7 @@ func TestErrorHandling(t *testing.T) {
 
 		em.Subscribe("test.event.error", func(e Event, args *PublishArgs) error {
 			return fmt.Errorf("test error")
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.error")
 		dc := make(chan []error)
@@ -265,11 +265,11 @@ func TestErrorHandling(t *testing.T) {
 
 		em.Subscribe("test.event.error", func(e Event, args *PublishArgs) error {
 			return fmt.Errorf("test error")
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		em.Subscribe("test.event.error", func(e Event, args *PublishArgs) error {
 			return fmt.Errorf("test error")
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.error")
 		dc := make(chan []error)
@@ -287,7 +287,7 @@ func TestErrorHandling(t *testing.T) {
 
 		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			panic("test panic")
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.panic")
 		dc := make(chan []error)
@@ -305,15 +305,15 @@ func TestErrorHandling(t *testing.T) {
 
 		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			panic("test panic")
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			return fmt.Errorf("test error")
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			return nil
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.panic")
 		dc := make(chan []error)
@@ -333,12 +333,12 @@ func TestErrorHandling(t *testing.T) {
 
 		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			panic("test panic")
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			received = true
 			return nil
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		event := NewMockEvent("test.event.panic")
 		dc := make(chan []error)
@@ -367,7 +367,7 @@ func TestConcurrentOperations(t *testing.T) {
 		em.Subscribe("test.event.concurrent.publish", func(e Event, args *PublishArgs) error {
 			atomic.AddInt32(&count, 1)
 			return nil
-		}, DEFAULT_EVENT_PRIORITY)
+		}, DefaultEventPriority)
 
 		var wg sync.WaitGroup
 		for i := 0; i < 100; i++ {
@@ -405,7 +405,7 @@ func TestConcurrentOperations(t *testing.T) {
 				em.Subscribe(fmt.Sprintf("test.event.concurrent.subscribe.%d", num), func(e Event, args *PublishArgs) error {
 					atomic.AddInt32(&count, 1)
 					return nil
-				}, DEFAULT_EVENT_PRIORITY)
+				}, DefaultEventPriority)
 			}(i)
 		}
 		wg.Wait()
@@ -442,7 +442,7 @@ func TestConcurrentOperations(t *testing.T) {
 				em.Subscribe(fmt.Sprintf("test.event.concurrent.mixed.%d", c), func(e Event, args *PublishArgs) error {
 					atomic.AddInt32(&subCount, 1)
 					return nil
-				}, DEFAULT_EVENT_PRIORITY)
+				}, DefaultEventPriority)
 
 				event := NewMockEvent(fmt.Sprintf("test.event.concurrent.mixed.%d", c))
 				dc := make(chan []error)

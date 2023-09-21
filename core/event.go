@@ -8,19 +8,19 @@ import (
 	"github.com/org-harmony/harmony/trace"
 )
 
-const EVENT_MOD = "sys.core.event"
+const EventMod = "sys.core.event"
 
-// DEFAULT_EVENT_PRIORITY can be used as a general default priority for an event subscriber.
+// DefaultEventPriority can be used as a general default priority for an event subscriber.
 // The priority is used to determine the order in which subscribers are called.
 // A higher priority means that the subscriber is called earlier.
 // If you do not care about the order in which subscribers are called, use this constant.
-const DEFAULT_EVENT_PRIORITY = 0
+const DefaultEventPriority = 0
 
-// EVENT_BUFFER_SIZE is the size of the buffer for event channels.
+// EventBufferSize is the size of the buffer for event channels.
 // The buffer size is used when creating channels for events.
 // If the buffer size is too small publishing an event will block until the event is handled.
 // If the buffer size is too large publishing an event will use more memory.
-const EVENT_BUFFER_SIZE = 100
+const EventBufferSize = 100
 
 // Event is an interface that makes a type publishable through the EventManager.
 type Event interface {
@@ -117,7 +117,7 @@ func (em *EventManager) Subscribe(eventID string, publish func(Event, *PublishAr
 		return em.subscriber[eventID][i].priority < em.subscriber[eventID][j].priority
 	})
 
-	em.logger.Debug(EVENT_MOD, "subscribed to event", "eventID", eventID, "priority", priority)
+	em.logger.Debug(EventMod, "subscribed to event", "eventID", eventID, "priority", priority)
 }
 
 // Publish publishes an event to the event's channel.
@@ -140,7 +140,7 @@ func (em *EventManager) Publish(event Event, doneChan chan []error) {
 		return
 	}
 
-	em.logger.Debug(EVENT_MOD, "publishing event", "eventID", event.ID())
+	em.logger.Debug(EventMod, "publishing event", "eventID", event.ID())
 
 	em.mu.Lock()
 	defer em.mu.Unlock()
@@ -155,7 +155,7 @@ func (em *EventManager) Publish(event Event, doneChan chan []error) {
 		dc: doneChan,
 	}
 
-	em.logger.Debug(EVENT_MOD, "published event", "eventID", event.ID())
+	em.logger.Debug(EventMod, "published event", "eventID", event.ID())
 }
 
 // register registers an event with the event manager and creates a channel for the event.
@@ -168,12 +168,12 @@ func (em *EventManager) register(e Event) {
 	}
 
 	// create a buffered channel to publish events to
-	em.events[e.ID()] = make(chan pc, EVENT_BUFFER_SIZE)
+	em.events[e.ID()] = make(chan pc, EventBufferSize)
 
 	// start a goroutine to handle published events for a given event ID through the channel
 	go handle(em.events[e.ID()], em.logger)
 
-	em.logger.Debug(EVENT_MOD, "registered event and created channel", "eventID", e.ID())
+	em.logger.Debug(EventMod, "registered event and created channel", "eventID", e.ID())
 }
 
 // handle handles events published to the given channel.
@@ -184,7 +184,7 @@ func handle(e chan pc, l trace.Logger) {
 	for {
 		pc := <-e
 
-		l.Debug(EVENT_MOD, "handling event", "eventID", pc.e.ID())
+		l.Debug(EventMod, "handling event", "eventID", pc.e.ID())
 
 		var errs []error
 		args := &PublishArgs{}
@@ -192,7 +192,7 @@ func handle(e chan pc, l trace.Logger) {
 		// publish event to subscribers
 		for _, subscriber := range pc.s {
 			if args.StopPropagation {
-				l.Debug(EVENT_MOD, "stopping propagation of event", "eventID", pc.e.ID())
+				l.Debug(EventMod, "stopping propagation of event", "eventID", pc.e.ID())
 				break
 			}
 
@@ -202,11 +202,11 @@ func handle(e chan pc, l trace.Logger) {
 			}
 		}
 
-		l.Info(EVENT_MOD, fmt.Sprintf("handled event with %d error(s)", len(errs)), "eventID", pc.e.ID(), "errors", errs)
+		l.Info(EventMod, fmt.Sprintf("handled event with %d error(s)", len(errs)), "eventID", pc.e.ID(), "errors", errs)
 
 		dc := pc.dc
 		if dc == nil {
-			l.Debug(EVENT_MOD, "no done channel for event", "eventID", pc.e.ID())
+			l.Debug(EventMod, "no done channel for event", "eventID", pc.e.ID())
 			return
 		}
 

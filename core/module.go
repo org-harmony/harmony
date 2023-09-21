@@ -8,7 +8,7 @@ import (
 	"github.com/org-harmony/harmony/trace"
 )
 
-const MODULE_MOD = "sys.core.module"
+const ModuleMod = "sys.core.module"
 
 // Module is an interface representing components that can be managed by the ModuleManager.
 // Implementing the Module interface allows for lifecycle management including setup, start and stop operations.
