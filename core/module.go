@@ -39,15 +39,15 @@ type ModLifecycleArgs struct {
 	Logger trace.Logger
 }
 
-var modules = NewManager()
+var modules = NewModuleManager()
 
 // Manager provides a singleton instance of ModuleManager.
 func Manager() *ModuleManager {
 	return modules
 }
 
-// NewManager creates and returns a new instance of ModuleManager.
-func NewManager() *ModuleManager {
+// NewModuleManager creates and returns a new instance of ModuleManager.
+func NewModuleManager() *ModuleManager {
 	return &ModuleManager{
 		modules: make(map[string]Module),
 	}
