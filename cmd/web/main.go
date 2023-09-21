@@ -10,7 +10,7 @@ import (
 	"github.com/org-harmony/harmony/web"
 )
 
-const WEB_MOD = "sys.cmd.web"
+const WebMod = "sys.cmd.web"
 
 func main() {
 	var errs []error
@@ -22,12 +22,12 @@ func main() {
 
 	errs = m.Setup(&args, ctx)
 	if errs != nil {
-		args.Logger.Error(WEB_MOD, "Failed to setup modules: %v", errs)
+		args.Logger.Error(WebMod, "Failed to setup modules: %v", errs)
 	}
 
 	errs = m.Start(&args, ctx)
 	if errs != nil {
-		args.Logger.Error(WEB_MOD, "Failed to start modules: %v", errs)
+		args.Logger.Error(WebMod, "Failed to start modules: %v", errs)
 	}
 	defer m.Stop(&args)
 
