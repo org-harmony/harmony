@@ -34,7 +34,7 @@ func TestModuleManagerLifecycle(t *testing.T) {
 	logger := trace.NewStdLogger()
 
 	t.Run("setup", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module := &mockModule{id: "test.module"}
 
 		manager.Register(module)
@@ -46,7 +46,7 @@ func TestModuleManagerLifecycle(t *testing.T) {
 	})
 
 	t.Run("start", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module := &mockModule{id: "test.module"}
 
 		manager.Register(module)
@@ -59,7 +59,7 @@ func TestModuleManagerLifecycle(t *testing.T) {
 	})
 
 	t.Run("stop", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module := &mockModule{id: "test.module"}
 
 		manager.Register(module)
@@ -77,7 +77,7 @@ func TestModuleRegistration(t *testing.T) {
 	logger := trace.NewStdLogger()
 
 	t.Run("registration", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module1 := &mockModule{id: "test.module1"}
 		module2 := &mockModule{id: "test.module2"}
 
@@ -86,7 +86,7 @@ func TestModuleRegistration(t *testing.T) {
 	})
 
 	t.Run("registration after setup", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module1 := &mockModule{id: "test.module1"}
 
 		manager.Register(module1)
@@ -101,7 +101,7 @@ func TestModuleRegistration(t *testing.T) {
 	})
 
 	t.Run("start without registration", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 
 		defer func() {
 			if r := recover(); r == nil {
@@ -112,7 +112,7 @@ func TestModuleRegistration(t *testing.T) {
 	})
 
 	t.Run("stop without registration", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 
 		defer func() {
 			if r := recover(); r == nil {
@@ -123,7 +123,7 @@ func TestModuleRegistration(t *testing.T) {
 	})
 
 	t.Run("duplicate registration", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module1 := &mockModule{id: "test.module"}
 
 		defer func() {
@@ -139,7 +139,7 @@ func TestModuleRegistration(t *testing.T) {
 
 func TestModuleManagerConcurrency(t *testing.T) {
 	t.Run("concurrent registration", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 
 		var wg sync.WaitGroup
 		for i := 0; i < 10; i++ {
@@ -154,7 +154,7 @@ func TestModuleManagerConcurrency(t *testing.T) {
 	})
 
 	t.Run("concurrent duplicate registration", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module := &mockModule{id: "test.module"}
 
 		// This channel will collect panics from the goroutines
@@ -210,7 +210,7 @@ func TestModuleManagerMultipleErrorHandling(t *testing.T) {
 	logger := trace.NewStdLogger()
 
 	t.Run("multiple setup errors", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module1 := &errorMockModule{id: "test.module1", setupErr: errors.New("module1 setup error")}
 		module2 := &errorMockModule{id: "test.module2", setupErr: errors.New("module2 setup error")}
 
@@ -223,7 +223,7 @@ func TestModuleManagerMultipleErrorHandling(t *testing.T) {
 	})
 
 	t.Run("multiple start errors", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module1 := &errorMockModule{id: "test.module1", startErr: errors.New("module1 start error")}
 		module2 := &errorMockModule{id: "test.module2", startErr: errors.New("module2 start error")}
 
@@ -237,7 +237,7 @@ func TestModuleManagerMultipleErrorHandling(t *testing.T) {
 	})
 
 	t.Run("multiple stop errors", func(t *testing.T) {
-		manager := NewManager()
+		manager := NewModuleManager()
 		module1 := &errorMockModule{id: "test.module1", stopErr: errors.New("module1 stop error")}
 		module2 := &errorMockModule{id: "test.module2", stopErr: errors.New("module2 stop error")}
 
