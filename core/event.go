@@ -22,7 +22,7 @@ const DefaultEventPriority = 0
 // If the buffer size is too large publishing an event will use more memory.
 const EventBufferSize = 100
 
-// Event is an interface that makes a type publishable through the EventManager.
+// Event makes a type publishable through the StdEventManager.
 type Event interface {
 	// ID returns the unique ID of the event.
 	// This ID is used to identify the event and route it to the correct subscribers.
@@ -40,22 +40,31 @@ type Event interface {
 	Payload() any
 }
 
+// EventManager manages events and their subscribers.
+type EventManager interface {
+	// Subscribe subscribes to an event with the given event ID.
+	// The publish function is called when the event is published.
+	// The priority is used to determine the order in which subscribers are called.
+	Subscribe(eventID string, publish func(Event, *publishArgs) error, priority int)
+	// Publish publishes an event and allows for errors to be returned through the done channel.
+	Publish(event Event, doneChan chan []error)
+}
+
 // Subscriber is a struct that holds information about a subscriber.
 type Subscriber struct {
 	// eventID that the subscriber is subscribed to.
 	eventID string
 	// publish function that is called when the event is published.
-	publish func(Event, *PublishArgs) error
-	// priority of the subscriber.
-	// The priority is used to determine the order in which subscribers are called.
+	publish func(Event, *publishArgs) error
+	//priority is used to determine the order in which subscribers are called.
 	//
 	// A higher priority means that the subscriber is called earlier.
 	priority int
 }
 
-// EventManager is a struct that manages events and their subscribers.
-// The EventManager is safe to use concurrently and pass to multiple goroutines.
-type EventManager struct {
+// StdEventManager is the standard implementation of the [EventManager] interface.
+// The StdEventManager is safe to use concurrently and pass to multiple goroutines.
+type StdEventManager struct {
 	mu sync.Mutex
 	// events is a map of event IDs to channels.
 	// The channels are used to publish events to subscribers.
@@ -66,7 +75,7 @@ type EventManager struct {
 	logger     trace.Logger
 }
 
-// pc (publish container) is a struct that holds information about a published event.
+// pc (publish container) holds information about a published event.
 // It captures the event, subscribers that are subscribed to the event and the done channel.
 type pc struct {
 	e  Event
@@ -74,9 +83,9 @@ type pc struct {
 	dc chan []error
 }
 
-// PublishArgs is a struct that holds arguments that are passed to subscribers when an event is published.
-type PublishArgs struct {
-	// StopPropagation is a boolean that can be set to true to stop the propagation of an event.
+// publishArgs holds arguments that are passed to subscribers when an event is published.
+type publishArgs struct {
+	// StopPropagation can be set to true to stop the propagation of an event.
 	// When set to true, the event manager will stop calling subscribers for the event.
 	// Stopping propagation will be logged.
 	StopPropagation bool
@@ -90,9 +99,9 @@ func BuildEventID(module, namespace, action string) string {
 	return fmt.Sprintf("%s.%s.%s", module, namespace, action)
 }
 
-// NewEventManager creates a new event manager. ö
-func NewEventManager(l trace.Logger) *EventManager {
-	return &EventManager{
+// NewStdEventManager creates a new event manager. ö
+func NewStdEventManager(l trace.Logger) *StdEventManager {
+	return &StdEventManager{
 		events:     make(map[string]chan pc),
 		subscriber: make(map[string][]Subscriber),
 		logger:     l,
@@ -100,7 +109,7 @@ func NewEventManager(l trace.Logger) *EventManager {
 }
 
 // Subscribe subscribes to an event with the given event ID.
-func (em *EventManager) Subscribe(eventID string, publish func(Event, *PublishArgs) error, priority int) {
+func (em *StdEventManager) Subscribe(eventID string, publish func(Event, *publishArgs) error, priority int) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 
@@ -135,7 +144,7 @@ func (em *EventManager) Subscribe(eventID string, publish func(Event, *PublishAr
 // Meaning the channel for event publishing is created when the event is published for the first time.
 //
 // If a nil event is passed to the Publish function, the function will return immediately.
-func (em *EventManager) Publish(event Event, doneChan chan []error) {
+func (em *StdEventManager) Publish(event Event, doneChan chan []error) {
 	if event == nil {
 		return
 	}
@@ -162,7 +171,7 @@ func (em *EventManager) Publish(event Event, doneChan chan []error) {
 // Also, register boots up a goroutine to handle published events for the event ID.
 //
 // Register is *NOT* safe to call concurrently. It is expected that the caller locks the event manager beforehand.
-func (em *EventManager) register(e Event) {
+func (em *StdEventManager) register(e Event) {
 	if _, exists := em.events[e.ID()]; exists {
 		return
 	}
@@ -187,7 +196,7 @@ func handle(e chan pc, l trace.Logger) {
 		l.Debug(EventMod, "handling event", "eventID", pc.e.ID())
 
 		var errs []error
-		args := &PublishArgs{}
+		args := &publishArgs{}
 
 		// publish event to subscribers
 		for _, subscriber := range pc.s {
@@ -218,7 +227,7 @@ func handle(e chan pc, l trace.Logger) {
 
 // safePublish is a wrapper around the publish function of a subscriber.
 // It recovers from panics in the subscriber and returns an error if a panic occurred.
-func safePublish(s Subscriber, e Event, args *PublishArgs) (err error) {
+func safePublish(s Subscriber, e Event, args *publishArgs) (err error) {
 	// recover from panics in subscribers
 	// the named return value err is necessary to return the error from the deferred function,
 	// as the return value from the deferred function is discarded
