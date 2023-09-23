@@ -8,6 +8,7 @@ import (
 )
 
 const LogModKey = "module"
+const LogMod = "sys.trace.logger"
 
 type Logger interface {
 	Debug(mod, msg string, args ...any)
