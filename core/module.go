@@ -74,7 +74,7 @@ func (m *ModuleManager) Register(modules ...Module) {
 
 // Setup initializes all registered modules.
 // This method should be called before starting the modules.
-// Calling Setup after the modules have been setup will result in a panic.
+// Calling Setup after the modules have been set up will result in a panic.
 func (m *ModuleManager) Setup(args *ModLifecycleArgs, ctx context.Context) []error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
