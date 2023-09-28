@@ -58,7 +58,7 @@ func WithEventManger(em *harmony.StdEventManager) ServerConfigFunc {
 func defaultServerConfig() *ServerConfig {
 	return &ServerConfig{
 		Router: chi.NewRouter(),
-		Logger: harmony.NewStdLogger(),
+		Logger: harmony.NewLogger(),
 		Addr:   ":8080",
 	}
 }

@@ -22,8 +22,8 @@ type StdLogger struct {
 	slog *slog.Logger
 }
 
-// NewStdLogger creates a new standard logger that writes to stdout.
-func NewStdLogger() Logger {
+// NewLogger creates a new standard logger that writes to stdout.
+func NewLogger() Logger {
 	return &StdLogger{
 		slog: slog.New(slog.NewTextHandler(os.Stdout, nil)),
 	}
