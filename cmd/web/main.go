@@ -19,6 +19,7 @@ func main() {
 		Logger: trace.NewStdLogger(),
 	}
 	m := core.Manager()
+	em := core.NewStdEventManager(args.Logger)
 
 	errs = m.Setup(&args, ctx)
 	if errs != nil {
@@ -31,12 +32,16 @@ func main() {
 	}
 	defer m.Stop(&args)
 
-	s := web.NewServer(&web.ServerConfig{
-		Logger: args.Logger,
-		Addr:   ":8080",
-	}, ctx)
+	s := web.NewStdServer(web.WithEventManger(em))
 
-	err := s.Serve(ctx)
+	s.RegisterController(nil)
+
+	err := s.Setup(ctx)
+	if errs != nil {
+		panic(fmt.Sprintf("Setup failed: %v", errs))
+	}
+
+	err = s.Serve(ctx)
 	if err != nil {
 		panic(fmt.Sprintf("Serve failed: %v", errs))
 	}
