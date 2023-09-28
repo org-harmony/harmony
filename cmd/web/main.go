@@ -11,7 +11,7 @@ const WebMod = "sys.cmd.web"
 
 func main() {
 	ctx := context.Background()
-	l := harmony.NewStdLogger()
+	l := harmony.NewLogger()
 	em := harmony.NewEventManager(l)
 
 	s := web.NewServer(web.WithEventManger(em))
