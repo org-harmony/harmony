@@ -23,4 +23,7 @@ go.work
 var/
 tmp/
 
+config/env.toml
+config/**/*.local.toml
+
 .idea
