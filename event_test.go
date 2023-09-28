@@ -1,12 +1,10 @@
-package core
+package harmony
 
 import (
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
-
-	"github.com/org-harmony/harmony/trace"
 )
 
 type mockPayload struct {
@@ -44,10 +42,10 @@ func (me *mockEvent) DoneChan() chan []error {
 }
 
 func TestBasicEventSubscribing(t *testing.T) {
-	logger := trace.NewTestLogger(t)
+	logger := NewTestLogger(t)
 
 	t.Run("single subscriber", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		received := false
 		subscriberFunc := func(e Event, args *publishArgs) error {
@@ -72,7 +70,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 	})
 
 	t.Run("multiple subscribers same event", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		var count int
 		subscriberFunc := func(e Event, args *publishArgs) error {
@@ -98,7 +96,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 	})
 
 	t.Run("fire and forget", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		subscriberFunc := func(e Event, args *publishArgs) error {
 			return nil
@@ -111,7 +109,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 	})
 
 	t.Run("channel closed after use", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		subscriberFunc := func(e Event, args *publishArgs) error {
 			return nil
@@ -133,10 +131,10 @@ func TestBasicEventSubscribing(t *testing.T) {
 }
 
 func TestBasicPublishing(t *testing.T) {
-	logger := trace.NewTestLogger(t)
+	logger := NewTestLogger(t)
 
 	t.Run("priority order", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		order := []int{}
 
@@ -164,7 +162,7 @@ func TestBasicPublishing(t *testing.T) {
 	})
 
 	t.Run("stop propagation", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		received := []int{}
 
@@ -193,9 +191,9 @@ func TestBasicPublishing(t *testing.T) {
 	})
 
 	t.Run("payload modification", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
-		// Subscriber that modifies the payload
+		// subscriber that modifies the payload
 		em.Subscribe("test.event.payload", func(e Event, args *publishArgs) error {
 			e.Payload().(*mockPayload).data = "modified"
 			return nil
@@ -213,7 +211,7 @@ func TestBasicPublishing(t *testing.T) {
 	})
 
 	t.Run("multiple subscribers same priority", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		received := []int{}
 
@@ -240,10 +238,10 @@ func TestBasicPublishing(t *testing.T) {
 }
 
 func TestErrorHandling(t *testing.T) {
-	logger := trace.NewTestLogger(t)
+	logger := NewTestLogger(t)
 
 	t.Run("single subscriber", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		em.Subscribe("test.event.error", func(e Event, args *publishArgs) error {
 			return fmt.Errorf("test error")
@@ -261,7 +259,7 @@ func TestErrorHandling(t *testing.T) {
 	})
 
 	t.Run("multiple subscribers", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		em.Subscribe("test.event.error", func(e Event, args *publishArgs) error {
 			return fmt.Errorf("test error")
@@ -283,7 +281,7 @@ func TestErrorHandling(t *testing.T) {
 	})
 
 	t.Run("panic", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		em.Subscribe("test.event.panic", func(e Event, args *publishArgs) error {
 			panic("test panic")
@@ -301,7 +299,7 @@ func TestErrorHandling(t *testing.T) {
 	})
 
 	t.Run("panic and other error", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		em.Subscribe("test.event.panic", func(e Event, args *publishArgs) error {
 			panic("test panic")
@@ -327,7 +325,7 @@ func TestErrorHandling(t *testing.T) {
 	})
 
 	t.Run("panic and further processing", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		var received bool
 
@@ -357,10 +355,10 @@ func TestErrorHandling(t *testing.T) {
 }
 
 func TestConcurrentOperations(t *testing.T) {
-	logger := trace.NewTestLogger(t)
+	logger := NewTestLogger(t)
 
 	t.Run("concurrent event publishing", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		var count int32
 
@@ -391,7 +389,7 @@ func TestConcurrentOperations(t *testing.T) {
 	})
 
 	t.Run("concurrent subscriber registration", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		var count int32
 
@@ -424,7 +422,7 @@ func TestConcurrentOperations(t *testing.T) {
 	})
 
 	t.Run("mixed operations of concurrent publishing and subscribing", func(t *testing.T) {
-		em := NewStdEventManager(logger)
+		em := NewEventManager(logger)
 
 		var pubCount int32
 		var subCount int32
