@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony"
+	"github.com/org-harmony/harmony/config"
 	"github.com/org-harmony/harmony/web"
 	"os"
 )
@@ -14,8 +16,9 @@ func main() {
 	ctx := context.Background()
 	l := harmony.NewLogger()
 	em := harmony.NewEventManager(l)
+	v := validator.New(validator.WithRequiredStructEnabled())
 
-	err := harmony.LoadConfigToEnv("env")
+	err := config.ToEnv(config.From("env"))
 	if err != nil {
 		l.Error(WebMod, "failed to load config to env", err)
 		return
@@ -28,7 +31,7 @@ func main() {
 
 	s.RegisterController(nil)
 
-	web.LoadConfig()
+	web.LoadConfig(v)
 
 	err = s.Serve(ctx)
 	if err != nil {
