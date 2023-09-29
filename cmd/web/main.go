@@ -23,7 +23,7 @@ func main() {
 
 	s := web.NewServer(
 		web.WithEventManger(em),
-		web.WithAddr(fmt.Sprintf(":%s", os.Getenv("web.server.port"))),
+		web.WithAddr(fmt.Sprintf(":%s", os.Getenv("WEB_SERVER_PORT"))),
 	)
 
 	s.RegisterController(nil)

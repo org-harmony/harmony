@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pelletier/go-toml/v2"
 	"os"
+	"strings"
 )
 
 const ConfigPkg = "sys.config"
@@ -49,7 +50,7 @@ func LoadConfigToEnv(filename string) error {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
-	fm := flattenMap(m)
+	fm := makeEnvMap(m)
 	if err := loadMapToEnv(fm); err != nil {
 		return fmt.Errorf("failed to load config to env: %w", err)
 	}
@@ -68,33 +69,38 @@ func loadMapToEnv(m map[string]string) error {
 	return nil
 }
 
-// flattenMap recursively flattens a map of any type to a string map.
-// The keys of the map will be joined with a dot until the map is entirely flattened.
+// makeEnvMap recursively flattens a map of any type to a string map and changes the naming scheme to be compatible with
+// environment variables. The capitalized keys of the map will be joined with underscores and the values will be
+// converted to strings and flattened to a single level.
 //
 // Example:
 //
-//	{
-//		"foo": {
-//			"bar": "baz"
+//		{
+//		  "foo": {
+//		    "bar": "baz"
+//	        "qux": {
+//	          "kelvin": 273.15
+//	        }
+//		  }
 //		}
-//	}
 //
-// will be flattened to:
+// will be flattened and converted to:
 //
 //	{
-//		"foo.bar": "baz"
+//	  "FOO_BAR": "baz"
+//	  "FOO_QUX_KELVIN": "273.15"
 //	}
-func flattenMap(m map[string]any) map[string]string {
+func makeEnvMap(m map[string]any) map[string]string {
 	fm := make(map[string]string)
 
 	for k, v := range m {
 		vm, ok := v.(map[string]any)
 		if ok {
-			for fk, fv := range flattenMap(vm) {
-				fm[fmt.Sprintf("%s.%s", k, fk)] = fv
+			for fk, fv := range makeEnvMap(vm) {
+				fm[fmt.Sprintf("%s_%s", strings.ToUpper(k), strings.ToUpper(fk))] = fv
 			}
 		} else {
-			fm[k] = fmt.Sprint(v)
+			fm[strings.ToUpper(k)] = fmt.Sprint(v)
 		}
 	}
 
