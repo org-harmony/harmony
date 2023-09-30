@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/org-harmony/harmony"
-	"github.com/org-harmony/harmony/config"
-	"github.com/org-harmony/harmony/web"
+	"github.com/org-harmony/harmony/core/auth"
+	"github.com/org-harmony/harmony/core/config"
+	"github.com/org-harmony/harmony/core/event"
+	"github.com/org-harmony/harmony/core/trace"
+	"github.com/org-harmony/harmony/core/web"
 	"os"
 )
 
@@ -14,8 +16,8 @@ const WebMod = "sys.cmd.web"
 
 func main() {
 	ctx := context.Background()
-	l := harmony.NewLogger()
-	em := harmony.NewEventManager(l)
+	l := trace.NewLogger()
+	em := event.NewEventManager(l)
 	v := validator.New(validator.WithRequiredStructEnabled())
 
 	err := config.ToEnv(config.From("env"))
@@ -31,7 +33,7 @@ func main() {
 
 	s.RegisterController(nil)
 
-	web.LoadConfig(v)
+	auth.LoadConfig(v)
 
 	err = s.Serve(ctx)
 	if err != nil {

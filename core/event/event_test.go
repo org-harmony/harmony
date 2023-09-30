@@ -1,7 +1,8 @@
-package harmony
+package event
 
 import (
 	"fmt"
+	"github.com/org-harmony/harmony/core/trace"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -42,7 +43,7 @@ func (me *mockEvent) DoneChan() chan []error {
 }
 
 func TestBasicEventSubscribing(t *testing.T) {
-	logger := NewTestLogger(t)
+	logger := trace.NewTestLogger(t)
 
 	t.Run("single subscriber", func(t *testing.T) {
 		em := NewEventManager(logger)
@@ -131,7 +132,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 }
 
 func TestBasicPublishing(t *testing.T) {
-	logger := NewTestLogger(t)
+	logger := trace.NewTestLogger(t)
 
 	t.Run("priority order", func(t *testing.T) {
 		em := NewEventManager(logger)
@@ -238,7 +239,7 @@ func TestBasicPublishing(t *testing.T) {
 }
 
 func TestErrorHandling(t *testing.T) {
-	logger := NewTestLogger(t)
+	logger := trace.NewTestLogger(t)
 
 	t.Run("single subscriber", func(t *testing.T) {
 		em := NewEventManager(logger)
@@ -355,7 +356,7 @@ func TestErrorHandling(t *testing.T) {
 }
 
 func TestConcurrentOperations(t *testing.T) {
-	logger := NewTestLogger(t)
+	logger := trace.NewTestLogger(t)
 
 	t.Run("concurrent event publishing", func(t *testing.T) {
 		em := NewEventManager(logger)

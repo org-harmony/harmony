@@ -1,7 +1,9 @@
-package harmony
+// Package event provides an event manager that allows for events to be published and subscribed to.
+package event
 
 import (
 	"fmt"
+	"github.com/org-harmony/harmony/core/trace"
 	"sort"
 	"sync"
 )
@@ -94,11 +96,11 @@ type StdEventManager struct {
 	// subscriber is a map of event IDs to subscribers.
 	// The subscribers are called when an event is published.
 	subscriber map[string][]subscriber
-	logger     Logger
+	logger     trace.Logger
 }
 
 // NewEventManager creates a new event manager.
-func NewEventManager(l Logger) *StdEventManager {
+func NewEventManager(l trace.Logger) *StdEventManager {
 	return &StdEventManager{
 		events:     make(map[string]chan pc),
 		subscriber: make(map[string][]subscriber),
@@ -187,7 +189,7 @@ func (em *StdEventManager) register(e Event) {
 // Through the channel the handle function receives a [pc] and publishes the event to the subscribers.
 // If the done channel is not nil, the handle function will signal that the event has been handled through the done channel.
 // After the event has been handled, the done channel is closed.
-func handle(e chan pc, l Logger) {
+func handle(e chan pc, l trace.Logger) {
 	for {
 		pc := <-e
 
