@@ -1,9 +1,11 @@
-package web
+// Package auth provides authentication details and logic for HARMONY.
+// Auth is a part of the core package as it provides user authentication for all domains.
+package auth
 
 import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/org-harmony/harmony/config"
+	"github.com/org-harmony/harmony/core/config"
 )
 
 // AuthConfig is the config for the auth module.

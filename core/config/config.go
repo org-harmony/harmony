@@ -5,7 +5,7 @@ package config
 import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/org-harmony/harmony/herr"
+	"github.com/org-harmony/harmony/core/herr"
 	"github.com/pelletier/go-toml/v2"
 	"os"
 	"path"

@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/org-harmony/harmony/herr"
+	"github.com/org-harmony/harmony/core/herr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -43,7 +43,6 @@ func TestC(t *testing.T) {
 
 		config := &MockConfig{}
 		err = C(config, From("unparsable"), FromDir(tempDir), Validate(v))
-		t.Logf("error: %v", err)
 		assert.IsType(t, &herr.Parse{}, err)
 	})
 
