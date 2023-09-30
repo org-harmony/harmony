@@ -1,14 +1,12 @@
-package core
+package harmony
 
 import (
 	"fmt"
 	"sort"
 	"sync"
-
-	"github.com/org-harmony/harmony/trace"
 )
 
-const EventMod = "sys.core.event"
+const EventPkg = "sys.event"
 
 // DefaultEventPriority can be used as a general default priority for an event subscriber.
 // The priority is used to determine the order in which subscribers are called.
@@ -50,8 +48,8 @@ type EventManager interface {
 	Publish(event Event, doneChan chan []error)
 }
 
-// Subscriber is a struct that holds information about a subscriber.
-type Subscriber struct {
+// subscriber is a struct that holds information about a subscriber.
+type subscriber struct {
 	// eventID that the subscriber is subscribed to.
 	eventID string
 	// publish function that is called when the event is published.
@@ -62,24 +60,11 @@ type Subscriber struct {
 	priority int
 }
 
-// StdEventManager is the standard implementation of the [EventManager] interface.
-// The StdEventManager is safe to use concurrently and pass to multiple goroutines.
-type StdEventManager struct {
-	mu sync.Mutex
-	// events is a map of event IDs to channels.
-	// The channels are used to publish events to subscribers.
-	events map[string]chan pc
-	// subscriber is a map of event IDs to subscribers.
-	// The subscribers are called when an event is published.
-	subscriber map[string][]Subscriber
-	logger     trace.Logger
-}
-
 // pc (publish container) holds information about a published event.
 // It captures the event, subscribers that are subscribed to the event and the done channel.
 type pc struct {
 	e  Event
-	s  []Subscriber
+	s  []subscriber
 	dc chan []error
 }
 
@@ -99,11 +84,24 @@ func BuildEventID(module, namespace, action string) string {
 	return fmt.Sprintf("%s.%s.%s", module, namespace, action)
 }
 
-// NewStdEventManager creates a new event manager. ö
-func NewStdEventManager(l trace.Logger) *StdEventManager {
+// StdEventManager is the standard implementation of the EventManager interface.
+// The StdEventManager is safe to use concurrently and pass to multiple goroutines.
+type StdEventManager struct {
+	mu sync.Mutex
+	// events is a map of event IDs to channels.
+	// The channels are used to publish events to subscribers.
+	events map[string]chan pc
+	// subscriber is a map of event IDs to subscribers.
+	// The subscribers are called when an event is published.
+	subscriber map[string][]subscriber
+	logger     Logger
+}
+
+// NewEventManager creates a new event manager.
+func NewEventManager(l Logger) *StdEventManager {
 	return &StdEventManager{
 		events:     make(map[string]chan pc),
-		subscriber: make(map[string][]Subscriber),
+		subscriber: make(map[string][]subscriber),
 		logger:     l,
 	}
 }
@@ -113,7 +111,7 @@ func (em *StdEventManager) Subscribe(eventID string, publish func(Event, *publis
 	em.mu.Lock()
 	defer em.mu.Unlock()
 
-	subscriber := Subscriber{
+	subscriber := subscriber{
 		eventID:  eventID,
 		publish:  publish,
 		priority: priority,
@@ -126,7 +124,7 @@ func (em *StdEventManager) Subscribe(eventID string, publish func(Event, *publis
 		return em.subscriber[eventID][i].priority < em.subscriber[eventID][j].priority
 	})
 
-	em.logger.Debug(EventMod, "subscribed to event", "eventID", eventID, "priority", priority)
+	em.logger.Debug(EventPkg, "subscribed to event", "eventID", eventID, "priority", priority)
 }
 
 // Publish publishes an event to the event's channel.
@@ -149,7 +147,7 @@ func (em *StdEventManager) Publish(event Event, doneChan chan []error) {
 		return
 	}
 
-	em.logger.Debug(EventMod, "publishing event", "eventID", event.ID())
+	em.logger.Debug(EventPkg, "publishing event", "eventID", event.ID())
 
 	em.mu.Lock()
 	defer em.mu.Unlock()
@@ -164,7 +162,7 @@ func (em *StdEventManager) Publish(event Event, doneChan chan []error) {
 		dc: doneChan,
 	}
 
-	em.logger.Debug(EventMod, "published event", "eventID", event.ID())
+	em.logger.Debug(EventPkg, "published event", "eventID", event.ID())
 }
 
 // register registers an event with the event manager and creates a channel for the event.
@@ -182,18 +180,18 @@ func (em *StdEventManager) register(e Event) {
 	// start a goroutine to handle published events for a given event ID through the channel
 	go handle(em.events[e.ID()], em.logger)
 
-	em.logger.Debug(EventMod, "registered event and created channel", "eventID", e.ID())
+	em.logger.Debug(EventPkg, "registered event and created channel", "eventID", e.ID())
 }
 
 // handle handles events published to the given channel.
 // Through the channel the handle function receives a [pc] and publishes the event to the subscribers.
 // If the done channel is not nil, the handle function will signal that the event has been handled through the done channel.
 // After the event has been handled, the done channel is closed.
-func handle(e chan pc, l trace.Logger) {
+func handle(e chan pc, l Logger) {
 	for {
 		pc := <-e
 
-		l.Debug(EventMod, "handling event", "eventID", pc.e.ID())
+		l.Debug(EventPkg, "handling event", "eventID", pc.e.ID())
 
 		var errs []error
 		args := &publishArgs{}
@@ -201,7 +199,7 @@ func handle(e chan pc, l trace.Logger) {
 		// publish event to subscribers
 		for _, subscriber := range pc.s {
 			if args.StopPropagation {
-				l.Debug(EventMod, "stopping propagation of event", "eventID", pc.e.ID())
+				l.Debug(EventPkg, "stopping propagation of event", "eventID", pc.e.ID())
 				break
 			}
 
@@ -211,11 +209,15 @@ func handle(e chan pc, l trace.Logger) {
 			}
 		}
 
-		l.Info(EventMod, fmt.Sprintf("handled event with %d error(s)", len(errs)), "eventID", pc.e.ID(), "errors", errs)
+		if len(errs) > 0 {
+			l.Info(EventPkg, fmt.Sprintf("handled event with %d error(s)", len(errs)), "eventID", pc.e.ID(), "errors", errs)
+		} else {
+			l.Debug(EventPkg, "handled event without errors", "eventID", pc.e.ID())
+		}
 
 		dc := pc.dc
 		if dc == nil {
-			l.Debug(EventMod, "no done channel for event", "eventID", pc.e.ID())
+			l.Debug(EventPkg, "no done channel for event", "eventID", pc.e.ID())
 			return
 		}
 
@@ -227,7 +229,7 @@ func handle(e chan pc, l trace.Logger) {
 
 // safePublish is a wrapper around the publish function of a subscriber.
 // It recovers from panics in the subscriber and returns an error if a panic occurred.
-func safePublish(s Subscriber, e Event, args *publishArgs) (err error) {
+func safePublish(s subscriber, e Event, args *publishArgs) (err error) {
 	// recover from panics in subscribers
 	// the named return value err is necessary to return the error from the deferred function,
 	// as the return value from the deferred function is discarded
