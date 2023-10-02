@@ -25,7 +25,7 @@ func NewInvalidOptions(options any, prev error) *InvalidOptions {
 }
 
 func (e *InvalidOptions) Error() string {
-	return fmt.Sprintf("invalid options %v", e.Options)
+	return fmt.Sprintf("invalid options %s: %s", e.Options, e.Prev.Error())
 }
 
 type InvalidConfig struct {
@@ -41,7 +41,7 @@ func NewInvalidConfig(config any, prev error) *InvalidConfig {
 }
 
 func (e *InvalidConfig) Error() string {
-	return fmt.Sprintf("invalid config %v", e.Config)
+	return fmt.Sprintf("invalid config %s: %s", e.Config, e.Prev.Error())
 }
 
 type Parse struct {
@@ -57,7 +57,7 @@ func NewParse(parsable any, prev error) *Parse {
 }
 
 func (e *Parse) Error() string {
-	return fmt.Sprintf("failed to parse %v", e.Parsable)
+	return fmt.Sprintf("failed to parse %s, with: %s", e.Parsable, e.Prev.Error())
 }
 
 type ReadFile struct {
