@@ -1,0 +1,7 @@
+[server]
+address = ""
+port = "8080"
+
+[server.asset_fs]
+root = "public/assets"
+route = "/assets"
