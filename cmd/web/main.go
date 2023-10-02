@@ -9,7 +9,6 @@ import (
 	"github.com/org-harmony/harmony/core/event"
 	"github.com/org-harmony/harmony/core/trace"
 	"github.com/org-harmony/harmony/core/web"
-	"os"
 )
 
 const WebMod = "sys.cmd.web"
@@ -20,15 +19,17 @@ func main() {
 	em := event.NewEventManager(l)
 	v := validator.New(validator.WithRequiredStructEnabled())
 
-	err := config.ToEnv(config.From("env"))
+	webCfg := &web.Cfg{}
+	err := config.C(webCfg, config.From("web"), config.Validate(v))
 	if err != nil {
-		l.Error(WebMod, "failed to load config to env", err)
+		l.Error(WebMod, "failed to load config", err)
 		return
 	}
-
 	s := web.NewServer(
+		web.WithFileServer(webCfg.Server.AssetFsCfg),
+		web.WithAddr(fmt.Sprintf("%s:%s", webCfg.Server.Addr, webCfg.Server.Port)),
+		web.WithLogger(l),
 		web.WithEventManger(em),
-		web.WithAddr(fmt.Sprintf(":%s", os.Getenv("WEB_SERVER_PORT"))),
 	)
 
 	s.RegisterController(nil)

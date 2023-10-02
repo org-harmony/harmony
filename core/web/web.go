@@ -10,6 +10,10 @@ import (
 
 const Pkg = "sys.web"
 
+type Cfg struct {
+	Server *ServerCfg `toml:"server" validate:"required"`
+}
+
 type Server interface {
 	Serve(ctx context.Context) error
 	RegisterController(c ...Controller)
