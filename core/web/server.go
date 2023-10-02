@@ -2,12 +2,28 @@ package web
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/org-harmony/harmony/core/event"
 	"github.com/org-harmony/harmony/core/trace"
+	"github.com/org-harmony/harmony/core/trans"
+	"html/template"
 	"net/http"
+	"path/filepath"
+	"strings"
 )
+
+// ServerCfg contains the configuration for a web server.
+type ServerCfg struct {
+	AssetFsCfg *FileServerCfg `toml:"asset_fs" validate:"required"`
+	Addr       string         `toml:"address" env:"ADDR"`
+	Port       string         `toml:"port" env:"PORT" validate:"required"`
+}
+
+// FileServerCfg contains the configuration for a file server.
+type FileServerCfg struct {
+	Root  string `toml:"root" validate:"required"`
+	Route string `toml:"route" validate:"required"`
+}
 
 // StdServer contains the configuration for a web server.
 // It implements the Server interface.
@@ -21,6 +37,7 @@ type ServerConfigs struct {
 	Logger       trace.Logger
 	Addr         string
 	EventManager *event.StdEventManager
+	FileServer   *FileServerCfg
 }
 
 // ServerConfig is a function that configures a ServerConfigs.
@@ -52,6 +69,45 @@ func WithAddr(addr string) ServerConfig {
 func WithEventManger(em *event.StdEventManager) ServerConfig {
 	return func(cfg *ServerConfigs) {
 		cfg.EventManager = em
+	}
+}
+
+// WithFileServer configures the file server for the web server.
+func WithFileServer(cfg *FileServerCfg) ServerConfig {
+	return func(c *ServerConfigs) {
+		if cfg == nil {
+			return
+		}
+
+		if c.Router == nil {
+			c.Router = chi.NewRouter()
+		}
+
+		route := cfg.Route
+
+		// Path Validation
+		if strings.ContainsAny(route, "{}*") {
+			panic("FileServer does not permit any URL parameters.")
+		}
+
+		// Path Adjustment and Redirection
+		if route != "/" && route[len(route)-1] != '/' {
+			c.Router.Get(route, http.RedirectHandler(route+"/", 301).ServeHTTP)
+			route += "/"
+		}
+
+		// Adjust the route to include a wildcard
+		routeWithWildcard := route + "*"
+
+		// Handling of GET requests
+		c.Router.Get(routeWithWildcard, func(w http.ResponseWriter, r *http.Request) {
+			rctx := chi.RouteContext(r.Context())
+			pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
+			fs := http.StripPrefix(pathPrefix, http.FileServer(http.Dir(cfg.Root)))
+			fs.ServeHTTP(w, r)
+		})
+
+		c.FileServer = cfg
 	}
 }
 
@@ -91,9 +147,34 @@ func (s *StdServer) Serve(ctx context.Context) error {
 // RegisterController registers a controller with the web server.
 func (s *StdServer) RegisterController(c ...Controller) {
 	s.config.Router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := fmt.Fprintf(w, "Hello World!")
+		tmpl := template.New("index.go.html")
+		pathToAssets := s.config.FileServer.Route
+		t := trans.NewTranslator()
+		tmpl.Funcs(template.FuncMap{
+			"t": func(s string, ctx context.Context) string {
+				return t.T(s, ctx)
+			},
+			"tf": func(s string, ctx context.Context, args ...interface{}) string {
+				return t.Tf(s, ctx, args...)
+			},
+			"html": func(s string) template.HTML {
+				return template.HTML(s)
+			},
+			"asset": func(filename string) string {
+				return filepath.Join(pathToAssets, filename)
+			},
+		})
+
+		tmpl, err := tmpl.ParseFiles("core/web/tmpl/index.go.html")
 		if err != nil {
-			s.config.Logger.Error(Pkg, "failed to write response", err)
+			s.config.Logger.Error(Pkg, "failed to parse template", err)
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		err = tmpl.Execute(w, nil)
+		if err != nil {
+			s.config.Logger.Error(Pkg, "failed to execute template", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
 }
