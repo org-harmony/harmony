@@ -3,12 +3,14 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/core/herr"
 	"github.com/pelletier/go-toml/v2"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 )
 
@@ -17,11 +19,16 @@ const Pkg = "sys.config"
 // Dir is the default directory for config files.
 const Dir = "config"
 
+var (
+	UnexpectedErrTryingEnvOverwrite = errors.New("unexpected error trying to overwrite config with env variables")
+)
+
 type Options struct {
-	dir       string
-	filename  string
-	fileExt   string
-	validator *validator.Validate
+	dir                 string
+	filename            string
+	fileExt             string
+	validator           *validator.Validate
+	disableEnvOverwrite bool
 }
 
 type Option func(*Options)
@@ -56,18 +63,25 @@ func WithFileExt(ext string) Option {
 	}
 }
 
+// DisableEnvOverwrite disables overwriting the config struct with environment variables.
+func DisableEnvOverwrite() Option {
+	return func(o *Options) {
+		o.disableEnvOverwrite = true
+	}
+}
+
 // defaultOptions returns a new instance of Options with default values.
 func defaultOptions() *Options {
 	return &Options{
-		dir:       Dir,
-		filename:  "config",
-		fileExt:   "toml",
-		validator: nil,
+		dir:      Dir,
+		filename: "config",
+		fileExt:  "toml",
 	}
 }
 
 // C reads a config file of type TOML and unmarshalls it into the given config struct.
 // C will override the config struct with a local config file if it exists.
+// After overriding with .local.toml the config will be overwritten by environment variables as well.
 // The C function expects parameters through Option functions, default values are provided.
 //
 // If the Validate() Option is passed a validator.Validate the config struct will be validated.
@@ -78,6 +92,26 @@ func defaultOptions() *Options {
 // The config file will be overwritten by a local config file if it exists.
 // For the local config a "local" will be inserted between filename and file extension.
 // Default example: config/config.local.toml
+//
+// Then the config will be overwritten by environment variables.
+// For overwriting through environment variables the struct must be annotated
+// with the "env" tag and define the environment variables name like: `env:"ENV_VAR_NAME"`.
+// Overwriting is done recursively, meaning that nested structs will be overwritten as well.
+// Bools will be set to true if the env value is "true" (case-insensitive) otherwise the value will be false.
+// Int/Float values will not be overwritten. Strings will be overwritten with the env value.
+// Example:
+//
+//	type Config struct {
+//		Foo string `env:"FOO"`
+//		Bar bool   `env:"BAR"`
+//		Baz struct {
+//			Qux string `env:"QUX"`
+//		}
+//	}
+//	// env: FOO=foo BAR=true QUX=qux
+//	// config: { Foo: "foo", Bar: true, Baz: { Qux: "qux" } }
+//
+// Overwriting can be disabled by passing the DisableEnvOverwrite Option.
 //
 // Errors are returned if they occur on validating the options/config, reading or unmarshalling the config file.
 func C(c any, opts ...Option) error {
@@ -99,6 +133,12 @@ func C(c any, opts ...Option) error {
 		return herr.NewParse(c, err)
 	}
 
+	if !o.disableEnvOverwrite {
+		if err := overwriteWithEnv(c); err != nil {
+			return fmt.Errorf("failed to overwrite config with env variables: %w", err)
+		}
+	}
+
 	if o.validator == nil {
 		return nil
 	}
@@ -116,6 +156,91 @@ func parseConfig(config any, b ...[]byte) error {
 		err := toml.Unmarshal(v, config)
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal config from file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// overwriteWithEnv overwrites the given config struct with environment variables.
+// The struct must be annotated with the "env" tag and define the environment variables name like: `env:"ENV_VAR_NAME"`.
+// Overwriting is done recursively, meaning that nested structs will be overwritten as well.
+// The function may return an UnexpectedErrTryingEnvOverwrite if an unexpected error occurs e.g. if it panics.
+// In most cases were a struct can not be set it will be ignored.
+// The function only handles overwrites for string and bool fields.
+// A bool has to be set to "true" (case-insensitive) to be overwritten with true otherwise the value will be false.
+// Int/Float values will not be overwritten.
+func overwriteWithEnv(c any) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%w: %v", UnexpectedErrTryingEnvOverwrite, r)
+		}
+	}()
+
+	typeOfC := reflect.TypeOf(c)
+	valueOfC := reflect.ValueOf(c)
+
+	if typeOfC.Kind() == reflect.Pointer {
+		if valueOfC.IsNil() {
+			return
+		}
+
+		typeOfC = typeOfC.Elem()
+		valueOfC = valueOfC.Elem()
+	}
+
+	if typeOfC.Kind() != reflect.Struct {
+		return
+	}
+
+	for i := 0; i < typeOfC.NumField(); i++ {
+		typeOfField := typeOfC.Field(i)
+		valueOfField := valueOfC.Field(i)
+
+		if !valueOfField.CanSet() {
+			continue
+		}
+
+		kind := typeOfField.Type.Kind()
+		if kind == reflect.Struct {
+			if err := overwriteWithEnv(valueOfField.Addr().Interface()); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if kind == reflect.Ptr {
+			if err := overwriteWithEnv(valueOfField.Interface()); err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		if kind != reflect.String && kind != reflect.Bool {
+			continue
+		}
+
+		envVar := typeOfField.Tag.Get("env")
+		if envVar == "" {
+			continue
+		}
+
+		envVal := os.Getenv(envVar)
+		if envVal == "" {
+			continue
+		}
+
+		fieldToSet := valueOfC.FieldByName(typeOfField.Name)
+		if !fieldToSet.CanSet() {
+			continue
+		}
+
+		switch kind {
+		case reflect.Bool:
+			fieldToSet.SetBool(strings.ToLower(envVal) == "true")
+		case reflect.String:
+			fieldToSet.SetString(envVal)
 		}
 	}
 
