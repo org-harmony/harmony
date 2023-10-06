@@ -207,6 +207,10 @@ func (s *StdServer) RegisterControllers(c ...*Controller) {
 		subRouter := chi.NewRouter()             // create a sub-router for the Controller
 		subRouter.Use(controller.middlewares...) // apply Controller specific middlewares
 
+		if controller.templaters == nil {
+			controller.templaters = s.templaters // overwrite Controller Templaters with server's Templaters
+		}
+
 		if controller.error == nil {
 			controller.error = s.errorHandler // overwrite Controller ErrorHandler with server's ErrorHandler
 		}
