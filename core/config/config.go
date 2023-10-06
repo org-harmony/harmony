@@ -150,6 +150,40 @@ func C(c any, opts ...Option) error {
 	return nil
 }
 
+// ToEnv reads a TOML config file and loads it into the environment.
+// As with C, the options are passed through Option functions.
+//
+// The config file will be loaded recursively, meaning that nested maps will be flattened and joined with underscores.
+// The values will be converted to strings and may be accessed through os.Getenv(<CONFIG_NAME>_<KEY>).
+//
+// The Validate() has no effect on this function.
+// As of right now there is no validation implemented for env variables loaded from config files.
+func ToEnv(opts ...Option) error {
+	o := defaultOptions()
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
+	b, err := os.ReadFile(fPath)
+	if err != nil {
+		return herr.NewReadFile(fPath, err)
+	}
+
+	m := make(map[string]any)
+	err = toml.Unmarshal(b, &m)
+	if err != nil {
+		return herr.NewParse("config to env", err)
+	}
+
+	fm := makeEnvMap(m)
+	if err := mapToEnv(fm); err != nil {
+		return herr.ErrSetEnv
+	}
+
+	return nil
+}
+
 // parseConfig unmarshalls byte slices into the given config struct.
 func parseConfig(config any, b ...[]byte) error {
 	for _, v := range b {
@@ -242,40 +276,6 @@ func overwriteWithEnv(c any) (err error) {
 		case reflect.String:
 			fieldToSet.SetString(envVal)
 		}
-	}
-
-	return nil
-}
-
-// ToEnv reads a TOML config file and loads it into the environment.
-// As with C, the options are passed through Option functions.
-//
-// The config file will be loaded recursively, meaning that nested maps will be flattened and joined with underscores.
-// The values will be converted to strings and may be accessed through os.Getenv(<CONFIG_NAME>_<KEY>).
-//
-// The Validate() has no effect on this function.
-// As of right now there is no validation implemented for env variables loaded from config files.
-func ToEnv(opts ...Option) error {
-	o := defaultOptions()
-	for _, opt := range opts {
-		opt(o)
-	}
-
-	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
-	b, err := os.ReadFile(fPath)
-	if err != nil {
-		return herr.NewReadFile(fPath, err)
-	}
-
-	m := make(map[string]any)
-	err = toml.Unmarshal(b, &m)
-	if err != nil {
-		return herr.NewParse("config to env", err)
-	}
-
-	fm := makeEnvMap(m)
-	if err := mapToEnv(fm); err != nil {
-		return herr.ErrSetEnv
 	}
 
 	return nil

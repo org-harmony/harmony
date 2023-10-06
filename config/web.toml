@@ -1,7 +1,17 @@
 [server]
+base_url = "http://localhost:8080"
 address = ""
 port = "8080"
 
 [server.asset_fs]
 root = "public/assets"
 route = "/assets"
+
+[ui]
+assets_uri = "/assets"
+
+[ui.templates]
+dir = "templates"
+base_dir = "templates/base"
+landing_page_filepath = "templates/landing-page.go.html"
+landing_page_name = "landing-page"

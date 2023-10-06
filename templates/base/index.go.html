@@ -1,0 +1,31 @@
+{{ define "index" }}
+    <!DOCTYPE html>
+    <html lang="de">
+        <head>
+            {{ block "head" . }}
+                {{ block "meta" . }}
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+                {{ end }}
+
+                {{ block "title-container" . }}
+                    <title>{{ block "title" . }}Home{{ end }} - HARMONY</title>
+                {{ end }}
+
+                {{ block "styles" . }}
+                    <link rel="stylesheet" href="{{ asset "css/styles.css" }}">
+                {{ end }}
+
+                {{ block "scripts" . }}
+                    <script defer src="{{ asset "js/htmx.min.js" }}"></script>
+                {{ end }}
+            {{ end }}
+        </head>
+        <body>
+            {{ block "body" . }}
+                {{ template "layout" . }}
+            {{ end }}
+        </body>
+    </html>
+{{ end }}

@@ -8,15 +8,15 @@ import (
 	"github.com/org-harmony/harmony/core/config"
 )
 
-// Config is the config for the auth package.
-type Config struct {
+// Cfg is the config for the auth package.
+type Cfg struct {
 	// Provider contains a list of OAuth2 providers.
-	Provider     map[string]ProviderConfig `toml:"provider"`
-	EnableOAuth2 bool                      `toml:"enable_oauth2"`
+	Provider     map[string]ProviderCfg `toml:"provider"`
+	EnableOAuth2 bool                   `toml:"enable_oauth2"`
 }
 
-// ProviderConfig is the config for an OAuth2 provider.
-type ProviderConfig struct {
+// ProviderCfg is the config for an OAuth2 provider.
+type ProviderCfg struct {
 	Name           string `toml:"name"`
 	AuthorizeURI   string `toml:"authorize_uri"`
 	AccessTokenURI string `toml:"access_token_uri"`
@@ -27,7 +27,7 @@ type ProviderConfig struct {
 func LoadConfig(v *validator.Validate) {
 	// TODO remove and implement real auth logic
 
-	cfg := &Config{}
+	cfg := &Cfg{}
 	err := config.C(cfg, config.From("auth"), config.Validate(v))
 	if err != nil {
 		fmt.Printf("failed to load auth config: %v", err)
