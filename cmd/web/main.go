@@ -19,22 +19,17 @@ func main() {
 	em := event.NewEventManager(l)
 	v := validator.New(validator.WithRequiredStructEnabled())
 	translator := trans.NewTranslator()
-
 	webCfg := &web.Cfg{}
+
 	err := config.C(webCfg, config.From("web"), config.Validate(v))
 	if err != nil {
 		l.Error(WebMod, "failed to load config", err)
 		return
 	}
 
-	baseT, err := web.NewTemplater(webCfg.UI, translator, web.FromBaseTemplate())
+	baseT, lpT, err := templater(webCfg, translator)
 	if err != nil {
-		l.Error(WebMod, "failed to create base templater", err)
-		return
-	}
-	lpT, err := web.NewTemplater(webCfg.UI, translator, web.FromLandingPageTemplate())
-	if err != nil {
-		l.Error(WebMod, "failed to create landing page templater", err)
+		l.Error(WebMod, "failed to load templates", err)
 		return
 	}
 
@@ -46,24 +41,23 @@ func main() {
 		web.WithEventManger(em),
 	)
 
-	s.RegisterControllers(
-		web.NewController(
-			"sys.home",
-			"/",
-			web.WithTemplaters(s.Templaters()),
-			web.Get(func(io web.HandlerIO, ctx context.Context) {
-				if err := io.Render("auth/login.go.html", web.LandingPageTemplate, nil); err != nil {
-					l.Error(WebMod, "failed to render home template", err)
-					io.IssueError(web.IntErr())
-				}
-			}),
-		),
-	)
-
-	auth.LoadConfig(v)
+	web.RegisterHome(s)
+	auth.Setup(v)
 
 	err = s.Serve(ctx)
 	if err != nil {
 		l.Error(WebMod, "failed to serve", err)
 	}
+}
+
+func templater(cfg *web.Cfg, t trans.Translator) (base web.Templater, landingPage web.Templater, err error) {
+	base, err = web.NewTemplater(cfg.UI, t, web.FromBaseTemplate())
+	if err != nil {
+		return
+	}
+	landingPage, err = web.NewTemplater(cfg.UI, t, web.FromLandingPageTemplate())
+	if err != nil {
+		return
+	}
+	return
 }
