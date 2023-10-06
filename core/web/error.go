@@ -30,6 +30,7 @@ func ExtErr(err error, status int, message string) HandlerError {
 func IntErr() HandlerError {
 	return HandlerError{
 		Internal: true,
+		Message:  "internal server error - please review the logs",
 		Status:   http.StatusInternalServerError,
 	}
 }
@@ -42,6 +43,10 @@ func (e *HandlerError) Error() string {
 
 	if e.Message != "" {
 		return e.Message
+	}
+
+	if e.Err == nil {
+		return "unknown error"
 	}
 
 	return e.Err.Error()
