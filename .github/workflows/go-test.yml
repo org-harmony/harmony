@@ -1,26 +1,31 @@
-name: Go Test
+name: Go Tests
 
 on:
   push:
-    branches:
-      - '*'
+    branches: [ main ]
   pull_request:
-    branches:
-      - '*'
+    branches: [ main ]
 
 jobs:
-  build:
-    name: Build & Test
+  test:
     runs-on: ubuntu-latest
 
     steps:
     - name: Check out code
       uses: actions/checkout@v2
 
-    - name: Set up Go
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Setup Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.21
+        go-version: ^1.16
 
     - name: Run tests
       run: go test -v ./...
