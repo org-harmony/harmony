@@ -7,13 +7,13 @@ import (
 	"fmt"
 )
 
+type StdTranslator struct {
+	translations map[string]string
+}
+
 type Translator interface {
 	T(s string, ctx context.Context) string
 	Tf(s string, ctx context.Context, args ...any) string
-}
-
-type StdTranslator struct {
-	translations map[string]string
 }
 
 func NewTranslator() *StdTranslator {

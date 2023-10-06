@@ -3,21 +3,10 @@
 // to easily extend upon this package and allow web communication.
 package web
 
-import (
-	"context"
-	"net/http"
-)
-
 const Pkg = "sys.web"
 
+// Cfg is the web packages configuration.
 type Cfg struct {
 	Server *ServerCfg `toml:"server" validate:"required"`
+	UI     *UICfg     `toml:"ui" validate:"required"`
 }
-
-type Server interface {
-	Serve(ctx context.Context) error
-	RegisterController(c ...Controller)
-	RegisterMiddleware(m ...func(http.Handler) http.Handler)
-}
-
-type Controller interface{}

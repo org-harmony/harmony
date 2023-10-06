@@ -1,0 +1,29 @@
+{{ define "title" }}
+    Welcome!
+{{ end }}
+
+{{ define "header" }}
+    {{ template "header-branding" . }}
+{{ end }}
+
+{{ block "content" . }}
+    <section class="section content">
+        <div class="content-inner">
+            <div class="content-body container box">
+                {{ template "content-body" . }}
+            </div>
+        </div>
+    </section>
+{{ end }}
+
+{{ define "content-body" }}
+    <h1>Hello! Welcome to HARMONY</h1>
+    <p>
+        Thank you for stopping by. HARMONY is a Highly Adaptable Requirements Management and OrgaNization sYstem.
+        We aim to provide you with a simple, yet powerful tool to manage your requirements and better organize your projects.
+        We always strive to improve and advance our system, so if you have any suggestions, please let us know!
+    </p>
+    <p>
+        HARMONY is currently in alpha, so please be aware that there may be bugs and missing features.
+    </p>
+{{ end }}
