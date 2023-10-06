@@ -24,9 +24,7 @@ type ProviderCfg struct {
 	ClientSecret   string `toml:"client_secret"`
 }
 
-func LoadConfig(v *validator.Validate) {
-	// TODO remove and implement real auth logic
-
+func Setup(v *validator.Validate) {
 	cfg := &Cfg{}
 	err := config.C(cfg, config.From("auth"), config.Validate(v))
 	if err != nil {
