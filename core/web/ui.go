@@ -26,7 +26,6 @@ type TemplatesCfg struct {
 	Dir                 string `toml:"dir" validate:"required"`
 	BaseDir             string `toml:"base_dir" validate:"required"`
 	LandingPageFilepath string `toml:"landing_page_filepath" validate:"required"`
-	LandingPageName     string `toml:"landing_page_name" validate:"required"`
 }
 
 // DeriveTemplater is a base templater that reads the templates from the directory specified in the UICfg struct.

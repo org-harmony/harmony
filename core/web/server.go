@@ -113,7 +113,7 @@ type HandlerIO interface {
 	RenderTemplate(tmpl *template.Template, data any)         // RenderTemplate renders a template with the provided data.
 	SetHeader(key string, value string)                       // SetHeader sets a header on the response.
 	Redirect(url string, code int)                            // Redirect redirects the client to the provided URL.
-	RedirectRoute(route string, code int)                     // RedirectRoute redirects the client to the provided route.
+	RedirectRoute(route string, code int) error               // RedirectRoute redirects the client to the provided route.
 	Raw(http.HandlerFunc)                                     // Raw allows for a raw http.HandlerFunc to be used, ignoring all other Handler functionality.
 	handle() (http.HandlerFunc, error)                        // handle returns a http.HandlerFunc that handles the actual request.
 }
@@ -162,13 +162,22 @@ func WithEventManger(em *event.StdEventManager) ServerOption {
 	}
 }
 
+// WithErrorHandler configures the default ErrorHandler for the web server.
+func WithErrorHandler(h ErrorHandler) ServerOption {
+	return func(s *StdServer) {
+		s.errorHandler = h
+	}
+}
+
 // NewServer creates a new instance of StdServer.
 // The server is configured using the provided ServerOption functions.
 // If no ServerOption functions are provided the server is configured with default values from defaultStdServer.
 func NewServer(config *Cfg, opts ...ServerOption) *StdServer {
 	srv := defaultStdServer(config.Server)
 
-	fsServer(srv.router, config.Server.AssetFsCfg)
+	if config.Server.AssetFsCfg != nil {
+		newFileServer(srv.router, config.Server.AssetFsCfg)
+	}
 
 	for _, o := range opts {
 		o(srv)
@@ -202,14 +211,12 @@ func (s *StdServer) RegisterControllers(c ...*Controller) {
 			controller.error = s.errorHandler // overwrite Controller ErrorHandler with server's ErrorHandler
 		}
 
-		subRouter.MethodNotAllowed(throughErrorHandler(controller.error, HandlerError{
-			Status:  http.StatusMethodNotAllowed,
-			Message: "method not allowed",
-		}))
-		subRouter.NotFound(throughErrorHandler(controller.error, HandlerError{
-			Status:  http.StatusNotFound,
-			Message: "page not found",
-		}))
+		subRouter.MethodNotAllowed(
+			throughErrorHandler(controller.error, ExtErr(nil, http.StatusMethodNotAllowed, "method not allowed")),
+		)
+		subRouter.NotFound(
+			throughErrorHandler(controller.error, ExtErr(nil, http.StatusNotFound, "page not found")),
+		)
 
 		// register all HTTP verbs on the sub-router
 		registerControllerHTTPVerbsOnSubRouter(controller, subRouter, s.logger, s.routeResolver)
@@ -379,10 +386,7 @@ func (io *StdHandlerIO) RenderTemplate(tmpl *template.Template, data any) {
 		}
 
 		io.logger.Error(Pkg, "failed to render template", err)
-		io.IssueError(HandlerError{
-			Err:      err,
-			Internal: true,
-		})
+		io.IssueError(IntErr())
 	}
 }
 
@@ -399,20 +403,15 @@ func (io *StdHandlerIO) Redirect(url string, code int) {
 }
 
 // RedirectRoute redirects the client to the provided route.
-func (io *StdHandlerIO) RedirectRoute(route string, code int) {
-	io.handler = func(w http.ResponseWriter, r *http.Request) {
-		url, err := io.routeResolver.Resolve(route)
-		if err != nil {
-			io.logger.Error(Pkg, "failed to resolve route", err)
-			io.IssueError(HandlerError{
-				Err:      err,
-				Internal: true,
-			})
-			return
-		}
-
-		http.Redirect(w, r, url, code)
+func (io *StdHandlerIO) RedirectRoute(route string, code int) error {
+	url, err := io.routeResolver.Resolve(route)
+	if err != nil {
+		return err
 	}
+
+	io.Redirect(url, code)
+
+	return nil
 }
 
 // Raw allows for raw a http.HandlerFunc to be used, ignoring all other Handler functionality.
@@ -466,8 +465,8 @@ func defaultStdServer(cfg *ServerCfg) *StdServer {
 	return srv
 }
 
-// fsServer registers a file server with a config on a router.
-func fsServer(r chi.Router, cfg *FileServerCfg) {
+// newFileServer registers a file server with a config on a router.
+func newFileServer(r chi.Router, cfg *FileServerCfg) {
 	route := cfg.Route
 
 	// Path Validation
