@@ -34,11 +34,6 @@ func IntErr() HandlerError {
 	}
 }
 
-// ServeHTTP implements http.Handler.
-func (e *HandlerError) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, e.Error(), e.Status)
-}
-
 // Error returns the error message.
 func (e *HandlerError) Error() string {
 	if e.Internal {

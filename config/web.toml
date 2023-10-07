@@ -13,4 +13,3 @@ assets_uri = "/assets"
 [ui.templates]
 dir = "templates"
 base_dir = "templates/base"
-landing_page_filepath = "templates/landing-page.go.html"
