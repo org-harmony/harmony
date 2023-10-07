@@ -1,6 +1,9 @@
 package web
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+)
 
 // HandlerError contains the error, status code, and message to be issued.
 //
@@ -13,6 +16,18 @@ type HandlerError struct {
 	Internal bool
 	Status   int
 	Message  string
+}
+
+type ErrorTemplateData struct {
+	Ctx context.Context
+	Err string
+}
+
+func NewErrorTemplateData(ctx context.Context, err string) *ErrorTemplateData {
+	return &ErrorTemplateData{
+		Ctx: ctx,
+		Err: err,
+	}
 }
 
 // ExtErr returns a new HandlerError with the provided error, status code, and message.
