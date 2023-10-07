@@ -6,13 +6,21 @@ import (
 	"github.com/org-harmony/harmony/core/trans"
 	"html/template"
 	"path/filepath"
+	"sync"
 )
 
 const (
-	// BaseTemplate is the base template name.
-	BaseTemplate = "index"
-	// LandingPageTemplate is the landing page template name.
-	LandingPageTemplate = "landing-page"
+	// BaseTemplateName is the base template name.
+	BaseTemplateName = "base"
+	// LandingPageTemplateName is the landing page template name.
+	LandingPageTemplateName = "landing-page"
+)
+
+var (
+	ErrTemplaterNotFound = fmt.Errorf("templater not found")
+	ErrNoBaseTemplate    = fmt.Errorf("no base template")
+	ErrCanNotLoad        = fmt.Errorf("template not loaded")
+	ErrCanNotClone       = fmt.Errorf("template not cloned")
 )
 
 // UICfg is the web packages UI configuration.
@@ -23,118 +31,180 @@ type UICfg struct {
 
 // TemplatesCfg is the web packages UI templates configuration.
 type TemplatesCfg struct {
-	Dir                 string `toml:"dir" validate:"required"`
-	BaseDir             string `toml:"base_dir" validate:"required"`
-	LandingPageFilepath string `toml:"landing_page_filepath" validate:"required"`
+	Dir     string `toml:"dir" validate:"required"`
+	BaseDir string `toml:"base_dir" validate:"required"`
 }
 
-// DeriveTemplater is a base templater that reads the templates from the directory specified in the UICfg struct.
-// All templates requested from the DeriveTemplater will derive from the base template.
-// The DeriveTemplater will also load the landing page template at the same time the base template is loaded and saved.
-type DeriveTemplater struct {
-	ui    *UICfg
-	trans trans.Translator
-	from  *template.Template
+// HTemplaterStore is a store of Templater. Templaters can each derive from a template.
+// Each Templater is stored in a map and can be retrieved by name.
+// E.g. a "base" Templater containing all templates deriving the base template.
+// HTemplaterStore is safe for concurrent use by multiple goroutines.
+type HTemplaterStore struct {
+	templaters map[string]Templater
+	lock       sync.RWMutex
 }
 
-type DeriveTemplaterOption func(*DeriveTemplater) error
+// HTemplater is an implementation of Templater. It contains and loads templates derived from a base template.
+// Templates are cached in a map and loaded from the filesystem when not found in the map.
+// HTemplater is safe for concurrent use by multiple goroutines.
+type HTemplater struct {
+	name      string                        // name of the templater (usually the name of the base template)
+	dir       string                        // dir the templates are loaded from when not found in the map
+	templates map[string]*template.Template // map of templates cached
+	lock      sync.RWMutex                  // lock for the map
+}
 
-// Templater allows to load a template for a given template path.
+// TemplaterStore is a store of Templater.
+type TemplaterStore interface {
+	Templater(string) (Templater, error) // Templater returns a Templater by name.
+	Set(string, Templater)               // Set sets a Templater by name.
+}
+
+// Templater retrieves templates by name and path.
 type Templater interface {
-	Template(templatePath string) (*template.Template, error)
+	Template(name string, path string) (*template.Template, error) // Template returns a template by name and path.
+	Name() string                                                  // Name returns the name of the Templater.
+	Base() (*template.Template, error)                             // Base returns the base template.
 }
 
-// FromBaseTemplate option specifies the base template to derive from.
-func FromBaseTemplate() DeriveTemplaterOption {
-	return func(t *DeriveTemplater) error {
-		base, err := ctrlBaseTmpl(t.trans, t.ui)
-		if err != nil {
-			return fmt.Errorf("failed to load base template: %w", err)
-		}
-		t.from = base
-		return nil
+// NewTemplaterStore returns a new TemplaterStore.
+func NewTemplaterStore(t ...Templater) TemplaterStore {
+	templaters := make(map[string]Templater)
+	for _, t := range t {
+		templaters[t.Name()] = t
 	}
-}
 
-// FromLandingPageTemplate option specifies the landing page template to derive from.
-func FromLandingPageTemplate() DeriveTemplaterOption {
-	return func(t *DeriveTemplater) error {
-		lp, err := ctrlLpTmpl(t.trans, t.ui)
-		if err != nil {
-			return fmt.Errorf("failed to load landing page template: %w", err)
-		}
-		t.from = lp
-		return nil
+	return &HTemplaterStore{
+		templaters: templaters,
 	}
 }
 
-// FromTemplate allows to provide a template to derive from.
-func FromTemplate(tmpl *template.Template) DeriveTemplaterOption {
-	return func(t *DeriveTemplater) error {
-		t.from = tmpl
-		return nil
+// NewTemplater returns a new Templater.
+func NewTemplater(base *template.Template, dir string) Templater {
+	if base == nil {
+		panic("base template is nil")
+	}
+
+	templates := make(map[string]*template.Template)
+	name := base.Name()
+	templates[name] = base
+
+	return &HTemplater{
+		name:      name,
+		dir:       dir,
+		templates: templates,
 	}
 }
 
-// NewTemplater returns a new DeriveTemplater.
-func NewTemplater(ui *UICfg, trans trans.Translator, opts ...DeriveTemplaterOption) (*DeriveTemplater, error) {
-	t := &DeriveTemplater{
-		ui:    ui,
-		trans: trans,
-	}
+// Templater returns a Templater by name.
+func (s *HTemplaterStore) Templater(name string) (Templater, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 
-	for _, opt := range opts {
-		err := opt(t)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if t.from == nil {
-		return nil, fmt.Errorf("no template to derive from provided")
+	t, ok := s.templaters[name]
+	if !ok {
+		return nil, ErrTemplaterNotFound
 	}
 
 	return t, nil
 }
 
-// Template returns the template for the given template path.
-// The DeriveTemplater will return the templates based on the configuration provided in the UICfg struct.
-// If the templatePath is the LandingPageTemplate or BaseTemplate, the corresponding template will be returned.
-// All other templates will be loaded from the templates directory in the UICfg struct.
-func (t *DeriveTemplater) Template(path string) (*template.Template, error) {
-	f, err := t.from.Clone()
-	if err != nil {
-		return nil, fmt.Errorf("failed to clone derived from template: %w", err)
-	}
+// Set sets a Templater by name.
+func (s *HTemplaterStore) Set(name string, t Templater) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
-	if f.Name() == path {
-		return f, nil
-	}
-
-	return f.New(BaseTemplate).ParseFiles(filepath.Join(t.ui.Templates.Dir, path))
+	s.templaters[name] = t
 }
 
-// ctrlLpTmpl returns the landing page template.
-func ctrlLpTmpl(t trans.Translator, ui *UICfg) (*template.Template, error) {
-	base, err := ctrlBaseTmpl(t, ui)
+// Template returns a template by name and path.
+func (t *HTemplater) Template(name string, path string) (*template.Template, error) {
+	t.lock.RLock()
+	tmpl, ok := t.templates[path]
+	t.lock.RUnlock()
+	if !ok {
+		base, err := t.Base()
+		if err != nil {
+			return nil, ErrNoBaseTemplate
+		}
+
+		tmpl, err = base.New(name).ParseFiles(filepath.Join(t.dir, path))
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", ErrCanNotLoad, err)
+		}
+
+		t.lock.Lock()
+		t.templates[path] = tmpl
+		t.lock.Unlock()
+	}
+
+	tmpl, err := tmpl.Clone()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrCanNotClone, err)
+	}
+
+	return tmpl, nil
+}
+
+// Name returns the name of the Templater.
+func (t *HTemplater) Name() string {
+	return t.name
+}
+
+// Base returns the base template that all templates within the Templater derive from.
+func (t *HTemplater) Base() (*template.Template, error) {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
+
+	tmpl, ok := t.templates[t.name]
+	if !ok {
+		return nil, ErrNoBaseTemplate
+	}
+
+	b, err := tmpl.Clone()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrCanNotClone, err)
+	}
+
+	return b, nil
+}
+
+// SetupTemplaterStore returns a new TemplaterStore.
+func SetupTemplaterStore(ui *UICfg, t trans.Translator) (TemplaterStore, error) {
+	base, err := BaseTemplate(ui, t)
 	if err != nil {
 		return nil, err
 	}
 
-	return base.New(LandingPageTemplate).ParseFiles(ui.Templates.LandingPageFilepath)
+	landingPage, err := LandingPageTemplate(ui, t)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTemplaterStore(NewTemplater(base, ui.Templates.Dir), NewTemplater(landingPage, ui.Templates.Dir)), nil
 }
 
-// ctrlBaseTmpl returns the base template for controllers.
-func ctrlBaseTmpl(t trans.Translator, ui *UICfg) (*template.Template, error) {
+// LandingPageTemplate returns the landing page template.
+func LandingPageTemplate(ui *UICfg, t trans.Translator) (*template.Template, error) {
+	base, err := BaseTemplate(ui, t)
+	if err != nil {
+		return nil, err
+	}
+
+	return base.New(LandingPageTemplateName).ParseFiles(filepath.Join(ui.Templates.Dir, "landing-page.go.html"))
+}
+
+// BaseTemplate returns the base template.
+func BaseTemplate(ui *UICfg, t trans.Translator) (*template.Template, error) {
 	return template.
-		New("index").
-		Funcs(ctrlTmplUtilFunc(t, ui)).
+		New(BaseTemplateName).
+		Funcs(templateFuncs(ui, t)).
 		ParseGlob(filepath.Join(ui.Templates.BaseDir, "*.go.html"))
 }
 
-// ctrlTmplUtilFunc returns a template.FuncMap for use in templates.
-// It contains the functions that are expected to be used in Controller templates.
-func ctrlTmplUtilFunc(t trans.Translator, ui *UICfg) template.FuncMap {
+// templateFuncs returns a template.FuncMap for use in templates.
+// It contains the functions that are expected to be used in "base" templates.
+func templateFuncs(ui *UICfg, t trans.Translator) template.FuncMap {
 	return template.FuncMap{
 		"t": func(s string, ctx context.Context) string {
 			return t.T(s, ctx)
