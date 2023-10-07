@@ -2,8 +2,7 @@ package web
 
 import "net/http"
 
-// HandlerError is issued by a controller's handler to the client.
-// It contains the error, status code, and message to be issued.
+// HandlerError contains the error, status code, and message to be issued.
 //
 // It is safe to display the message to the client.
 //
@@ -33,6 +32,11 @@ func IntErr() HandlerError {
 		Message:  "internal server error - please review the logs",
 		Status:   http.StatusInternalServerError,
 	}
+}
+
+// ServeHTTP implements http.Handler.
+func (e *HandlerError) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, e.Error(), e.Status)
 }
 
 // Error returns the error message.
