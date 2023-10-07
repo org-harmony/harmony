@@ -1,0 +1,11 @@
+{{ define "error" }}
+    {{ template "landing-page" . }}
+{{ end }}
+
+{{ define "content-body" }}
+    <div class="notification is-danger is-light">
+        <p>
+            {{ (t "error.message" .Ctx) }} {{ .Err }}
+        </p>
+    </div>
+{{ end }}

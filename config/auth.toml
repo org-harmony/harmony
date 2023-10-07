@@ -4,5 +4,7 @@ enable_oauth2 = true
 name = "github"
 authorize_uri = "https://github.com/login/oauth/authorize"
 access_token_uri = "https://github.com/login/oauth/access_token"
+userinfo_uri = "https://api.github.com/user"
 client_id = "[client_id]"
 client_secret = "[client_secret]"
+scopes = ["read:user", "user:email"]
