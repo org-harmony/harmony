@@ -9,9 +9,9 @@ import (
 
 const LogPkgKey = "module"
 
-// StdLogger is the system's default logger.
-type StdLogger struct {
-	// slog is the underlying structured logger used by the StdLogger.
+// HLogger is the system's default logger.
+type HLogger struct {
+	// slog is the underlying structured logger used by the HLogger.
 	slog *slog.Logger
 }
 
@@ -29,29 +29,29 @@ type Logger interface {
 
 // NewLogger creates a new standard logger that writes to stdout.
 func NewLogger() Logger {
-	return &StdLogger{
+	return &HLogger{
 		slog: slog.New(slog.NewTextHandler(os.Stdout, nil)),
 	}
 }
 
-func (l *StdLogger) Log(level slog.Level, mod string, msg string, args ...any) {
+func (l *HLogger) Log(level slog.Level, mod string, msg string, args ...any) {
 	a := append([]any{slog.String(LogPkgKey, mod)}, args...)
 	l.slog.Log(context.Background(), level, msg, a...)
 }
 
-func (l *StdLogger) Debug(mod, msg string, args ...any) {
+func (l *HLogger) Debug(mod, msg string, args ...any) {
 	l.Log(slog.LevelDebug, mod, msg, args...)
 }
 
-func (l *StdLogger) Info(mod, msg string, args ...any) {
+func (l *HLogger) Info(mod, msg string, args ...any) {
 	l.Log(slog.LevelInfo, mod, msg, args...)
 }
 
-func (l *StdLogger) Warn(mod, msg string, args ...any) {
+func (l *HLogger) Warn(mod, msg string, args ...any) {
 	l.Log(slog.LevelWarn, mod, msg, args...)
 }
 
-func (l *StdLogger) Error(mod, msg string, err error, args ...any) {
+func (l *HLogger) Error(mod, msg string, err error, args ...any) {
 	args = append(args, "error", err)
 	l.Log(slog.LevelError, mod, msg, args...)
 }
