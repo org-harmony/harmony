@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-type StdTranslator struct {
+type HTranslator struct {
 	translations map[string]string
 }
 
@@ -16,17 +16,17 @@ type Translator interface {
 	Tf(s string, ctx context.Context, args ...any) string
 }
 
-func NewTranslator() *StdTranslator {
-	return &StdTranslator{
+func NewTranslator() *HTranslator {
+	return &HTranslator{
 		translations: make(map[string]string),
 	}
 }
 
-func (t *StdTranslator) T(s string, ctx context.Context) string {
+func (t *HTranslator) T(s string, ctx context.Context) string {
 	return s
 }
 
-func (t *StdTranslator) Tf(s string, ctx context.Context, args ...any) string {
+func (t *HTranslator) Tf(s string, ctx context.Context, args ...any) string {
 	s = t.T(s, ctx)
 
 	return fmt.Sprintf(s, args...)
