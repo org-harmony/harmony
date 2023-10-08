@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"github.com/org-harmony/harmony/core/config"
 	"github.com/org-harmony/harmony/core/ctx"
-	"github.com/org-harmony/harmony/core/trace"
 	"github.com/org-harmony/harmony/core/util"
 	"github.com/org-harmony/harmony/core/web"
 	"golang.org/x/oauth2"
-	"io"
+	ioutil "io"
 	"net/http"
 )
 
@@ -38,118 +37,106 @@ type ProviderCfg struct {
 	Scopes         []string `toml:"scopes" validate:"required"`
 }
 
-func RegisterAuth(app ctx.App, ctx web.Context) {
+func RegisterAuth(appCtx ctx.App, webCtx web.Context) {
 	cfg := &Cfg{}
-	util.Ok(config.C(cfg, config.From("auth"), config.Validate(app.Validator())))
+	util.Ok(config.C(cfg, config.From("auth"), config.Validate(appCtx.Validator())))
 
-	registerRoutes(cfg, app, ctx)
+	registerRoutes(cfg, appCtx, webCtx)
 }
 
-func registerRoutes(cfg *Cfg, app ctx.App, ctx web.Context) {
-	lp := util.Unwrap(ctx.TemplaterStore().Templater(web.LandingPageTemplateName))
-	errT := util.Unwrap(lp.Template("error", "error.go.html"))
-
-	router := ctx.Router()
-	router.Get("/auth/login", login(lp, app.Logger()))
+func registerRoutes(cfg *Cfg, appCtx ctx.App, webCtx web.Context) {
+	router := webCtx.Router()
+	router.Get("/auth/login", loginController(appCtx, webCtx).ServeHTTP)
 
 	if !cfg.EnableOAuth2 {
 		return
 	}
 
-	webCfg := ctx.Configuration()
 	providers := cfg.Provider
+	router.Get(fmt.Sprintf(OAuthLoginPattern, "{provider}"), oAuthLoginController(appCtx, webCtx, providers).ServeHTTP)
+	router.Get(fmt.Sprintf(OAuthLoginSuccessPattern, "{provider}"), oAuthLoginSuccessController(appCtx, webCtx, providers).ServeHTTP)
+}
 
-	router.Get(fmt.Sprintf(OAuthLoginPattern, "{provider}"), func(w http.ResponseWriter, r *http.Request) {
-		oAuthCfg, _, err := oAuthConfigFromProviderName(router.URLParam(r, "provider"), providers, webCfg.Server.BaseURL)
+func loginController(appCtx ctx.App, webCtx web.Context) http.Handler {
+	loginT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
+		Template("auth.login", "auth/login.go.html"))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		return io.Render(loginT, nil)
+	})
+}
+
+func oAuthLoginController(appCtx ctx.App, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
+	errT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
+		Template("error", "error.go.html"))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		oAuthCfg, _, err := oAuthConfigByProviderName(
+			webCtx.Router().URLParam(io.Request(), "provider"),
+			providers, webCtx.Configuration().Server.BaseURL,
+		)
 		if err != nil {
-			util.Ok(errT.Execute(w, web.NewErrorTemplateData(
-				r.Context(),
-				"auth.error.invalid-provider",
-			)))
-			return
+			return io.Error(errT, web.ExtErr("auth.error.invalid-provider"))
 		}
 
 		url := oAuthCfg.AuthCodeURL("state")
 
-		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+		return io.Redirect(url, http.StatusTemporaryRedirect)
 	})
+}
 
-	router.Get(fmt.Sprintf(OAuthLoginSuccessPattern, "{provider}"), func(w http.ResponseWriter, r *http.Request) {
-		oAuthCfg, provider, err := oAuthConfigFromProviderName(router.URLParam(r, "provider"), providers, webCfg.Server.BaseURL)
+func oAuthLoginSuccessController(appCtx ctx.App, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
+	errT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
+		Template("error", "error.go.html"))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		request := io.Request()
+		state := request.FormValue("state")
+		code := request.FormValue("code")
+
+		oAuthCfg, provider, err := oAuthConfigByProviderName(
+			webCtx.Router().URLParam(io.Request(), "provider"),
+			providers, webCtx.Configuration().Server.BaseURL,
+		)
 		if err != nil {
-			util.Ok(errT.Execute(w, web.NewErrorTemplateData(
-				r.Context(),
-				"auth.error.invalid-provider",
-			)))
-			return
+			return io.Error(errT, web.ExtErr("auth.error.invalid-provider"))
 		}
-
-		state := r.FormValue("state")
-		code := r.FormValue("code")
 
 		if state != "state" {
-			util.Ok(errT.Execute(w, web.NewErrorTemplateData(
-				r.Context(),
-				"auth.error.invalid-state",
-			)))
-			return
+			return io.Error(errT, web.ExtErr("auth.error.invalid-state"))
 		}
 
-		token, err := oAuthCfg.Exchange(r.Context(), code)
+		token, err := oAuthCfg.Exchange(request.Context(), code)
 		if err != nil {
-			util.Ok(errT.Execute(w, web.NewErrorTemplateData(
-				r.Context(),
-				"auth.error.invalid-token",
-			)))
-			return
+			return io.Error(errT, web.ExtErr("auth.error.invalid-token"))
 		}
 
 		req, err := http.NewRequest(http.MethodGet, provider.UserinfoURI, nil)
 		if err != nil {
-			util.Ok(errT.Execute(w, web.NewErrorTemplateData(
-				r.Context(),
-				"auth.error.invalid-userinfo-request",
-			)))
-			return
+			return io.Error(errT, web.ExtErr("auth.error.invalid-userinfo-request"))
 		}
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 
 		c := http.DefaultClient
 		userinfo, err := c.Do(req)
 		if err != nil {
-			util.Ok(errT.Execute(w, web.NewErrorTemplateData(
-				r.Context(),
-				"auth.error.invalid-userinfo-response",
-			)))
-			return
+			return io.Error(errT, web.ExtErr("auth.error.invalid-userinfo-response"))
 		}
 		defer userinfo.Body.Close()
 
-		contents, err := io.ReadAll(userinfo.Body)
+		contents, err := ioutil.ReadAll(userinfo.Body)
 		if err != nil {
-			util.Ok(errT.Execute(w, web.NewErrorTemplateData(
-				r.Context(),
-				"auth.error.invalid-userinfo-response",
-			)))
-			return
+			return io.Error(errT, web.ExtErr("auth.error.invalid-userinfo-response"))
 		}
 
 		fmt.Printf("userinfo: %s", contents)
-
 		fmt.Printf("access token: %s, token: %+v", token.AccessToken, token)
+
+		return nil
 	})
 }
 
-func login(lp web.Templater, l trace.Logger) http.HandlerFunc {
-	tmpl := util.Unwrap(lp.Template("auth.login", "auth/login.go.html"))
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		err := tmpl.Execute(w, nil)
-		_ = web.MaybeIntErr(err, l, w, r)
-	}
-}
-
-func oAuthConfigFromProviderName(name string, providers map[string]ProviderCfg, baseURL string) (*oauth2.Config, *ProviderCfg, error) {
+func oAuthConfigByProviderName(name string, providers map[string]ProviderCfg, baseURL string) (*oauth2.Config, *ProviderCfg, error) {
 	p, ok := providers[name]
 	if !ok {
 		return nil, nil, fmt.Errorf("auth: provider %s not found", name)
