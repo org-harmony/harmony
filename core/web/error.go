@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	"net/http"
 )
 
 // HandlerError contains the error, status code, and message to be issued.
@@ -12,40 +11,28 @@ import (
 // If Internal is true, the error is an internal server error and should not be displayed to the client.
 // It should be assumed that the error has been logged if it is internal.
 type HandlerError struct {
-	Err      error
 	Internal bool
-	Status   int
 	Message  string
 }
 
+// ErrorTemplateData is the template data for the default error template.
 type ErrorTemplateData struct {
-	Ctx context.Context
-	Err string
+	Ctx context.Context // Ctx is the request's/error's context used for translation.
+	Err string          // Err is the error message.
 }
 
-func NewErrorTemplateData(ctx context.Context, err string) *ErrorTemplateData {
-	return &ErrorTemplateData{
-		Ctx: ctx,
-		Err: err,
-	}
-}
-
-// ExtErr returns a new HandlerError with the provided error, status code, and message.
-func ExtErr(err error, status int, message string) HandlerError {
-	return HandlerError{
-		Err:      err,
-		Status:   status,
+// ExtErr constructs an error that is safe to display to the client.
+func ExtErr(message string) *HandlerError {
+	return &HandlerError{
 		Message:  message,
 		Internal: false,
 	}
 }
 
-// IntErr returns a new internal HandlerError with a valid status code.
-func IntErr() HandlerError {
-	return HandlerError{
+// IntErr constructs an internal server error.
+func IntErr() *HandlerError {
+	return &HandlerError{
 		Internal: true,
-		Message:  "internal server error - please review the logs",
-		Status:   http.StatusInternalServerError,
 	}
 }
 
@@ -59,9 +46,13 @@ func (e *HandlerError) Error() string {
 		return e.Message
 	}
 
-	if e.Err == nil {
-		return "unknown error"
-	}
+	return "unknown error"
+}
 
-	return e.Err.Error()
+// NewErrorTemplateData returns a new ErrorTemplateData.
+func NewErrorTemplateData(ctx context.Context, err string) *ErrorTemplateData {
+	return &ErrorTemplateData{
+		Ctx: ctx,
+		Err: err,
+	}
 }
