@@ -209,11 +209,11 @@ func Serve(r Router, cfg *ServerCfg) error {
 }
 
 // RegisterHome registers the home page on a router.
-func RegisterHome(app ctx.App, ctx Context) {
-	lp := util.Unwrap(ctx.TemplaterStore().Templater(LandingPageTemplateName))
+func RegisterHome(appCtx ctx.App, webCtx Context) {
+	lp := util.Unwrap(webCtx.TemplaterStore().Templater(LandingPageTemplateName))
 	t := util.Unwrap(lp.Template("home", "home.go.html"))
 
-	ctx.Router().Get("/", NewController(app, ctx, func(io IO) error {
+	webCtx.Router().Get("/", NewController(appCtx, webCtx, func(io IO) error {
 		return io.Render(t, nil)
 	}).ServeHTTP)
 }

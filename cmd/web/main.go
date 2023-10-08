@@ -27,8 +27,11 @@ func main() {
 	app := ctx.NewApp(l, t, v)
 	ctx := web.NewContext(r, webCfg, store)
 
-	web.RegisterHome(app, ctx)
-	auth.RegisterAuth(app, ctx)
+	appCtx := ctx.NewApp(l, t, v)
+	webCtx := web.NewContext(r, webCfg, store)
+
+	web.RegisterHome(appCtx, webCtx)
+	auth.RegisterAuth(appCtx, webCtx)
 
 	util.Ok(web.Serve(r, webCfg.Server))
 }
