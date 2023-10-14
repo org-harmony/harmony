@@ -208,8 +208,8 @@ func templateFuncs(ui *UICfg, t trans.Translator) template.FuncMap {
 		"t": func(s string) string {
 			return t.T(s)
 		},
-		"tf": func(s string, args map[string]string) string {
-			return t.Tf(s, args)
+		"tf": func(s string, args ...string) string {
+			return t.Tf(s, args...)
 		},
 		"html": func(s string) template.HTML {
 			return template.HTML(s)
