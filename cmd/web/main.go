@@ -30,7 +30,7 @@ func main() {
 	db := util.Unwrap(persistence.NewDB(dbCfg.DB))
 	defer db.Close()
 
-	appCtx := ctx.NewApp(l, t, v)
+	appCtx := ctx.NewApp(l, v)
 	webCtx := web.NewContext(r, webCfg, store)
 
 	web.RegisterHome(appCtx, webCtx)

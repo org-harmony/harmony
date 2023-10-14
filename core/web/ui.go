@@ -1,7 +1,6 @@
 package web
 
 import (
-	"context"
 	"fmt"
 	"github.com/org-harmony/harmony/core/trans"
 	"html/template"
@@ -206,11 +205,11 @@ func BaseTemplate(ui *UICfg, t trans.Translator) (*template.Template, error) {
 // It contains the functions that are expected to be used in "base" templates.
 func templateFuncs(ui *UICfg, t trans.Translator) template.FuncMap {
 	return template.FuncMap{
-		"t": func(s string, ctx context.Context) string {
-			return t.T(s, ctx)
+		"t": func(s string) string {
+			return t.T(s)
 		},
-		"tf": func(s string, ctx context.Context, args ...any) string {
-			return t.Tf(s, ctx, args...)
+		"tf": func(s string, args map[string]string) string {
+			return t.Tf(s, args)
 		},
 		"html": func(s string) template.HTML {
 			return template.HTML(s)

@@ -93,7 +93,6 @@ func setupMockCtxs(t *testing.T) (ctx.App, Context) {
 
 	return ctx.NewApp(
 			trace.NewLogger(),
-			trans.NewTranslator(),
 			validator.New(validator.WithRequiredStructEnabled()),
 		),
 		&Ctx{
