@@ -23,6 +23,9 @@ func TestHTranslator_Tf(t *testing.T) {
 		result := translator.Tf("{{.foo}} is like a bar", args)
 		assert.Equal(t, "Bär ist wie ein bar", result)
 
+		result = translator.Tf("{{.foo}} is like a bar", args)
+		assert.Equal(t, "Bär ist wie ein bar", result)
+
 		result = translator.Tf("qux is like a {{.foo}} with a {{.crux}}", args)
 		assert.Equal(t, "qux ist wie ein Bär mit einem Fuchs", result)
 	})
@@ -33,6 +36,14 @@ func TestHTranslator_Tf(t *testing.T) {
 
 		result = translator.Tf("foo ist ein qux", args)
 		assert.Equal(t, "foo ist ein qux", result)
+	})
+
+	t.Run("missing args", func(t *testing.T) {
+		result := translator.Tf("{{.foo}} is like a bar", map[string]string{})
+		assert.Equal(t, "<no value> ist wie ein bar", result)
+
+		result = translator.Tf("{{or .foo \"\"}} is like a bar", map[string]string{})
+		assert.Equal(t, " is like a bar", result)
 	})
 }
 
@@ -55,6 +66,33 @@ func TestHTranslator_T(t *testing.T) {
 	t.Run("without translation", func(t *testing.T) {
 		result := translator.T("fux ist ein qux")
 		assert.Equal(t, "fux ist ein qux", result)
+	})
+}
+
+func TestParams(t *testing.T) {
+	t.Run("correct params", func(t *testing.T) {
+		params := Params("foo", "bar")
+		assert.Equal(t, map[string]string{"foo": "bar"}, params)
+	})
+
+	t.Run("correct params with multiple", func(t *testing.T) {
+		params := Params("foo", "bar", "qux", "fux")
+		assert.Equal(t, map[string]string{"foo": "bar", "qux": "fux"}, params)
+	})
+
+	t.Run("correct params with multiple and odd", func(t *testing.T) {
+		params := Params("foo", "bar", "qux", "fux", "baz")
+		assert.Equal(t, map[string]string{"foo": "bar", "qux": "fux"}, params)
+	})
+
+	t.Run("correct params with multiple and odd", func(t *testing.T) {
+		params := Params("foo", "bar", "qux", "fux", "baz", "quux")
+		assert.Equal(t, map[string]string{"foo": "bar", "qux": "fux", "baz": "quux"}, params)
+	})
+
+	t.Run("no params", func(t *testing.T) {
+		params := Params()
+		assert.Equal(t, map[string]string{}, params)
 	})
 }
 
