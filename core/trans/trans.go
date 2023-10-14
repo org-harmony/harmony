@@ -3,17 +3,23 @@
 package trans
 
 import (
-	"context"
-	"fmt"
+	"crypto/md5"
+	"github.com/org-harmony/harmony/core/trace"
+	"strings"
+	"text/template"
 )
+
+const Pkg = "sys.trans"
 
 type HTranslator struct {
 	translations map[string]string
+	template     *template.Template
+	logger       trace.Logger
 }
 
 type Translator interface {
-	T(s string, ctx context.Context) string
-	Tf(s string, ctx context.Context, args ...any) string
+	T(s string) string
+	Tf(s string, args map[string]string) string
 }
 
 func NewTranslator() *HTranslator {
@@ -22,12 +28,38 @@ func NewTranslator() *HTranslator {
 	}
 }
 
-func (t *HTranslator) T(s string, ctx context.Context) string {
-	return s
+func (t *HTranslator) T(s string) string {
+	transS, ok := t.translations[s]
+	if !ok {
+		return s
+	}
+
+	return transS
 }
 
-func (t *HTranslator) Tf(s string, ctx context.Context, args ...any) string {
-	s = t.T(s, ctx)
+func (t *HTranslator) Tf(s string, args map[string]string) string {
+	var err error
+	s = t.T(s)
+	hash := md5.New()
+	hash.Write([]byte(s))
+	sh := string(hash.Sum(nil))
 
-	return fmt.Sprintf(s, args...)
+	transTemplate := t.template.Lookup(sh)
+	if transTemplate == nil {
+		t.logger.Debug(Pkg, "template not found, parsing", "hash", sh, "template", s)
+		transTemplate, err = t.template.New(sh).Parse(s)
+		if err != nil {
+			t.logger.Error(Pkg, "error parsing template", err, "template", s)
+			return s
+		}
+	}
+
+	wr := &strings.Builder{}
+	err = transTemplate.Execute(wr, args)
+	if err != nil {
+		t.logger.Error(Pkg, "error executing template", err, "template", s)
+		return s
+	}
+
+	return wr.String()
 }
