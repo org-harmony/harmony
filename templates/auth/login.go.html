@@ -2,6 +2,19 @@
     {{ template "landing-page" . }}
 {{ end }}
 
-{{ define "content-body" }}
-    <h1>This is the login.</h1>
+{{ define "content" }}
+    <section class="section content login">
+        <div class="card auth-login-providers">
+            <div class="card-header">
+                <p class="card-header-title">Login</p>
+            </div>
+            <div class="card-content">
+                {{ block "auth.login.providers" . }}
+                    {{ range $provider := .Providers }}
+                        <a href="/auth/login/{{ $provider.Name }}" class="button is-fullwidth is-{{ $provider.Name }}">{{ tf "Anmelden mit {{.name}}" "name" $provider.DisplayName }}</a>
+                    {{ end }}
+                {{ end }}
+            </div>
+        </div>
+    </section>
 {{ end }}
