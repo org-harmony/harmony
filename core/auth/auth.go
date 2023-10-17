@@ -38,14 +38,14 @@ type ProviderCfg struct {
 	Scopes         []string `toml:"scopes" validate:"required"`
 }
 
-func RegisterAuth(appCtx ctx.App, webCtx web.Context) {
+func RegisterAuth(appCtx ctx.AppContext, webCtx web.Context) {
 	cfg := &Cfg{}
 	util.Ok(config.C(cfg, config.From("auth"), config.Validate(appCtx.Validator())))
 
 	registerRoutes(cfg, appCtx, webCtx)
 }
 
-func registerRoutes(cfg *Cfg, appCtx ctx.App, webCtx web.Context) {
+func registerRoutes(cfg *Cfg, appCtx ctx.AppContext, webCtx web.Context) {
 	router := webCtx.Router()
 	router.Get("/auth/login", loginController(cfg, appCtx, webCtx).ServeHTTP)
 
@@ -58,7 +58,7 @@ func registerRoutes(cfg *Cfg, appCtx ctx.App, webCtx web.Context) {
 	router.Get(fmt.Sprintf(OAuthLoginSuccessPattern, "{provider}"), oAuthLoginSuccessController(appCtx, webCtx, providers).ServeHTTP)
 }
 
-func loginController(cfg *Cfg, appCtx ctx.App, webCtx web.Context) http.Handler {
+func loginController(cfg *Cfg, appCtx ctx.AppContext, webCtx web.Context) http.Handler {
 	loginT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
 		Template("auth.login", "auth/login.go.html"))
 
@@ -67,7 +67,7 @@ func loginController(cfg *Cfg, appCtx ctx.App, webCtx web.Context) http.Handler 
 	})
 }
 
-func oAuthLoginController(appCtx ctx.App, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
+func oAuthLoginController(appCtx ctx.AppContext, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
 	errT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
 		Template("error", "error.go.html"))
 
@@ -87,7 +87,7 @@ func oAuthLoginController(appCtx ctx.App, webCtx web.Context, providers map[stri
 	})
 }
 
-func oAuthLoginSuccessController(appCtx ctx.App, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
+func oAuthLoginSuccessController(appCtx ctx.AppContext, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
 	errT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
 		Template("error", "error.go.html"))
 

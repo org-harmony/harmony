@@ -46,7 +46,7 @@ type Ctx struct {
 // The Controller is aware of the application context and the web context.
 // The Controller implements the http.Handler interface and can therefore be used as a handler.
 type Controller struct {
-	app     ctx.App
+	app     ctx.AppContext
 	ctx     Context
 	handler func(io IO) error
 }
@@ -106,7 +106,7 @@ func (c *Ctx) TemplaterStore() TemplaterStore {
 }
 
 // NewController returns a new Controller.
-func NewController(app ctx.App, ctx Context, handler func(io IO) error) http.Handler {
+func NewController(app ctx.AppContext, ctx Context, handler func(io IO) error) http.Handler {
 	if app == nil || ctx == nil || handler == nil {
 		panic("nil contexts or handler")
 	}
@@ -209,7 +209,7 @@ func Serve(r Router, cfg *ServerCfg) error {
 }
 
 // RegisterHome registers the home page on a router.
-func RegisterHome(appCtx ctx.App, webCtx Context) {
+func RegisterHome(appCtx ctx.AppContext, webCtx Context) {
 	lp := util.Unwrap(webCtx.TemplaterStore().Templater(LandingPageTemplateName))
 	t := util.Unwrap(lp.Template("home", "home.go.html"))
 

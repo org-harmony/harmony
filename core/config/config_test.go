@@ -32,7 +32,7 @@ func TestC(t *testing.T) {
 	t.Run("file not readable", func(t *testing.T) {
 		config := &MockConfig{}
 		err := C(config, From("not_readable"))
-		assert.IsType(t, &herr.ReadFile{}, err)
+		assert.IsType(t, &herr.ReadFileError{}, err)
 	})
 
 	t.Run("valid config file", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestC(t *testing.T) {
 
 		config := &MockConfig{}
 		err = C(config, From("unparsable"), FromDir(tempDir), Validate(v))
-		assert.IsType(t, &herr.Parse{}, err)
+		assert.IsType(t, &herr.ParseError{}, err)
 	})
 
 	t.Run("invalid config", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestC(t *testing.T) {
 
 		config := &MockConfig{}
 		err = C(config, From("invalid"), FromDir(tempDir), Validate(v), DisableEnvOverwrite())
-		assert.IsType(t, err, &herr.InvalidConfig{})
+		assert.IsType(t, err, &herr.InvalidConfigError{})
 	})
 
 	t.Run("no validate", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestC(t *testing.T) {
 func TestToEnv(t *testing.T) {
 	t.Run("file not readable", func(t *testing.T) {
 		err := ToEnv(From("not_readable"))
-		assert.IsType(t, &herr.ReadFile{}, err)
+		assert.IsType(t, &herr.ReadFileError{}, err)
 	})
 
 	t.Run("valid config file", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestToEnv(t *testing.T) {
 		require.NoError(t, err)
 
 		err = ToEnv(From("unparsable"), FromDir(tempDir))
-		assert.IsType(t, &herr.Parse{}, err)
+		assert.IsType(t, &herr.ParseError{}, err)
 	})
 
 	t.Run("env config naming scheme", func(t *testing.T) {

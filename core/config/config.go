@@ -123,14 +123,14 @@ func C(c any, opts ...Option) error {
 	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
-		return herr.NewReadFile(fPath, err)
+		return herr.NewReadFileError(fPath, err)
 	}
 
 	flPath := path.Join(o.dir, fmt.Sprintf("%s.local.%s", o.filename, o.fileExt))
 	bl, _ := os.ReadFile(flPath) // ignore error
 
 	if err := parseConfig(c, b, bl); err != nil {
-		return herr.NewParse(c, err)
+		return herr.NewParseError(c, err)
 	}
 
 	if !o.disableEnvOverwrite {
@@ -144,7 +144,7 @@ func C(c any, opts ...Option) error {
 	}
 
 	if err := o.validator.Struct(c); err != nil {
-		return herr.NewInvalidConfig(c, err)
+		return herr.NewInvalidConfigError(c, err)
 	}
 
 	return nil
@@ -167,13 +167,13 @@ func ToEnv(opts ...Option) error {
 	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
-		return herr.NewReadFile(fPath, err)
+		return herr.NewReadFileError(fPath, err)
 	}
 
 	m := make(map[string]any)
 	err = toml.Unmarshal(b, &m)
 	if err != nil {
-		return herr.NewParse("config to env", err)
+		return herr.NewParseError("config to env", err)
 	}
 
 	fm := makeEnvMap(m)
