@@ -87,11 +87,11 @@ func TestController(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.Code)
 }
 
-func setupMockCtxs(t *testing.T) (ctx.App, Context) {
+func setupMockCtxs(t *testing.T) (ctx.AppContext, Context) {
 	r, ts := setupMock(t)
 	templatesDir, baseDir := setupDirectories(t)
 
-	return ctx.NewApp(
+	return ctx.NewAppContext(
 			trace.NewLogger(),
 			validator.New(validator.WithRequiredStructEnabled()),
 		),

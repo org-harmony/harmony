@@ -12,66 +12,50 @@ var (
 	ErrSetEnv = errors.New("failed to write to env")
 )
 
-type InvalidOptions struct {
-	Options any
-	Prev    error
-}
-
-type InvalidConfig struct {
+type InvalidConfigError struct {
 	Config any
 	Prev   error
 }
 
-type Parse struct {
+type ParseError struct {
 	Parsable any
 	Prev     error
 }
 
-type ReadFile struct {
+type ReadFileError struct {
 	Path string
 	Prev error
 }
 
-func NewInvalidOptions(options any, prev error) *InvalidOptions {
-	return &InvalidOptions{
-		Options: options,
-		Prev:    prev,
-	}
-}
-
-func (e *InvalidOptions) Error() string {
-	return fmt.Sprintf("invalid options %s: %s", e.Options, e.Prev.Error())
-}
-
-func NewInvalidConfig(config any, prev error) *InvalidConfig {
-	return &InvalidConfig{
+func NewInvalidConfigError(config any, prev error) *InvalidConfigError {
+	return &InvalidConfigError{
 		Config: config,
 		Prev:   prev,
 	}
 }
 
-func (e *InvalidConfig) Error() string {
+func (e *InvalidConfigError) Error() string {
 	return fmt.Sprintf("invalid config %s: %s", e.Config, e.Prev.Error())
 }
 
-func NewParse(parsable any, prev error) *Parse {
-	return &Parse{
+func NewParseError(parsable any, prev error) *ParseError {
+	return &ParseError{
 		Parsable: parsable,
 		Prev:     prev,
 	}
 }
 
-func (e *Parse) Error() string {
+func (e *ParseError) Error() string {
 	return fmt.Sprintf("failed to parse %s, with: %s", e.Parsable, e.Prev.Error())
 }
 
-func NewReadFile(path string, prev error) *ReadFile {
-	return &ReadFile{
+func NewReadFileError(path string, prev error) *ReadFileError {
+	return &ReadFileError{
 		Path: path,
 		Prev: prev,
 	}
 }
 
-func (e *ReadFile) Error() string {
+func (e *ReadFileError) Error() string {
 	return fmt.Sprintf("failed to read file %s", e.Path)
 }

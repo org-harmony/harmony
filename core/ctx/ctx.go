@@ -10,12 +10,12 @@ type AppCtx struct {
 	validator *validator.Validate
 }
 
-type App interface {
+type AppContext interface {
 	Logger() trace.Logger
 	Validator() *validator.Validate
 }
 
-func NewApp(l trace.Logger, v *validator.Validate) App {
+func NewAppContext(l trace.Logger, v *validator.Validate) AppContext {
 	return &AppCtx{
 		logger:    l,
 		validator: v,

@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-const EventPkg = "sys.event"
+const Pkg = "sys.event"
 
 // DefaultEventPriority can be used as a general default priority for an event subscriber.
 // The priority is used to determine the order in which subscribers are called.
@@ -16,13 +16,13 @@ const EventPkg = "sys.event"
 // If you do not care about the order in which subscribers are called, use this constant.
 const DefaultEventPriority = 0
 
-// EventBufferSize is the size of the buffer for event channels.
+// BufferSize is the size of the buffer for event channels.
 // The buffer size is used when creating channels for events.
 // If the buffer size is too small publishing an event will block until the event is handled.
 // If the buffer size is too large publishing an event will use more memory.
-const EventBufferSize = 100
+const BufferSize = 100
 
-// Event makes a type publishable through the StdEventManager.
+// Event makes a type publishable through the HManager.
 type Event interface {
 	// ID returns the unique ID of the event.
 	// This ID is used to identify the event and route it to the correct subscribers.
@@ -40,8 +40,8 @@ type Event interface {
 	Payload() any
 }
 
-// EventManager manages events and their subscribers.
-type EventManager interface {
+// Manager manages events and their subscribers.
+type Manager interface {
 	// Subscribe subscribes to an event with the given event ID.
 	// The publish function is called when the event is published.
 	// The priority is used to determine the order in which subscribers are called.
@@ -86,9 +86,9 @@ func BuildEventID(module, namespace, action string) string {
 	return fmt.Sprintf("%s.%s.%s", module, namespace, action)
 }
 
-// StdEventManager is the standard implementation of the EventManager interface.
-// The StdEventManager is safe to use concurrently and pass to multiple goroutines.
-type StdEventManager struct {
+// HManager is the standard implementation of the Manager interface.
+// The HManager is safe to use concurrently and pass to multiple goroutines.
+type HManager struct {
 	mu sync.Mutex
 	// events is a map of event IDs to channels.
 	// The channels are used to publish events to subscribers.
@@ -99,9 +99,9 @@ type StdEventManager struct {
 	logger     trace.Logger
 }
 
-// NewEventManager creates a new event manager.
-func NewEventManager(l trace.Logger) *StdEventManager {
-	return &StdEventManager{
+// NewManager creates a new event manager.
+func NewManager(l trace.Logger) *HManager {
+	return &HManager{
 		events:     make(map[string]chan pc),
 		subscriber: make(map[string][]subscriber),
 		logger:     l,
@@ -109,7 +109,7 @@ func NewEventManager(l trace.Logger) *StdEventManager {
 }
 
 // Subscribe subscribes to an event with the given event ID.
-func (em *StdEventManager) Subscribe(eventID string, publish func(Event, *publishArgs) error, priority int) {
+func (em *HManager) Subscribe(eventID string, publish func(Event, *publishArgs) error, priority int) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 
@@ -126,7 +126,7 @@ func (em *StdEventManager) Subscribe(eventID string, publish func(Event, *publis
 		return em.subscriber[eventID][i].priority < em.subscriber[eventID][j].priority
 	})
 
-	em.logger.Debug(EventPkg, "subscribed to event", "eventID", eventID, "priority", priority)
+	em.logger.Debug(Pkg, "subscribed to event", "eventID", eventID, "priority", priority)
 }
 
 // Publish publishes an event to the event's channel.
@@ -144,12 +144,12 @@ func (em *StdEventManager) Subscribe(eventID string, publish func(Event, *publis
 // Meaning the channel for event publishing is created when the event is published for the first time.
 //
 // If a nil event is passed to the Publish function, the function will return immediately.
-func (em *StdEventManager) Publish(event Event, doneChan chan []error) {
+func (em *HManager) Publish(event Event, doneChan chan []error) {
 	if event == nil {
 		return
 	}
 
-	em.logger.Debug(EventPkg, "publishing event", "eventID", event.ID())
+	em.logger.Debug(Pkg, "publishing event", "eventID", event.ID())
 
 	em.mu.Lock()
 	defer em.mu.Unlock()
@@ -164,25 +164,25 @@ func (em *StdEventManager) Publish(event Event, doneChan chan []error) {
 		dc: doneChan,
 	}
 
-	em.logger.Debug(EventPkg, "published event", "eventID", event.ID())
+	em.logger.Debug(Pkg, "published event", "eventID", event.ID())
 }
 
 // register registers an event with the event manager and creates a channel for the event.
 // Also, register boots up a goroutine to handle published events for the event ID.
 //
 // Register is *NOT* safe to call concurrently. It is expected that the caller locks the event manager beforehand.
-func (em *StdEventManager) register(e Event) {
+func (em *HManager) register(e Event) {
 	if _, exists := em.events[e.ID()]; exists {
 		return
 	}
 
 	// create a buffered channel to publish events to
-	em.events[e.ID()] = make(chan pc, EventBufferSize)
+	em.events[e.ID()] = make(chan pc, BufferSize)
 
 	// start a goroutine to handle published events for a given event ID through the channel
 	go handle(em.events[e.ID()], em.logger)
 
-	em.logger.Debug(EventPkg, "registered event and created channel", "eventID", e.ID())
+	em.logger.Debug(Pkg, "registered event and created channel", "eventID", e.ID())
 }
 
 // handle handles events published to the given channel.
@@ -193,7 +193,7 @@ func handle(e chan pc, l trace.Logger) {
 	for {
 		pc := <-e
 
-		l.Debug(EventPkg, "handling event", "eventID", pc.e.ID())
+		l.Debug(Pkg, "handling event", "eventID", pc.e.ID())
 
 		var errs []error
 		args := &publishArgs{}
@@ -201,7 +201,7 @@ func handle(e chan pc, l trace.Logger) {
 		// publish event to subscribers
 		for _, subscriber := range pc.s {
 			if args.StopPropagation {
-				l.Debug(EventPkg, "stopping propagation of event", "eventID", pc.e.ID())
+				l.Debug(Pkg, "stopping propagation of event", "eventID", pc.e.ID())
 				break
 			}
 
@@ -212,14 +212,14 @@ func handle(e chan pc, l trace.Logger) {
 		}
 
 		if len(errs) > 0 {
-			l.Info(EventPkg, fmt.Sprintf("handled event with %d error(s)", len(errs)), "eventID", pc.e.ID(), "errors", errs)
+			l.Info(Pkg, fmt.Sprintf("handled event with %d error(s)", len(errs)), "eventID", pc.e.ID(), "errors", errs)
 		} else {
-			l.Debug(EventPkg, "handled event without errors", "eventID", pc.e.ID())
+			l.Debug(Pkg, "handled event without errors", "eventID", pc.e.ID())
 		}
 
 		dc := pc.dc
 		if dc == nil {
-			l.Debug(EventPkg, "no done channel for event", "eventID", pc.e.ID())
+			l.Debug(Pkg, "no done channel for event", "eventID", pc.e.ID())
 			return
 		}
 
