@@ -1,8 +1,9 @@
 @import "bulma.min.css";
 
-.auth-login-providers {
+.is-action-button {
     margin: 0 auto;
     max-width: 60vw;
+    display: block;
 }
 
 .is-logo {
