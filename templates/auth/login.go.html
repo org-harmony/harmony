@@ -11,7 +11,7 @@
             <div class="card-content">
                 {{ block "auth.login.providers" . }}
                     {{ range $provider := .Providers }}
-                        <a href="/auth/login/{{ $provider.Name }}" class="button is-fullwidth is-{{ $provider.Name }}">{{ tf "Anmelden mit {{.name}}" "name" $provider.DisplayName }}</a>
+                        <a href="/auth/login/{{ $provider.Name }}" class="button is-action-button is-fullwidth is-{{ $provider.Name }}">{{ tf "Anmelden mit {{.name}}" "name" $provider.DisplayName }}</a>
                     {{ end }}
                 {{ end }}
             </div>
