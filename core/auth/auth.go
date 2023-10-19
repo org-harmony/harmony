@@ -127,13 +127,10 @@ func oAuthLoginSuccessController(appCtx ctx.AppContext, webCtx web.Context, prov
 		}
 		defer userinfo.Body.Close()
 
-		contents, err := ioutil.ReadAll(userinfo.Body)
+		_, err = ioutil.ReadAll(userinfo.Body)
 		if err != nil {
 			return io.Error(errT, web.ExtErr("auth.error.invalid-userinfo-response"))
 		}
-
-		fmt.Printf("userinfo: %s", contents)
-		fmt.Printf("access token: %s, token: %+v", token.AccessToken, token)
 
 		return nil
 	})

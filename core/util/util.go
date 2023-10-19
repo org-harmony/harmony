@@ -28,3 +28,8 @@ func Wrap(e error, msg string) error {
 
 	return fmt.Errorf("%s: %w", msg, e)
 }
+
+// ErrErr wraps an error with another error.
+func ErrErr(e1, e2 error) error {
+	return fmt.Errorf("%w: %w", e1, e2)
+}

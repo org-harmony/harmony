@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/core/herr"
+	"github.com/org-harmony/harmony/core/util"
 	"github.com/pelletier/go-toml/v2"
 	"os"
 	"path"
 	"reflect"
 	"strings"
 )
-
-const Pkg = "sys.config"
 
 // Dir is the default directory for config files.
 const Dir = "config"
@@ -123,7 +122,7 @@ func C(c any, opts ...Option) error {
 	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
-		return herr.NewReadFileError(fPath, err)
+		return util.ErrErr(herr.ReadFileError, err)
 	}
 
 	flPath := path.Join(o.dir, fmt.Sprintf("%s.local.%s", o.filename, o.fileExt))
@@ -167,7 +166,7 @@ func ToEnv(opts ...Option) error {
 	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
-		return herr.NewReadFileError(fPath, err)
+		return util.ErrErr(herr.ReadFileError, err)
 	}
 
 	m := make(map[string]any)
@@ -178,7 +177,7 @@ func ToEnv(opts ...Option) error {
 
 	fm := makeEnvMap(m)
 	if err := mapToEnv(fm); err != nil {
-		return herr.ErrSetEnv
+		return herr.SetEnvError
 	}
 
 	return nil

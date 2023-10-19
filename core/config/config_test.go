@@ -32,7 +32,7 @@ func TestC(t *testing.T) {
 	t.Run("file not readable", func(t *testing.T) {
 		config := &MockConfig{}
 		err := C(config, From("not_readable"))
-		assert.IsType(t, &herr.ReadFileError{}, err)
+		assert.ErrorIs(t, herr.ReadFileError, err)
 	})
 
 	t.Run("valid config file", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestC(t *testing.T) {
 func TestToEnv(t *testing.T) {
 	t.Run("file not readable", func(t *testing.T) {
 		err := ToEnv(From("not_readable"))
-		assert.IsType(t, &herr.ReadFileError{}, err)
+		assert.ErrorIs(t, herr.ReadFileError, err)
 	})
 
 	t.Run("valid config file", func(t *testing.T) {
