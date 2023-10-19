@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/core/config"
-	"github.com/org-harmony/harmony/core/ctx"
 	"github.com/org-harmony/harmony/core/persistence"
-	"github.com/org-harmony/harmony/core/trace"
 	"github.com/org-harmony/harmony/core/util"
 	"os"
 )
@@ -25,7 +23,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	l := trace.NewLogger()
 	v := validator.New(validator.WithRequiredStructEnabled())
 
 	dbCfg := &persistence.Cfg{}
@@ -33,11 +30,9 @@ func main() {
 	db := util.Unwrap(persistence.NewDB(dbCfg.DB))
 	defer db.Close()
 
-	appCtx := ctx.NewAppContext(l, v, db)
-
 	fmt.Println("migrating database...")
 
-	err := persistence.Migrate(persistence.MigrateDirection(direction), dbCfg.DB.MigrationsDir, appCtx, context.Background())
+	err := persistence.Migrate(persistence.MigrateDirection(direction), dbCfg.DB.MigrationsDir, db, context.Background())
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

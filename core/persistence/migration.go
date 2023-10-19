@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/org-harmony/harmony/core/ctx"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,8 +28,7 @@ type Migration struct {
 }
 
 // Migrate takes a direction and a directory of migrations and executes them in the given direction.
-func Migrate(direction MigrateDirection, migrationsDir string, app ctx.AppContext, c context.Context) error {
-	db := app.DB()
+func Migrate(direction MigrateDirection, migrationsDir string, db *pgxpool.Pool, c context.Context) error {
 	migDir, err := os.ReadDir(migrationsDir) // read all migrations from directory
 	if err != nil {
 		return err

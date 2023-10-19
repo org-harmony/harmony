@@ -12,8 +12,6 @@ import (
 	"github.com/org-harmony/harmony/core/web"
 )
 
-const WebMod = "sys.cmd.web"
-
 func main() {
 	l := trace.NewLogger()
 	v := validator.New(validator.WithRequiredStructEnabled())
@@ -30,7 +28,7 @@ func main() {
 	db := util.Unwrap(persistence.NewDB(dbCfg.DB))
 	defer db.Close()
 
-	appCtx := ctx.NewAppContext(l, v)
+	appCtx := ctx.NewAppContext(l, v, db)
 	webCtx := web.NewContext(r, webCfg, store)
 
 	web.RegisterHome(appCtx, webCtx)
