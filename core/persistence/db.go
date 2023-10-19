@@ -7,8 +7,11 @@ import (
 )
 
 var (
-	// ErrDBConn is the error returned when the database connection fails.
-	ErrDBConn = fmt.Errorf("error connecting to database")
+	// DBConfigError is returned when the database configuration is invalid.
+	// This might be due to invalid PostgresDBCfg or invalid environment variables.
+	DBConfigError = fmt.Errorf("error parsing database configuration")
+	// DBConnError is the error returned when the database connection fails.
+	DBConnError = fmt.Errorf("error connecting to database")
 )
 
 // PostgresDBCfg is the configuration for the Postgres database.
@@ -25,9 +28,27 @@ type PostgresDBCfg struct {
 
 // NewDB creates a new database connection pool.
 func NewDB(cfg *PostgresDBCfg) (*pgxpool.Pool, error) {
-	pool, err := pgxpool.New(context.Background(), cfg.String())
+	config, err := pgxpool.ParseConfig(cfg.String())
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrDBConn, err)
+		return nil, fmt.Errorf("%w: %s", DBConfigError, err)
+	}
+
+	return newDBWithConfig(config)
+}
+
+func NewDBWithString(cfg string) (*pgxpool.Pool, error) {
+	config, err := pgxpool.ParseConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", DBConfigError, err)
+	}
+
+	return newDBWithConfig(config)
+}
+
+func newDBWithConfig(config *pgxpool.Config) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", DBConnError, err)
 	}
 
 	return pool, nil
@@ -37,4 +58,9 @@ func NewDB(cfg *PostgresDBCfg) (*pgxpool.Pool, error) {
 func (cfg *PostgresDBCfg) String() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s pool_max_conns=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.Name, cfg.SSLMode, cfg.MaxConns)
+}
+
+func (cfg *PostgresDBCfg) StringWoDbName() string {
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s pool_max_conns=%s",
+		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.SSLMode, cfg.MaxConns)
 }

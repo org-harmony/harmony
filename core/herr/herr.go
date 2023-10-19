@@ -9,22 +9,21 @@ import (
 )
 
 var (
-	ErrSetEnv = errors.New("failed to write to env")
+	SetEnvError         = errors.New("failed to write to env")
+	NotImplementedError = errors.New("not implemented")
+	ReadFileError       = errors.New("failed to read file")
 )
 
+// TODO move to config as var
 type InvalidConfigError struct {
 	Config any
 	Prev   error
 }
 
+// TODO move to config as var
 type ParseError struct {
 	Parsable any
 	Prev     error
-}
-
-type ReadFileError struct {
-	Path string
-	Prev error
 }
 
 func NewInvalidConfigError(config any, prev error) *InvalidConfigError {
@@ -47,15 +46,4 @@ func NewParseError(parsable any, prev error) *ParseError {
 
 func (e *ParseError) Error() string {
 	return fmt.Sprintf("failed to parse %s, with: %s", e.Parsable, e.Prev.Error())
-}
-
-func NewReadFileError(path string, prev error) *ReadFileError {
-	return &ReadFileError{
-		Path: path,
-		Prev: prev,
-	}
-}
-
-func (e *ReadFileError) Error() string {
-	return fmt.Sprintf("failed to read file %s", e.Path)
 }
