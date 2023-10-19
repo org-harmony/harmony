@@ -15,7 +15,7 @@ import (
 func main() {
 	l := trace.NewLogger()
 	v := validator.New(validator.WithRequiredStructEnabled())
-	t := trans.NewTranslator()
+	t := trans.NewTranslator(trans.WithLogger(l))
 	webCfg := &web.Cfg{}
 	util.Ok(config.C(webCfg, config.From("web"), config.Validate(v)))
 	store := util.Unwrap(web.SetupTemplaterStore(webCfg.UI, t))
