@@ -94,6 +94,7 @@ func setupMockCtxs(t *testing.T) (ctx.AppContext, Context) {
 	return ctx.NewAppContext(
 			trace.NewLogger(),
 			validator.New(validator.WithRequiredStructEnabled()),
+			nil,
 		),
 		&Ctx{
 			router: r,
