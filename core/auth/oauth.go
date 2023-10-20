@@ -86,7 +86,7 @@ func oAuthLoginSuccessController(
 
 		token, adapter, err := oauthVerify(reqCtx, code, state, oAuthCfg, provider.Name, adapters)
 		if err != nil {
-			appCtx.Error(Pkg, "error verifying oauth 2 login", err)
+			appCtx.Error(Pkg, "error verifying oauth login", err)
 			return io.Error(errT, web.ExtErr("Login per OAuth fehlgeschlagen. Bitte erneut versuchen."))
 		}
 
