@@ -5,7 +5,7 @@ package web
 
 import (
 	"fmt"
-	"github.com/org-harmony/harmony/core/ctx"
+	"github.com/org-harmony/harmony/core/hctx"
 	"github.com/org-harmony/harmony/core/trace"
 	"github.com/org-harmony/harmony/core/util"
 	"html/template"
@@ -46,7 +46,7 @@ type Ctx struct {
 // The Controller is aware of the application context and the web context.
 // The Controller implements the http.Handler interface and can therefore be used as a handler.
 type Controller struct {
-	app     ctx.AppContext
+	app     hctx.AppContext
 	ctx     Context
 	handler func(io IO) error
 }
@@ -106,7 +106,7 @@ func (c *Ctx) TemplaterStore() TemplaterStore {
 }
 
 // NewController returns a new Controller.
-func NewController(app ctx.AppContext, ctx Context, handler func(io IO) error) http.Handler {
+func NewController(app hctx.AppContext, ctx Context, handler func(io IO) error) http.Handler {
 	if app == nil || ctx == nil || handler == nil {
 		panic("nil contexts or handler")
 	}
@@ -124,14 +124,14 @@ func (c *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	io := &HIO{
 		w:  w,
 		r:  r,
-		l:  c.app.Logger(),
+		l:  c.app,
 		t:  c.ctx.TemplaterStore(),
 		rt: c.ctx.Router(),
 	}
 
 	err := c.handler(io)
 	if err != nil {
-		c.app.Logger().Error(Pkg, "internal server error executing handler", err)
+		c.app.Error(Pkg, "internal server error executing handler", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }
@@ -209,7 +209,7 @@ func Serve(r Router, cfg *ServerCfg) error {
 }
 
 // RegisterHome registers the home page on a router.
-func RegisterHome(appCtx ctx.AppContext, webCtx Context) {
+func RegisterHome(appCtx hctx.AppContext, webCtx Context) {
 	lp := util.Unwrap(webCtx.TemplaterStore().Templater(LandingPageTemplateName))
 	t := util.Unwrap(lp.Template("home", "home.go.html"))
 

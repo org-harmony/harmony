@@ -3,19 +3,14 @@
 package auth
 
 import (
-	"fmt"
 	"github.com/org-harmony/harmony/core/config"
-	"github.com/org-harmony/harmony/core/ctx"
+	"github.com/org-harmony/harmony/core/hctx"
 	"github.com/org-harmony/harmony/core/util"
 	"github.com/org-harmony/harmony/core/web"
 	"net/http"
 )
 
-const (
-	Pkg                      = "sys.auth"
-	OAuthLoginPattern        = "/auth/login/%s"
-	OAuthLoginSuccessPattern = "/auth/login/%s/success"
-)
+const Pkg = "sys.auth"
 
 // Cfg is the config for the auth package.
 type Cfg struct {
@@ -24,14 +19,14 @@ type Cfg struct {
 	EnableOAuth2 bool                   `toml:"enable_oauth2"`
 }
 
-func RegisterAuth(appCtx ctx.AppContext, webCtx web.Context) {
+func RegisterAuth(appCtx hctx.AppContext, webCtx web.Context) {
 	cfg := &Cfg{}
 	util.Ok(config.C(cfg, config.From("auth"), config.Validate(appCtx.Validator())))
 
 	registerRoutes(cfg, appCtx, webCtx)
 }
 
-func registerRoutes(cfg *Cfg, appCtx ctx.AppContext, webCtx web.Context) {
+func registerRoutes(cfg *Cfg, appCtx hctx.AppContext, webCtx web.Context) {
 	router := webCtx.Router()
 	router.Get("/auth/login", loginController(cfg, appCtx, webCtx).ServeHTTP)
 
@@ -40,17 +35,11 @@ func registerRoutes(cfg *Cfg, appCtx ctx.AppContext, webCtx web.Context) {
 	}
 
 	providers := cfg.Providers
-	router.Get(
-		fmt.Sprintf(OAuthLoginPattern, "{provider}"),
-		oAuthLoginController(appCtx, webCtx, providers).ServeHTTP,
-	)
-	router.Get(
-		fmt.Sprintf(OAuthLoginSuccessPattern, "{provider}"),
-		oAuthLoginSuccessController(appCtx, webCtx, providers, getUserAdapters()).ServeHTTP,
-	)
+	router.Get("/auth/login/{provider}", oAuthLoginController(appCtx, webCtx, providers).ServeHTTP)
+	router.Get("/auth/login/{provider}/success", oAuthLoginSuccessController(appCtx, webCtx, providers, getUserAdapters()).ServeHTTP)
 }
 
-func loginController(cfg *Cfg, appCtx ctx.AppContext, webCtx web.Context) http.Handler {
+func loginController(cfg *Cfg, appCtx hctx.AppContext, webCtx web.Context) http.Handler {
 	loginT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
 		Template("auth.login", "auth/login.go.html"))
 
