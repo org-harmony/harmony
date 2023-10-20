@@ -163,11 +163,13 @@ func (h *HIO) Router() Router {
 
 // Render renders a template with data. If an error occurs, the error is returned.
 func (h *HIO) Render(t *template.Template, data any) error {
+	// TODO add translations through HIO with language detection
 	return util.Wrap(t.Execute(h.w, data), "failed to render template")
 }
 
 // Error renders an error template with an error. If an error occurs, the error is returned.
 func (h *HIO) Error(t *template.Template, e error) error {
+	// TODO add translations through HIO with language detection
 	return util.Wrap(t.Execute(h.w, NewErrorTemplateData(h.r.Context(), e.Error())), "failed to render error template")
 }
 
