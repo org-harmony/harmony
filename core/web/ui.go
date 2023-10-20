@@ -211,11 +211,11 @@ func templateFuncs(ui *UICfg, t trans.Translator) template.FuncMap {
 		"tf": func(s string, args ...string) string {
 			return t.Tf(s, args...)
 		},
-		"html": func(s string) template.HTML {
-			return template.HTML(s)
-		},
 		"asset": func(filename string) string {
 			return filepath.Join(ui.AssetsUri, filename)
+		},
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(s)
 		},
 	}
 }

@@ -67,7 +67,11 @@
         <footer class="footer">
             <div class="content has-text-centered">
                 <p>
-                    Visit <strong>HARMONY</strong> on <a href="https://github.com/org-harmony/harmony" target="_blank">GitHub</a>.
+                    {{ tf "Besuchen Sie <strong>HARMONY</strong> auf {{ .link }}."
+                        "link"
+                        "<a href=\"https://github.com/org-harmony/harmony\" target=\"_blank\">GitHub</a>" |
+                        safeHTML
+                    }}
                 </p>
             </div>
         </footer>
