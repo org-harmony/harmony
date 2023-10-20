@@ -36,8 +36,8 @@ type PGUserRepository struct {
 
 // UserRepository is the interface for the user repository.
 type UserRepository interface {
-	GetByEmail(email string, ctx context.Context) (*User, error)   // GetByEmail returns a user by email. Returns NotFoundError if no user was found.
-	GetById(id uuid.UUID, ctx context.Context) (*User, error)      // GetById returns a user by id. Returns NotFoundError if no user was found.
+	FindByEmail(email string, ctx context.Context) (*User, error)  // GetByEmail returns a user by email. Returns NotFoundError if no user was found.
+	FindById(id uuid.UUID, ctx context.Context) (*User, error)     // GetById returns a user by id. Returns NotFoundError if no user was found.
 	Create(user *UserToCreate, ctx context.Context) (*User, error) // Create creates a new user and returns it. Returns InsertError if the user could not be created.
 	Delete(id uuid.UUID, ctx context.Context) error                // Delete deletes a user by id. Returns DeleteError if the user could not be deleted.
 }
@@ -47,8 +47,8 @@ func NewUserRepository(db *pgxpool.Pool) UserRepository {
 	return &PGUserRepository{db: db}
 }
 
-// GetByEmail returns a user by email. Returns NotFoundError if no user was found.
-func (r *PGUserRepository) GetByEmail(email string, ctx context.Context) (*User, error) {
+// FindByEmail returns a user by email. Returns NotFoundError if no user was found.
+func (r *PGUserRepository) FindByEmail(email string, ctx context.Context) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(ctx, "SELECT id, email, firstname, lastname, created_at, updated_at FROM users WHERE email = $1", email).
 		Scan(&user.Id, &user.Email, &user.Firstname, &user.Lastname, &user.CreatedAt, &user.UpdatedAt)
@@ -64,8 +64,8 @@ func (r *PGUserRepository) GetByEmail(email string, ctx context.Context) (*User,
 	return user, nil
 }
 
-// GetById returns a user by id. Returns NotFoundError if no user was found.
-func (r *PGUserRepository) GetById(id uuid.UUID, ctx context.Context) (*User, error) {
+// FindById returns a user by id. Returns NotFoundError if no user was found.
+func (r *PGUserRepository) FindById(id uuid.UUID, ctx context.Context) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(ctx, "SELECT id, email, firstname, lastname, created_at, updated_at FROM users WHERE id = $1", id).
 		Scan(&user.Id, &user.Email, &user.Firstname, &user.Lastname, &user.CreatedAt, &user.UpdatedAt)
