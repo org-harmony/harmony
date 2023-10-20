@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"sync"
 )
 
 var (
@@ -24,6 +25,21 @@ type PostgresDBCfg struct {
 	SSLMode       string `toml:"ssl_mode" env:"DB_SSL_MODE" validate:"required"`
 	MaxConns      string `toml:"max_conns" env:"DB_MAX_CONNS" validate:"required"`
 	MigrationsDir string `toml:"migrations_dir" env:"DB_MIGRATIONS_DIR"`
+}
+
+type PGRepositoryProvider struct {
+	db           *pgxpool.Pool
+	repositories map[string]Repository
+	mu           sync.RWMutex
+}
+
+type Repository interface {
+	RepositoryName() string
+}
+
+type RepositoryProvider interface {
+	Repository(name string) (Repository, error)
+	RegisterRepository(init func(db any) (Repository, error)) error
 }
 
 // NewDB creates a new database connection pool.
@@ -63,4 +79,36 @@ func (cfg *PostgresDBCfg) String() string {
 func (cfg *PostgresDBCfg) StringWoDbName() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s pool_max_conns=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.SSLMode, cfg.MaxConns)
+}
+
+func NewPGRepositoryProvider(db *pgxpool.Pool) RepositoryProvider {
+	return &PGRepositoryProvider{
+		db:           db,
+		repositories: make(map[string]Repository),
+	}
+}
+
+func (rp *PGRepositoryProvider) Repository(name string) (Repository, error) {
+	rp.mu.RLock()
+	r, ok := rp.repositories[name]
+	rp.mu.RUnlock()
+	if !ok {
+		return nil, fmt.Errorf("repository %s not found", name)
+	}
+
+	return r, nil
+}
+
+func (rp *PGRepositoryProvider) RegisterRepository(init func(db any) (Repository, error)) error {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+
+	repo, err := init(rp.db)
+	if err != nil {
+		return err
+	}
+
+	rp.repositories[repo.RepositoryName()] = repo
+
+	return nil
 }

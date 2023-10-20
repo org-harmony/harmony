@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/org-harmony/harmony/core/ctx"
+	"github.com/org-harmony/harmony/core/hctx"
 	"github.com/org-harmony/harmony/core/persistence"
 	"github.com/org-harmony/harmony/core/util"
 	"github.com/org-harmony/harmony/core/web"
@@ -40,7 +39,7 @@ func getUserAdapters() map[string]OAuthUserAdapter {
 	}
 }
 
-func oAuthLoginController(appCtx ctx.AppContext, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
+func oAuthLoginController(appCtx hctx.AppContext, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
 	errT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
 		Template("error", "error.go.html"))
 
@@ -61,16 +60,16 @@ func oAuthLoginController(appCtx ctx.AppContext, webCtx web.Context, providers m
 }
 
 func oAuthLoginSuccessController(
-	appCtx ctx.AppContext,
+	appCtx hctx.AppContext,
 	webCtx web.Context,
 	providers map[string]ProviderCfg,
 	adapters map[string]OAuthUserAdapter,
 ) http.Handler {
 	errT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
 		Template("error", "error.go.html"))
+	userRepository := util.UnwrapType[UserRepository](appCtx.Repository(UserRepositoryName))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		logger := appCtx.Logger()
 		request := io.Request()
 		reqCtx := request.Context()
 		state := request.FormValue("state")
@@ -87,13 +86,13 @@ func oAuthLoginSuccessController(
 
 		token, adapter, err := oauthVerify(reqCtx, code, state, oAuthCfg, provider.Name, adapters)
 		if err != nil {
-			logger.Error(Pkg, "error verifying oauth 2 login", err)
+			appCtx.Error(Pkg, "error verifying oauth 2 login", err)
 			return io.Error(errT, web.ExtErr("Login per OAuth fehlgeschlagen. Bitte erneut versuchen."))
 		}
 
-		user, err := loginWithAdapter(reqCtx, token, provider, adapter, appCtx.DB())
+		user, err := loginWithAdapter(reqCtx, token, provider, adapter, userRepository)
 		if err != nil {
-			logger.Error(Pkg, "error logging in user", err)
+			appCtx.Error(Pkg, "error logging in user", err)
 			return io.Error(errT, web.ExtErr("Login per OAuth fehlgeschlagen. Bitte erneut versuchen."))
 		}
 
@@ -133,14 +132,13 @@ func loginWithAdapter(
 	token *oauth2.Token,
 	provider *ProviderCfg,
 	adapter OAuthUserAdapter,
-	db *pgxpool.Pool,
+	userRepo UserRepository,
 ) (*User, error) {
 	email, err := adapter.Email(token, provider, http.DefaultClient, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	userRepo := NewUserRepository(db)
 	user, err := userRepo.FindByEmail(email, ctx)
 	if err != nil && !errors.Is(err, persistence.NotFoundError) {
 		return nil, err
@@ -181,6 +179,6 @@ func oAuthCfgFromProviderCfg(p ProviderCfg, baseURL string) *oauth2.Config {
 			TokenURL: p.AccessTokenURI,
 		},
 		Scopes:      p.Scopes,
-		RedirectURL: fmt.Sprintf("%s%s", baseURL, fmt.Sprintf(OAuthLoginSuccessPattern, p.Name)),
+		RedirectURL: fmt.Sprintf("%s%s", baseURL, fmt.Sprintf("/auth/login/%s/success", p.Name)),
 	}
 }
