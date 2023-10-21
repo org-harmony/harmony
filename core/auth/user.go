@@ -15,7 +15,7 @@ const UserRepositoryName = "UserRepository"
 
 // User is the user entity.
 type User struct {
-	Id        uuid.UUID
+	ID        uuid.UUID
 	Email     string
 	Firstname string
 	Lastname  string
@@ -40,8 +40,8 @@ type PGUserRepository struct {
 type UserRepository interface {
 	persistence.Repository
 
-	FindByEmail(email string, ctx context.Context) (*User, error)  // GetByEmail returns a user by email. Returns NotFoundError if no user was found.
-	FindById(id uuid.UUID, ctx context.Context) (*User, error)     // GetById returns a user by id. Returns NotFoundError if no user was found.
+	FindByEmail(email string, ctx context.Context) (*User, error)  // FindByEmail returns a user by email. Returns NotFoundError if no user was found.
+	FindByID(id uuid.UUID, ctx context.Context) (*User, error)     // FindByID returns a user by id. Returns NotFoundError if no user was found.
 	Create(user *UserToCreate, ctx context.Context) (*User, error) // Create creates a new user and returns it. Returns InsertError if the user could not be created.
 	Delete(id uuid.UUID, ctx context.Context) error                // Delete deletes a user by id. Returns DeleteError if the user could not be deleted.
 }
@@ -59,7 +59,7 @@ func (r *PGUserRepository) RepositoryName() string {
 func (r *PGUserRepository) FindByEmail(email string, ctx context.Context) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(ctx, "SELECT id, email, firstname, lastname, created_at, updated_at FROM users WHERE email = $1", email).
-		Scan(&user.Id, &user.Email, &user.Firstname, &user.Lastname, &user.CreatedAt, &user.UpdatedAt)
+		Scan(&user.ID, &user.Email, &user.Firstname, &user.Lastname, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -72,11 +72,11 @@ func (r *PGUserRepository) FindByEmail(email string, ctx context.Context) (*User
 	return user, nil
 }
 
-// FindById returns a user by id. Returns NotFoundError if no user was found.
-func (r *PGUserRepository) FindById(id uuid.UUID, ctx context.Context) (*User, error) {
+// FindByID returns a user by id. Returns NotFoundError if no user was found.
+func (r *PGUserRepository) FindByID(id uuid.UUID, ctx context.Context) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(ctx, "SELECT id, email, firstname, lastname, created_at, updated_at FROM users WHERE id = $1", id).
-		Scan(&user.Id, &user.Email, &user.Firstname, &user.Lastname, &user.CreatedAt, &user.UpdatedAt)
+		Scan(&user.ID, &user.Email, &user.Firstname, &user.Lastname, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -93,7 +93,7 @@ func (r *PGUserRepository) FindById(id uuid.UUID, ctx context.Context) (*User, e
 // Returns InsertError if the user could not be created.
 func (r *PGUserRepository) Create(user *UserToCreate, ctx context.Context) (*User, error) {
 	newUser := &User{
-		Id:        uuid.New(),
+		ID:        uuid.New(),
 		Email:     user.Email,
 		Firstname: user.Firstname,
 		Lastname:  user.Lastname,
@@ -103,7 +103,7 @@ func (r *PGUserRepository) Create(user *UserToCreate, ctx context.Context) (*Use
 	_, err := r.db.Exec(
 		ctx,
 		"INSERT INTO users (id, email, firstname, lastname, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)",
-		newUser.Id, newUser.Email, newUser.Firstname, newUser.Lastname, newUser.CreatedAt, newUser.UpdatedAt,
+		newUser.ID, newUser.Email, newUser.Firstname, newUser.Lastname, newUser.CreatedAt, newUser.UpdatedAt,
 	)
 
 	if err != nil {
