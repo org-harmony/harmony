@@ -11,11 +11,11 @@ import (
 
 func TestMain(m *testing.M) {
 	db = persistence.InitTestDB("./../../")
-	defer db.Close()
 	repo = NewUserRepository(db)
-	c = context.Background()
-
-	os.Exit(m.Run())
+	ctx = context.Background()
+	result := m.Run()
+	db.Close()
+	os.Exit(result)
 }
 
 var (
