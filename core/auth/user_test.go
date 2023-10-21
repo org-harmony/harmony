@@ -21,46 +21,46 @@ func TestMain(m *testing.M) {
 var (
 	db   *pgxpool.Pool
 	repo UserRepository
-	c    context.Context
+	ctx  context.Context
 )
 
 func TestPGUserRepository(t *testing.T) {
-	user, err := repo.Create(fooUserToCreate(), c)
+	user, err := repo.Create(fooUserToCreate(), ctx)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
-	assert.NotEmpty(t, user.Id)
+	assert.NotEmpty(t, user.ID)
 	assert.NotEmpty(t, user.CreatedAt)
 	assert.Nil(t, user.UpdatedAt) // should be nil because it's a new user
 	assert.Equal(t, "foo@bar.com", user.Email)
 	assert.Equal(t, "Foo", user.Firstname)
 	assert.Equal(t, "Bar", user.Lastname)
 
-	id := user.Id
+	id := user.ID
 	email := user.Email
 
-	err = repo.Delete(id, c)
+	err = repo.Delete(id, ctx)
 	assert.NoError(t, err)
 
-	user, err = repo.FindById(id, c)
+	user, err = repo.FindByID(id, ctx)
 	assert.ErrorIs(t, err, persistence.NotFoundError)
 
-	user, err = repo.FindByEmail(email, c)
+	user, err = repo.FindByEmail(email, ctx)
 	assert.ErrorIs(t, err, persistence.NotFoundError)
 
-	user, err = repo.Create(fooUserToCreate(), c)
+	user, err = repo.Create(fooUserToCreate(), ctx)
 	assert.NoError(t, err)
 
-	id = user.Id
+	id = user.ID
 	email = user.Email
 
-	user, err = repo.FindByEmail(email, c)
+	user, err = repo.FindByEmail(email, ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, id, user.Id)
+	assert.Equal(t, id, user.ID)
 
-	user, err = repo.FindById(id, c)
+	user, err = repo.FindByID(id, ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, id, user.Id)
+	assert.Equal(t, id, user.ID)
 }
 
 func fooUserToCreate() *UserToCreate {
