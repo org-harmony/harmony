@@ -27,6 +27,8 @@ type Migration struct {
 	ExecutedAt time.Time
 }
 
+// TODO write tests for this
+
 // Migrate takes a direction and a directory of migrations and executes them in the given direction.
 func Migrate(direction MigrateDirection, migrationsDir string, db *pgxpool.Pool, c context.Context) error {
 	migDir, err := os.ReadDir(migrationsDir) // read all migrations from directory
