@@ -29,8 +29,8 @@ type ProviderCfg struct {
 // If the user was not find and can therefore not be logged in, the CreateUser method is called.
 // CreateUser then returns a UserToCreate struct which is used to create a new user.
 type OAuthUserAdapter interface {
-	Email(token *oauth2.Token, cfg *ProviderCfg, client *http.Client, c context.Context) (string, error)
-	CreateUser(email string, token *oauth2.Token, cfg *ProviderCfg, client *http.Client, c context.Context) (*UserToCreate, error)
+	Email(ctx context.Context, token *oauth2.Token, cfg *ProviderCfg, client *http.Client) (string, error)
+	CreateUser(ctx context.Context, email string, token *oauth2.Token, cfg *ProviderCfg, client *http.Client) (*UserToCreate, error)
 }
 
 // getUserAdapters returns a map of OAuthUserAdapters. They are used to adapt the OAuth2 user data to the user entity.
@@ -131,12 +131,12 @@ func loginWithAdapter(
 	userRepo UserRepository,
 	sessionStore UserSessionRepository,
 ) (*UserSession, error) {
-	email, err := adapter.Email(token, provider, http.DefaultClient, ctx)
+	email, err := adapter.Email(ctx, token, provider, http.DefaultClient)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := userRepo.FindByEmail(email, ctx)
+	user, err := userRepo.FindByEmail(ctx, email)
 	if err != nil && !errors.Is(err, persistence.ErrNotFound) {
 		return nil, err
 	}
@@ -150,12 +150,12 @@ func loginWithAdapter(
 		return session, nil
 	}
 
-	userToCreate, err := adapter.CreateUser(email, token, provider, http.DefaultClient, ctx)
+	userToCreate, err := adapter.CreateUser(ctx, email, token, provider, http.DefaultClient)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err = userRepo.Create(userToCreate, ctx)
+	user, err = userRepo.Create(ctx, userToCreate)
 	if err != nil {
 		return nil, err
 	}

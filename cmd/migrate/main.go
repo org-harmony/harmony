@@ -32,7 +32,7 @@ func main() {
 
 	fmt.Println("migrating database...")
 
-	err := persistence.Migrate(persistence.MigrateDirection(direction), dbCfg.DB.MigrationsDir, db, context.Background())
+	err := persistence.Migrate(context.Background(), persistence.MigrateDirection(direction), dbCfg.DB.MigrationsDir, db)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
