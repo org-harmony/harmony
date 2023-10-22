@@ -26,7 +26,7 @@ func ReadTestDBCfg(configDir string) *Cfg {
 
 func InitTestDB(baseDir string) *pgxpool.Pool {
 	dbCfg := ReadTestDBCfg(filepath.Join(baseDir, "config"))
-	db := util.Unwrap(NewDBWithString(dbCfg.DB.StringWoDbName()))
+	db := util.Unwrap(NewDBWithString(dbCfg.DB.StringWoDBName()))
 
 	id := strings.Replace(uuid.NewString(), "-", "", -1)
 	dbCfg.DB.Name = fmt.Sprintf("%s_%s", dbCfg.DB.Name, id)
@@ -38,7 +38,7 @@ func InitTestDB(baseDir string) *pgxpool.Pool {
 	pgxConfig.BeforeClose = func(conn *pgx.Conn) {
 		util.Ok(conn.Close(context.Background()))
 
-		db := util.Unwrap(NewDBWithString(dbCfg.DB.StringWoDbName()))
+		db := util.Unwrap(NewDBWithString(dbCfg.DB.StringWoDBName()))
 
 		_, err := db.Exec(context.Background(), fmt.Sprintf("DROP DATABASE %s", dbCfg.DB.Name))
 		if err != nil {

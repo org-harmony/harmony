@@ -19,9 +19,9 @@ import (
 const Dir = "config"
 
 var (
-	InvalidConfigError          = errors.New("invalid config")
-	ParseError                  = errors.New("failed to parse config")
-	UnexpectedEnvOverwriteError = errors.New("unexpected error trying to overwrite config with env variables")
+	ErrInvalidConfig          = errors.New("invalid config")
+	ErrParse                  = errors.New("failed to parse config")
+	ErrUnexpectedEnvOverwrite = errors.New("unexpected error trying to overwrite config with env variables")
 )
 
 type Options struct {
@@ -124,14 +124,14 @@ func C(c any, opts ...Option) error {
 	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
-		return util.ErrErr(herr.ReadFileError, err)
+		return util.ErrErr(herr.ErrReadFile, err)
 	}
 
 	flPath := path.Join(o.dir, fmt.Sprintf("%s.local.%s", o.filename, o.fileExt))
 	bl, _ := os.ReadFile(flPath) // ignore error
 
 	if err := parseConfig(c, b, bl); err != nil {
-		return util.ErrErr(ParseError, err)
+		return util.ErrErr(ErrParse, err)
 	}
 
 	if !o.disableEnvOverwrite {
@@ -145,7 +145,7 @@ func C(c any, opts ...Option) error {
 	}
 
 	if err := o.validator.Struct(c); err != nil {
-		return util.ErrErr(InvalidConfigError, err)
+		return util.ErrErr(ErrInvalidConfig, err)
 	}
 
 	return nil
@@ -168,18 +168,18 @@ func ToEnv(opts ...Option) error {
 	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
-		return util.ErrErr(herr.ReadFileError, err)
+		return util.ErrErr(herr.ErrReadFile, err)
 	}
 
 	m := make(map[string]any)
 	err = toml.Unmarshal(b, &m)
 	if err != nil {
-		return util.ErrErr(ParseError, err)
+		return util.ErrErr(ErrParse, err)
 	}
 
 	fm := makeEnvMap(m)
 	if err := mapToEnv(fm); err != nil {
-		return herr.SetEnvError
+		return herr.ErrSetEnv
 	}
 
 	return nil
@@ -200,7 +200,7 @@ func parseConfig(config any, b ...[]byte) error {
 // overwriteWithEnv overwrites the given config struct with environment variables.
 // The struct must be annotated with the "env" tag and define the environment variables name like: `env:"ENV_VAR_NAME"`.
 // Overwriting is done recursively, meaning that nested structs will be overwritten as well.
-// The function may return an UnexpectedEnvOverwriteError if an unexpected error occurs e.g. if it panics.
+// The function may return an ErrUnexpectedEnvOverwrite if an unexpected error occurs e.g. if it panics.
 // In most cases were a struct can not be set it will be ignored.
 // The function only handles overwrites for string and bool fields.
 // A bool has to be set to "true" (case-insensitive) to be overwritten with true otherwise the value will be false.
@@ -208,7 +208,7 @@ func parseConfig(config any, b ...[]byte) error {
 func overwriteWithEnv(c any) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("%w: %v", UnexpectedEnvOverwriteError, r)
+			err = fmt.Errorf("%w: %v", ErrUnexpectedEnvOverwrite, r)
 		}
 	}()
 

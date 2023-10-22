@@ -13,31 +13,47 @@ import (
 	"github.com/org-harmony/harmony/core/web"
 )
 
+// TODO Add translations
+// TODO Migrate to Bootstrap 5
+// TODO Move Context to first argument position (auth/oauth stuff)
+
 func main() {
 	l := trace.NewLogger()
 	v := validator.New(validator.WithRequiredStructEnabled())
 	t := trans.NewTranslator(trans.WithLogger(l))
+
+	webCtx, r := initWeb(v, t)
+	p, db := initDB(v)
+	defer db.Close()
+	appCtx := hctx.NewAppContext(l, v, p)
+
+	web.RegisterHome(appCtx, webCtx)
+	auth.RegisterAuth(appCtx, webCtx)
+
+	util.Ok(web.Serve(r, webCtx.Configuration().Server))
+}
+
+func initWeb(v *validator.Validate, t trans.Translator) (web.Context, web.Router) {
 	webCfg := &web.Cfg{}
 	util.Ok(config.C(webCfg, config.From("web"), config.Validate(v)))
 	store := util.Unwrap(web.SetupTemplaterStore(webCfg.UI, t))
 
 	r := web.NewRouter()
+	registerMiddlewares(r)
+
 	web.MountFileServer(r, webCfg.Server.AssetFsCfg)
 
+	webCtx := web.NewContext(r, webCfg, store)
+
+	return webCtx, r
+}
+
+func initDB(v *validator.Validate) (persistence.RepositoryProvider, *pgxpool.Pool) {
 	dbCfg := &persistence.Cfg{}
 	util.Ok(config.C(dbCfg, config.From("persistence"), config.Validate(v)))
 	db := util.Unwrap(persistence.NewDB(dbCfg.DB))
-	defer db.Close()
 
-	p := initRepositoryProvider(db)
-
-	appCtx := hctx.NewAppContext(l, v, p)
-	webCtx := web.NewContext(r, webCfg, store)
-
-	web.RegisterHome(appCtx, webCtx)
-	auth.RegisterAuth(appCtx, webCtx)
-
-	util.Ok(web.Serve(r, webCfg.Server))
+	return initRepositoryProvider(db), db
 }
 
 func initRepositoryProvider(db *pgxpool.Pool) persistence.RepositoryProvider {
@@ -46,6 +62,13 @@ func initRepositoryProvider(db *pgxpool.Pool) persistence.RepositoryProvider {
 	util.Ok(p.RegisterRepository(func(db any) (persistence.Repository, error) {
 		return auth.NewUserRepository(db.(*pgxpool.Pool)), nil
 	}))
+	util.Ok(p.RegisterRepository(func(db any) (persistence.Repository, error) {
+		return auth.NewPGUserSessionRepository(db.(*pgxpool.Pool)), nil
+	}))
 
 	return p
+}
+
+func registerMiddlewares(r web.Router) {
+	r.Use(web.CleanPath, web.Heartbeat("/ping"), web.Recoverer)
 }

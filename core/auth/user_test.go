@@ -43,10 +43,10 @@ func TestPGUserRepository(t *testing.T) {
 	assert.NoError(t, err)
 
 	user, err = repo.FindByID(id, ctx)
-	assert.ErrorIs(t, err, persistence.NotFoundError)
+	assert.ErrorIs(t, err, persistence.ErrNotFound)
 
 	user, err = repo.FindByEmail(email, ctx)
-	assert.ErrorIs(t, err, persistence.NotFoundError)
+	assert.ErrorIs(t, err, persistence.ErrNotFound)
 
 	user, err = repo.Create(fooUserToCreate(), ctx)
 	assert.NoError(t, err)

@@ -8,7 +8,6 @@ import (
 )
 
 var (
-	SetEnvError         = errors.New("failed to write to env")
-	ReadFileError       = errors.New("failed to read file")
-	NotImplementedError = errors.New("not implemented")
+	ErrSetEnv   = errors.New("failed to write to env")
+	ErrReadFile = errors.New("failed to read file")
 )
