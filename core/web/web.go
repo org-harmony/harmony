@@ -71,14 +71,14 @@ type Context interface {
 // IO is passed to a Controller's handler function allowing the handler to interact with the http.ResponseWriter and http.Request.
 // At the same time, IO allows the handler to interact with frequently used functionality such as logging and rendering.
 type IO interface {
-	Writer() http.ResponseWriter           // Writer returns the http.ResponseWriter.
-	Request() *http.Request                // Request returns the http.Request.
-	Logger() trace.Logger                  // Logger returns the application logger.
-	TemplaterStore() TemplaterStore        // TemplaterStore returns an instance of TemplaterStore.
-	Router() Router                        // Router returns an instance of Router.
-	Render(*template.Template, any) error  // Render renders a template with data.
-	Error(*template.Template, error) error // Error renders an error template with an error.
-	Redirect(string, int) error            // Redirect redirects the client to a URL with a status code.
+	Response() http.ResponseWriter        // Response returns the http.ResponseWriter.
+	Request() *http.Request               // Request returns the http.Request.
+	Logger() trace.Logger                 // Logger returns the application logger.
+	TemplaterStore() TemplaterStore       // TemplaterStore returns an instance of TemplaterStore.
+	Router() Router                       // Router returns an instance of Router.
+	Render(*template.Template, any) error // Render renders a template with data.
+	Error(error) error                    // Error renders an error template with an error.
+	Redirect(string, int) error           // Redirect redirects the client to a URL with a status code.
 }
 
 // NewContext returns a new Context.
@@ -137,7 +137,7 @@ func (c *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Writer returns the http.ResponseWriter.
-func (h *HIO) Writer() http.ResponseWriter {
+func (h *HIO) Response() http.ResponseWriter {
 	return h.w
 }
 
@@ -168,9 +168,18 @@ func (h *HIO) Render(t *template.Template, data any) error {
 }
 
 // Error renders an error template with an error. If an error occurs, the error is returned.
-func (h *HIO) Error(t *template.Template, e error) error {
-	// TODO add translations through HIO with language detection
-	return util.Wrap(t.Execute(h.w, NewErrorTemplateData(h.r.Context(), e.Error())), "failed to render error template")
+func (h *HIO) Error(e error) error {
+	errTemplater, err := h.t.Templater(ErrorTemplateName)
+	if err != nil {
+		return err
+	}
+
+	errTemplate, err := errTemplater.Template("error", "error.go.html")
+	if err != nil {
+		return err
+	}
+
+	return errTemplate.Execute(h.w, NewErrorTemplateData(h.r.Context(), e.Error()))
 }
 
 // Redirect redirects the client to a URL with a status code.

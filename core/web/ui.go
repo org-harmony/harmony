@@ -13,6 +13,8 @@ const (
 	BaseTemplateName = "base"
 	// LandingPageTemplateName is the landing page template name.
 	LandingPageTemplateName = "landing-page"
+	// ErrorTemplateName is the error template name.
+	ErrorTemplateName = "error"
 )
 
 var (
@@ -180,7 +182,26 @@ func SetupTemplaterStore(ui *UICfg, t trans.Translator) (TemplaterStore, error) 
 		return nil, err
 	}
 
-	return NewTemplaterStore(NewTemplater(base, ui.Templates.Dir), NewTemplater(landingPage, ui.Templates.Dir)), nil
+	errorPage, err := ErrorTemplate(ui, t)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTemplaterStore(
+		NewTemplater(base, ui.Templates.Dir),
+		NewTemplater(landingPage, ui.Templates.Dir),
+		NewTemplater(errorPage, ui.Templates.Dir),
+	), nil
+}
+
+// ErrorTemplate returns the error template.
+func ErrorTemplate(ui *UICfg, t trans.Translator) (*template.Template, error) {
+	landingPage, err := LandingPageTemplate(ui, t)
+	if err != nil {
+		return nil, err
+	}
+
+	return landingPage.New(ErrorTemplateName).ParseFiles(filepath.Join(ui.Templates.Dir, "error.go.html"))
 }
 
 // LandingPageTemplate returns the landing page template.

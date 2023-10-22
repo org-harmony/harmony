@@ -2,8 +2,11 @@ package persistence
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/org-harmony/harmony/core/util"
 	"sync"
 )
 
@@ -27,16 +30,24 @@ type PostgresDBCfg struct {
 	MigrationsDir string `toml:"migrations_dir" env:"DB_MIGRATIONS_DIR"`
 }
 
+// PGRepositoryProvider is the Postgres implementation of the RepositoryProvider interface.
+// It contains all the repositories using the Postgres database.
+// The repositories are stored in a map and can be retrieved by name.
+//
+// PGRepositoryProvider is safe for concurrent use by multiple goroutines.
 type PGRepositoryProvider struct {
 	db           *pgxpool.Pool
 	repositories map[string]Repository
 	mu           sync.RWMutex
 }
 
+// Repository is the interface for a repository.
 type Repository interface {
 	RepositoryName() string
 }
 
+// RepositoryProvider is the interface for a repository provider.
+// RepositoryProviders should be safe for concurrent use by multiple goroutines.
 type RepositoryProvider interface {
 	Repository(name string) (Repository, error)
 	RegisterRepository(init func(db any) (Repository, error)) error
@@ -52,6 +63,7 @@ func NewDB(cfg *PostgresDBCfg) (*pgxpool.Pool, error) {
 	return newDBWithConfig(config)
 }
 
+// NewDBWithString creates a new database connection pool from a string.
 func NewDBWithString(cfg string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(cfg)
 	if err != nil {
@@ -61,6 +73,7 @@ func NewDBWithString(cfg string) (*pgxpool.Pool, error) {
 	return newDBWithConfig(config)
 }
 
+// newDBWithConfig creates a new database connection pool from a pgxpool.Config.
 func newDBWithConfig(config *pgxpool.Config) (*pgxpool.Pool, error) {
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
@@ -76,11 +89,14 @@ func (cfg *PostgresDBCfg) String() string {
 		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.Name, cfg.SSLMode, cfg.MaxConns)
 }
 
-func (cfg *PostgresDBCfg) StringWoDbName() string {
+// StringWoDBName returns the string representation of the database configuration without the database name.
+// This is useful for creating and dropping the database in tests.
+func (cfg *PostgresDBCfg) StringWoDBName() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s pool_max_conns=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.SSLMode, cfg.MaxConns)
 }
 
+// NewPGRepositoryProvider creates a new PGRepositoryProvider.
 func NewPGRepositoryProvider(db *pgxpool.Pool) RepositoryProvider {
 	return &PGRepositoryProvider{
 		db:           db,
@@ -88,6 +104,7 @@ func NewPGRepositoryProvider(db *pgxpool.Pool) RepositoryProvider {
 	}
 }
 
+// Repository returns a repository by name.
 func (rp *PGRepositoryProvider) Repository(name string) (Repository, error) {
 	rp.mu.RLock()
 	r, ok := rp.repositories[name]
@@ -99,6 +116,7 @@ func (rp *PGRepositoryProvider) Repository(name string) (Repository, error) {
 	return r, nil
 }
 
+// RegisterRepository registers a new repository.
 func (rp *PGRepositoryProvider) RegisterRepository(init func(db any) (Repository, error)) error {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
@@ -111,4 +129,18 @@ func (rp *PGRepositoryProvider) RegisterRepository(init func(db any) (Repository
 	rp.repositories[repo.RepositoryName()] = repo
 
 	return nil
+}
+
+// PGReadErr returns a ErrNotFound if the passed in error is a pgx.ErrNoRows. Otherwise, it returns a ErrReadRow.
+// This is a utility function for wrapping the pgx error inside a persistence-package error.
+func PGReadErr(err error) error {
+	if err == nil {
+		panic("PGReadErr: err is nil - should be evaluated before calling this function")
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return util.ErrErr(ErrNotFound, err)
+	}
+
+	return util.ErrErr(ErrReadRow, err)
 }

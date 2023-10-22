@@ -33,6 +33,7 @@ type OAuthUserAdapter interface {
 	CreateUser(email string, token *oauth2.Token, cfg *ProviderCfg, client *http.Client, c context.Context) (*UserToCreate, error)
 }
 
+// getUserAdapters returns a map of OAuthUserAdapters. They are used to adapt the OAuth2 user data to the user entity.
 func getUserAdapters() map[string]OAuthUserAdapter {
 	return map[string]OAuthUserAdapter{
 		"github": &GitHubUserAdapter{},
@@ -40,9 +41,6 @@ func getUserAdapters() map[string]OAuthUserAdapter {
 }
 
 func oAuthLoginController(appCtx hctx.AppContext, webCtx web.Context, providers map[string]ProviderCfg) http.Handler {
-	errT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
-		Template("error", "error.go.html"))
-
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		oAuthCfg, _, err := oAuthConfigByProviderName(
 			webCtx.Router().URLParam(io.Request(), "provider"),
@@ -50,10 +48,10 @@ func oAuthLoginController(appCtx hctx.AppContext, webCtx web.Context, providers 
 			webCtx.Configuration().Server.BaseURL,
 		)
 		if err != nil {
-			return io.Error(errT, web.ExtErr("auth.error.invalid-provider"))
+			return io.Error(web.ExtErr("auth.error.invalid-provider"))
 		}
 
-		url := oAuthCfg.AuthCodeURL("state")
+		url := oAuthCfg.AuthCodeURL("state") // TODO state
 
 		return io.Redirect(url, http.StatusTemporaryRedirect)
 	})
@@ -65,9 +63,8 @@ func oAuthLoginSuccessController(
 	providers map[string]ProviderCfg,
 	adapters map[string]OAuthUserAdapter,
 ) http.Handler {
-	errT := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
-		Template("error", "error.go.html"))
 	userRepository := util.UnwrapType[UserRepository](appCtx.Repository(UserRepositoryName))
+	sessionStore := UserSessionStore(appCtx)
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		request := io.Request()
@@ -81,71 +78,76 @@ func oAuthLoginSuccessController(
 			webCtx.Configuration().Server.BaseURL,
 		)
 		if err != nil {
-			return io.Error(errT, web.ExtErr("Der gewählte OAuth Provider ist leider nicht unterstützt."))
+			return io.Error(web.ExtErr("Der gewählte OAuth Provider ist leider nicht unterstützt."))
 		}
 
-		token, adapter, err := oauthVerify(reqCtx, code, state, oAuthCfg, provider.Name, adapters)
+		token, err := oauthVerify(reqCtx, code, state, oAuthCfg)
 		if err != nil {
 			appCtx.Error(Pkg, "error verifying oauth login", err)
-			return io.Error(errT, web.ExtErr("Login per OAuth fehlgeschlagen. Bitte erneut versuchen."))
+			return io.Error(web.ExtErr("Login per OAuth fehlgeschlagen. Bitte erneut versuchen."))
 		}
 
-		user, err := loginWithAdapter(reqCtx, token, provider, adapter, userRepository)
+		adapter, ok := adapters[provider.Name]
+		if !ok {
+			return io.Error(web.ExtErr("Der gewählte OAuth Provider ist leider nicht unterstützt."))
+		}
+
+		session, err := loginWithAdapter(reqCtx, token, provider, adapter, userRepository, sessionStore)
 		if err != nil {
 			appCtx.Error(Pkg, "error logging in user", err)
-			return io.Error(errT, web.ExtErr("Login per OAuth fehlgeschlagen. Bitte erneut versuchen."))
+			return io.Error(web.ExtErr("Login per OAuth fehlgeschlagen. Bitte erneut versuchen."))
 		}
 
-		fmt.Printf("user logged in: %+v\n", user)
+		setSession(io.Response(), session)
 
 		return io.Redirect("/", http.StatusTemporaryRedirect)
 	})
 }
 
-func oauthVerify(
-	ctx context.Context,
-	code string,
-	state string,
-	cfg *oauth2.Config,
-	providerName string,
-	adapters map[string]OAuthUserAdapter,
-) (*oauth2.Token, OAuthUserAdapter, error) {
+// oauthVerify verifies the oauth login by verifying the state and exchanging the code for a token.
+func oauthVerify(ctx context.Context, code string, state string, cfg *oauth2.Config) (*oauth2.Token, error) {
 	if state != "state" {
-		return nil, nil, errors.New("invalid oauth state")
+		return nil, errors.New("invalid oauth state")
 	}
 
 	token, err := cfg.Exchange(ctx, code)
 	if err != nil {
-		return nil, nil, fmt.Errorf("code exchange failed: %s", err.Error())
+		return nil, fmt.Errorf("code exchange failed: %s", err.Error())
 	}
 
-	adapter, ok := adapters[providerName]
-	if !ok {
-		return nil, nil, fmt.Errorf("no adapter for provider %s found", providerName)
-	}
-
-	return token, adapter, nil
+	return token, nil
 }
 
+// loginWithAdapter logs in the user with the given OAuthUserAdapter.
+// First it checks if the user already exists in the database. If so, the user is logged in.
+// The email address of the user is used to find the user in the database.
+// If the user doesn't exist, the OAuthUserAdapter.CreateUser creates the user.
+// After creating the user, the user is logged in and loginWithAdapter returns the session.
 func loginWithAdapter(
 	ctx context.Context,
 	token *oauth2.Token,
 	provider *ProviderCfg,
 	adapter OAuthUserAdapter,
 	userRepo UserRepository,
-) (*User, error) {
+	sessionStore UserSessionRepository,
+) (*UserSession, error) {
 	email, err := adapter.Email(token, provider, http.DefaultClient, ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	user, err := userRepo.FindByEmail(email, ctx)
-	if err != nil && !errors.Is(err, persistence.NotFoundError) {
+	if err != nil && !errors.Is(err, persistence.ErrNotFound) {
 		return nil, err
 	}
 
 	if user != nil {
-		return user, nil
+		session, err := login(ctx, user, sessionStore)
+		if err != nil {
+			return nil, err
+		}
+
+		return session, nil
 	}
 
 	userToCreate, err := adapter.CreateUser(email, token, provider, http.DefaultClient, ctx)
@@ -158,9 +160,15 @@ func loginWithAdapter(
 		return nil, err
 	}
 
-	return user, nil
+	session, err := login(ctx, user, sessionStore)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
 
+// oAuthConfigByProviderName returns the OAuth2 config for the given provider name.
 func oAuthConfigByProviderName(name string, providers map[string]ProviderCfg, baseURL string) (*oauth2.Config, *ProviderCfg, error) {
 	p, ok := providers[name]
 	if !ok {
@@ -170,6 +178,7 @@ func oAuthConfigByProviderName(name string, providers map[string]ProviderCfg, ba
 	return oAuthCfgFromProviderCfg(p, baseURL), &p, nil
 }
 
+// oAuthCfgFromProviderCfg returns the OAuth2 config for the given provider config.
 func oAuthCfgFromProviderCfg(p ProviderCfg, baseURL string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     p.ClientID,
