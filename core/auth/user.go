@@ -143,10 +143,6 @@ func CtxUser(ctx context.Context) (*User, error) {
 	return u, nil
 }
 
-// TODO add auto-refresh of sessions -> soft and hard expiry
-// TODO add refresh token for remember me functionality
-// TODO add logout everywhere functionality -> delete all sessions for a user
-
 // login logs the user in and returns the session.
 func login(ctx context.Context, user *User, sessionStore UserSessionRepository) (*UserSession, error) {
 	session := NewUserSession(user, time.Hour)
@@ -185,3 +181,8 @@ func clearSession(w http.ResponseWriter) {
 		HttpOnly: true,
 	})
 }
+
+// TODO add auto-refresh of sessions -> soft and hard expiry
+// TODO add refresh token for remember me functionality
+// TODO add logout everywhere functionality -> delete all sessions for a user
+// TODO remove expired sessions from database job

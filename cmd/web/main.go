@@ -15,7 +15,6 @@ import (
 
 // TODO Add translations
 // TODO Migrate to Bootstrap 5
-// TODO Remove expired sessions from database job
 
 func main() {
 	l := trace.NewLogger()
