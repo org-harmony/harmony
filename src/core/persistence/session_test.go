@@ -12,7 +12,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	db = InitTestDB("./../../")
+	db = InitTestDB("./../../../")
 	ctx = context.Background()
 	result := m.Run()
 	db.Close()
