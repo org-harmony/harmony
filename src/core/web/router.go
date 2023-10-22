@@ -23,7 +23,6 @@ type Router interface {
 	Handle(path string, handler http.HandlerFunc) // Handle registers a handler function.
 	NotFound(handler http.HandlerFunc)            // NotFound registers a handler for when a route could not be found.
 	MethodNotAllowed(handler http.HandlerFunc)    // MethodNotAllowed registers a handler for when a method is not allowed.
-	URLParam(r *http.Request, key string) string  // URLParam returns the URL parameter by key.
 }
 
 // VerbRouter is an interface for router that handles HTTP verbs.
@@ -113,6 +112,6 @@ func (r *HRouter) With(middlewares ...func(http.Handler) http.Handler) Router {
 }
 
 // URLParam returns the URL parameter by key.
-func (r *HRouter) URLParam(req *http.Request, key string) string {
+func URLParam(req *http.Request, key string) string {
 	return chi.URLParam(req, key)
 }
