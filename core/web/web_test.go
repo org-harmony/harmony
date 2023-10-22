@@ -44,12 +44,12 @@ func TestController(t *testing.T) {
 
 	tmplter := util.Unwrap(ctx.TemplaterStore().Templater(LandingPageTemplateName))
 	lp := util.Unwrap(tmplter.Base())
-	errT := util.Unwrap(tmplter.Template("error", "error.go.html"))
+
 	c := NewController(app, ctx, func(io IO) error {
 		return io.Render(lp, nil)
 	})
 	e := NewController(app, ctx, func(io IO) error {
-		return io.Error(errT, errors.New("test error"))
+		return io.Error(errors.New("test error"))
 	})
 	re := NewController(app, ctx, func(io IO) error {
 		return io.Redirect("/", http.StatusFound)
