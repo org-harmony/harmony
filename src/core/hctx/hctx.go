@@ -2,9 +2,9 @@ package hctx
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/org-harmony/harmony/core/persistence"
-	"github.com/org-harmony/harmony/core/trace"
-	"github.com/org-harmony/harmony/core/util"
+	"github.com/org-harmony/harmony/src/core/persistence"
+	"github.com/org-harmony/harmony/src/core/trace"
+	"github.com/org-harmony/harmony/src/core/util"
 )
 
 // AppCtx is the application context.

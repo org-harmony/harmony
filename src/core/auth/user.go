@@ -5,8 +5,8 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/org-harmony/harmony/core/persistence"
-	"github.com/org-harmony/harmony/core/util"
+	"github.com/org-harmony/harmony/src/core/persistence"
+	"github.com/org-harmony/harmony/src/core/util"
 	"net/http"
 	"time"
 )

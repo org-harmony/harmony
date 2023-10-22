@@ -2,7 +2,7 @@ package event
 
 import (
 	"fmt"
-	"github.com/org-harmony/harmony/core/trace"
+	"github.com/org-harmony/harmony/src/core/trace"
 	"sync"
 	"sync/atomic"
 	"testing"

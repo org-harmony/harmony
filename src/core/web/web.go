@@ -5,9 +5,9 @@ package web
 
 import (
 	"fmt"
-	"github.com/org-harmony/harmony/core/hctx"
-	"github.com/org-harmony/harmony/core/trace"
-	"github.com/org-harmony/harmony/core/util"
+	"github.com/org-harmony/harmony/src/core/hctx"
+	"github.com/org-harmony/harmony/src/core/trace"
+	"github.com/org-harmony/harmony/src/core/util"
 	"html/template"
 	"net/http"
 	"strings"

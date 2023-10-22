@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/org-harmony/harmony/core/herr"
+	"github.com/org-harmony/harmony/src/core/herr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"

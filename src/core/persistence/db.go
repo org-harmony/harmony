@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/org-harmony/harmony/core/util"
+	"github.com/org-harmony/harmony/src/core/util"
 	"sync"
 )
 

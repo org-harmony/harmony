@@ -1,7 +1,7 @@
 package trans
 
 import (
-	"github.com/org-harmony/harmony/core/trace"
+	"github.com/org-harmony/harmony/src/core/trace"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"text/template"

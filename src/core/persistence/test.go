@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/org-harmony/harmony/core/config"
-	"github.com/org-harmony/harmony/core/util"
+	"github.com/org-harmony/harmony/src/core/config"
+	"github.com/org-harmony/harmony/src/core/util"
 	"path/filepath"
 	"strings"
 )

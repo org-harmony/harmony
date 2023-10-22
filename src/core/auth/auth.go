@@ -3,10 +3,10 @@
 package auth
 
 import (
-	"github.com/org-harmony/harmony/core/config"
-	"github.com/org-harmony/harmony/core/hctx"
-	"github.com/org-harmony/harmony/core/util"
-	"github.com/org-harmony/harmony/core/web"
+	"github.com/org-harmony/harmony/src/core/config"
+	"github.com/org-harmony/harmony/src/core/hctx"
+	"github.com/org-harmony/harmony/src/core/util"
+	"github.com/org-harmony/harmony/src/core/web"
 	"net/http"
 )
 

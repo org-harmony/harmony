@@ -2,7 +2,7 @@ package web
 
 import (
 	"fmt"
-	"github.com/org-harmony/harmony/core/trans"
+	"github.com/org-harmony/harmony/src/core/trans"
 	"html/template"
 	"path/filepath"
 	"sync"

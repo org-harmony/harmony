@@ -4,7 +4,7 @@ package trans
 
 import (
 	"crypto/md5"
-	"github.com/org-harmony/harmony/core/trace"
+	"github.com/org-harmony/harmony/src/core/trace"
 	"strings"
 	"sync"
 	"text/template"

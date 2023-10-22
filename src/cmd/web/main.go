@@ -3,14 +3,14 @@ package main
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/org-harmony/harmony/core/auth"
-	"github.com/org-harmony/harmony/core/config"
-	"github.com/org-harmony/harmony/core/hctx"
-	"github.com/org-harmony/harmony/core/persistence"
-	"github.com/org-harmony/harmony/core/trace"
-	"github.com/org-harmony/harmony/core/trans"
-	"github.com/org-harmony/harmony/core/util"
-	"github.com/org-harmony/harmony/core/web"
+	"github.com/org-harmony/harmony/src/core/auth"
+	"github.com/org-harmony/harmony/src/core/config"
+	"github.com/org-harmony/harmony/src/core/hctx"
+	"github.com/org-harmony/harmony/src/core/persistence"
+	"github.com/org-harmony/harmony/src/core/trace"
+	"github.com/org-harmony/harmony/src/core/trans"
+	"github.com/org-harmony/harmony/src/core/util"
+	"github.com/org-harmony/harmony/src/core/web"
 )
 
 // TODO Add translations
