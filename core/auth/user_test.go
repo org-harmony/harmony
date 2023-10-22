@@ -25,7 +25,7 @@ var (
 )
 
 func TestPGUserRepository(t *testing.T) {
-	user, err := repo.Create(fooUserToCreate(), ctx)
+	user, err := repo.Create(ctx, fooUserToCreate())
 
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
@@ -39,26 +39,26 @@ func TestPGUserRepository(t *testing.T) {
 	id := user.ID
 	email := user.Email
 
-	err = repo.Delete(id, ctx)
+	err = repo.Delete(ctx, id)
 	assert.NoError(t, err)
 
-	user, err = repo.FindByID(id, ctx)
+	user, err = repo.FindByID(ctx, id)
 	assert.ErrorIs(t, err, persistence.ErrNotFound)
 
-	user, err = repo.FindByEmail(email, ctx)
+	user, err = repo.FindByEmail(ctx, email)
 	assert.ErrorIs(t, err, persistence.ErrNotFound)
 
-	user, err = repo.Create(fooUserToCreate(), ctx)
+	user, err = repo.Create(ctx, fooUserToCreate())
 	assert.NoError(t, err)
 
 	id = user.ID
 	email = user.Email
 
-	user, err = repo.FindByEmail(email, ctx)
+	user, err = repo.FindByEmail(ctx, email)
 	assert.NoError(t, err)
 	assert.Equal(t, id, user.ID)
 
-	user, err = repo.FindByID(id, ctx)
+	user, err = repo.FindByID(ctx, id)
 	assert.NoError(t, err)
 	assert.Equal(t, id, user.ID)
 }

@@ -12,20 +12,15 @@ import (
 
 type GitHubUserAdapter struct{}
 
-func (g *GitHubUserAdapter) Email(
-	token *oauth2.Token,
-	cfg *ProviderCfg,
-	client *http.Client,
-	ctx context.Context,
-) (string, error) {
-	userinfo, err := githubGetUserinfo(token.AccessToken, cfg.UserinfoURI, client, ctx)
+func (g *GitHubUserAdapter) Email(ctx context.Context, token *oauth2.Token, cfg *ProviderCfg, client *http.Client) (string, error) {
+	userinfo, err := githubGetUserinfo(ctx, token.AccessToken, cfg.UserinfoURI, client)
 	if err != nil {
 		return "", err
 	}
 
 	email, err := emailFromUserinfo(userinfo)
 	if err != nil {
-		email, err = githubPrimaryEmail(token.AccessToken, client, ctx)
+		email, err = githubPrimaryEmail(ctx, token.AccessToken, client)
 	}
 
 	if email == "" {
@@ -35,14 +30,8 @@ func (g *GitHubUserAdapter) Email(
 	return email, nil
 }
 
-func (g *GitHubUserAdapter) CreateUser(
-	email string,
-	token *oauth2.Token,
-	cfg *ProviderCfg,
-	client *http.Client,
-	ctx context.Context,
-) (*UserToCreate, error) {
-	userinfo, err := githubGetUserinfo(token.AccessToken, cfg.UserinfoURI, client, ctx)
+func (g *GitHubUserAdapter) CreateUser(ctx context.Context, email string, token *oauth2.Token, cfg *ProviderCfg, client *http.Client) (*UserToCreate, error) {
+	userinfo, err := githubGetUserinfo(ctx, token.AccessToken, cfg.UserinfoURI, client)
 	if err != nil {
 		return nil, err
 	}
@@ -59,12 +48,7 @@ func (g *GitHubUserAdapter) CreateUser(
 	}, nil
 }
 
-func githubGetUserinfo(
-	token string, // bearer token
-	url string, // userinfo url
-	client *http.Client,
-	ctx context.Context,
-) (string, error) {
+func githubGetUserinfo(ctx context.Context, token string, url string, client *http.Client) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
@@ -86,7 +70,7 @@ func githubGetUserinfo(
 	return string(content), nil
 }
 
-func githubPrimaryEmail(token string, client *http.Client, ctx context.Context) (string, error) {
+func githubPrimaryEmail(ctx context.Context, token string, client *http.Client) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/user/emails", nil)
 	if err != nil {
 		return "", err

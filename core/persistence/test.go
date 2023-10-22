@@ -49,7 +49,7 @@ func InitTestDB(baseDir string) *pgxpool.Pool {
 	}
 	db = util.Unwrap(newDBWithConfig(pgxConfig))
 
-	util.Ok(Migrate(MigrateUp, filepath.Join(baseDir, dbCfg.DB.MigrationsDir), db, context.Background()))
+	util.Ok(Migrate(context.Background(), MigrateUp, filepath.Join(baseDir, dbCfg.DB.MigrationsDir), db))
 
 	return db
 }

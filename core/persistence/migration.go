@@ -30,7 +30,7 @@ type Migration struct {
 // TODO write tests for this
 
 // Migrate takes a direction and a directory of migrations and executes them in the given direction.
-func Migrate(direction MigrateDirection, migrationsDir string, db *pgxpool.Pool, c context.Context) error {
+func Migrate(ctx context.Context, direction MigrateDirection, migrationsDir string, db *pgxpool.Pool) error {
 	migDir, err := os.ReadDir(migrationsDir) // read all migrations from directory
 	if err != nil {
 		return err
@@ -48,12 +48,12 @@ func Migrate(direction MigrateDirection, migrationsDir string, db *pgxpool.Pool,
 		migrations[key] = filename
 	}
 
-	err = ensureMigrationsTablesPresence(db, c)
+	err = ensureMigrationsTablesPresence(ctx, db)
 	if err != nil {
 		return err
 	}
 
-	rows, err := db.Query(c, "SELECT * FROM database_migrations")
+	rows, err := db.Query(ctx, "SELECT * FROM database_migrations")
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func Migrate(direction MigrateDirection, migrationsDir string, db *pgxpool.Pool,
 		executedMigrations[m.Name] = m // add found migration to list of executed migrations
 	}
 
-	err = migrateMigrations(direction, migrations, executedMigrations, migrationsDir, db, c)
+	err = migrateMigrations(ctx, direction, migrations, executedMigrations, migrationsDir, db)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,14 @@ func Migrate(direction MigrateDirection, migrationsDir string, db *pgxpool.Pool,
 }
 
 // migrateMigrations migrates a list of migrations up/down depending on the direction and the status of the migration.
-func migrateMigrations(direction MigrateDirection, migrations map[string]string, executedMigrations map[string]Migration, migrationsDir string, db *pgxpool.Pool, c context.Context) error {
+func migrateMigrations(
+	ctx context.Context,
+	direction MigrateDirection,
+	migrations map[string]string,
+	executedMigrations map[string]Migration,
+	migrationsDir string,
+	db *pgxpool.Pool,
+) error {
 	for name, migration := range migrations {
 		_, isMigrationExecuted := executedMigrations[name]
 		if direction == MigrateUp && isMigrationExecuted {
@@ -92,7 +99,7 @@ func migrateMigrations(direction MigrateDirection, migrations map[string]string,
 		}
 
 		fmt.Printf("executing migration %s\n", name)
-		err := migrate(name, direction, filepath.Join(migrationsDir, migration), db, c)
+		err := migrate(ctx, name, direction, filepath.Join(migrationsDir, migration), db)
 		if err != nil {
 			return err
 		}
@@ -102,19 +109,19 @@ func migrateMigrations(direction MigrateDirection, migrations map[string]string,
 }
 
 // migrate executes a single migration.
-func migrate(name string, direction MigrateDirection, migrationsPath string, db *pgxpool.Pool, c context.Context) error {
+func migrate(ctx context.Context, name string, direction MigrateDirection, migrationsPath string, db *pgxpool.Pool) error {
 	f, err := os.ReadFile(migrationsPath)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(c, string(f))
+	_, err = db.Exec(ctx, string(f))
 	if err != nil {
 		return err
 	}
 
 	if direction == MigrateUp {
-		_, err = db.Exec(c, "INSERT INTO database_migrations (name, timestamp) VALUES ($1, $2)", name, time.Now())
+		_, err = db.Exec(ctx, "INSERT INTO database_migrations (name, timestamp) VALUES ($1, $2)", name, time.Now())
 		if err != nil {
 			return err
 		}
@@ -123,7 +130,7 @@ func migrate(name string, direction MigrateDirection, migrationsPath string, db 
 	}
 
 	if direction == MigrateDown {
-		_, err = db.Exec(c, "DELETE FROM database_migrations WHERE name = $1", name)
+		_, err = db.Exec(ctx, "DELETE FROM database_migrations WHERE name = $1", name)
 		if err != nil {
 			return err
 		}
@@ -135,15 +142,15 @@ func migrate(name string, direction MigrateDirection, migrationsPath string, db 
 }
 
 // ensureMigrationsTablesPresence ensures that the migrations table is present in the database.
-func ensureMigrationsTablesPresence(db *pgxpool.Pool, c context.Context) error {
-	dbMigrationsTable, err := db.Query(c, "SELECT * FROM information_schema.tables WHERE table_name = 'database_migrations'")
+func ensureMigrationsTablesPresence(ctx context.Context, db *pgxpool.Pool) error {
+	dbMigrationsTable, err := db.Query(ctx, "SELECT * FROM information_schema.tables WHERE table_name = 'database_migrations'")
 	if err != nil {
 		return err
 	}
 
 	dbMigrationsTableExists := dbMigrationsTable.Next()
 	if !dbMigrationsTableExists {
-		_, err = db.Exec(c, "CREATE TABLE database_migrations (name VARCHAR(255) NOT NULL PRIMARY KEY, timestamp TIMESTAMP NOT NULL, executed_at TIMESTAMP NOT NULL DEFAULT NOW())")
+		_, err = db.Exec(ctx, "CREATE TABLE database_migrations (name VARCHAR(255) NOT NULL PRIMARY KEY, timestamp TIMESTAMP NOT NULL, executed_at TIMESTAMP NOT NULL DEFAULT NOW())")
 		if err != nil {
 			return err
 		}
