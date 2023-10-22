@@ -9,10 +9,10 @@ import (
 
 // Session is a generic session entity with a payload and metainformation.
 // It can be saved in the SessionStore which is a key-value store.
-type Session[V any, M any] struct {
+type Session[P any, M any] struct {
 	ID        uuid.UUID
 	Type      string
-	Payload   V
+	Payload   P
 	Meta      M
 	CreatedAt time.Time
 	ExpiresAt time.Time
@@ -38,7 +38,7 @@ type SessionRepository[V any] interface {
 
 // PGReadValidSession reads a session from the database into the session parameter by the key (id).
 // If the session has expired it will delete the session from the database and return a persistence.ErrSessionExpired.
-func PGReadValidSession[V any, M any](ctx context.Context, db *pgxpool.Pool, key uuid.UUID, session *Session[V, M]) error {
+func PGReadValidSession[P any, M any](ctx context.Context, db *pgxpool.Pool, key uuid.UUID, session *Session[P, M]) error {
 	err := PGReadSession(ctx, db, key, session)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func PGReadValidSession[V any, M any](ctx context.Context, db *pgxpool.Pool, key
 
 // PGReadSession reads a session from the database into the session parameter by the key (id).
 // It does not check if the session has expired.
-func PGReadSession[V any, M any](ctx context.Context, db *pgxpool.Pool, key uuid.UUID, session *Session[V, M]) error {
+func PGReadSession[P any, M any](ctx context.Context, db *pgxpool.Pool, key uuid.UUID, session *Session[P, M]) error {
 	return db.QueryRow(ctx, "SELECT id, type, payload, meta, created_at, expires_at, updated_at FROM sessions WHERE id = $1", key).
 		Scan(&session.ID, &session.Type, &session.Payload, &session.Meta, &session.CreatedAt, &session.ExpiresAt, &session.UpdatedAt)
 }
@@ -67,7 +67,7 @@ func PGReadSession[V any, M any](ctx context.Context, db *pgxpool.Pool, key uuid
 // PGWriteSession writes a session to the database.
 // If insert is true, it will insert the session into the database. Otherwise, it will update the session in the database.
 // Upon update, it will also set the updated_at field to the current time.
-func PGWriteSession[V any, M any](ctx context.Context, db *pgxpool.Pool, session *Session[V, M]) error {
+func PGWriteSession[P any, M any](ctx context.Context, db *pgxpool.Pool, session *Session[P, M]) error {
 	return db.QueryRow(
 		ctx,
 		`INSERT INTO sessions (id, type, payload, meta, created_at, expires_at) 
@@ -93,6 +93,6 @@ func PGDeleteSession(ctx context.Context, db *pgxpool.Pool, key uuid.UUID) error
 }
 
 // IsValidSession checks if a session has expired.
-func IsValidSession[V, K any](session *Session[V, K]) bool {
+func IsValidSession[P, M any](session *Session[P, M]) bool {
 	return session.ExpiresAt.After(time.Now())
 }

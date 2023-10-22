@@ -3,7 +3,8 @@ package main
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/org-harmony/harmony/src/core/auth"
+	"github.com/org-harmony/harmony/src/app/user"
+	userWeb "github.com/org-harmony/harmony/src/app/user/web"
 	"github.com/org-harmony/harmony/src/core/config"
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/persistence"
@@ -13,6 +14,7 @@ import (
 	"github.com/org-harmony/harmony/src/core/web"
 )
 
+// TODO move user to app and decouple from auth
 // TODO Add translations
 // TODO Migrate to Bootstrap 5
 
@@ -27,7 +29,7 @@ func main() {
 	appCtx := hctx.NewAppContext(l, v, p)
 
 	web.RegisterHome(appCtx, webCtx)
-	auth.RegisterAuth(appCtx, webCtx)
+	userWeb.RegisterController(appCtx, webCtx)
 
 	util.Ok(web.Serve(r, webCtx.Configuration().Server))
 }
@@ -59,10 +61,10 @@ func initRepositoryProvider(db *pgxpool.Pool) persistence.RepositoryProvider {
 	p := persistence.NewPGRepositoryProvider(db)
 
 	util.Ok(p.RegisterRepository(func(db any) (persistence.Repository, error) {
-		return auth.NewUserRepository(db.(*pgxpool.Pool)), nil
+		return user.NewUserRepository(db.(*pgxpool.Pool)), nil
 	}))
 	util.Ok(p.RegisterRepository(func(db any) (persistence.Repository, error) {
-		return auth.NewPGUserSessionRepository(db.(*pgxpool.Pool)), nil
+		return user.NewPGUserSessionRepository(db.(*pgxpool.Pool)), nil
 	}))
 
 	return p

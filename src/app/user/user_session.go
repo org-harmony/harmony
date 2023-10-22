@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -11,48 +11,48 @@ import (
 )
 
 const (
-	UserSessionRepositoryName = "UserSessionRepository"
-	UserSessionCookieName     = "harmony_session"
-	UserSessionType           = "user"
+	SessionRepositoryName = "UserSessionRepository"
+	SessionCookieName     = "harmony_session"
+	SessionType           = "user"
 )
 
-// UserSession is the user session entity.
-// It is a persistence.Session with the User as the payload and UserSessionMeta as the meta.
-type UserSession struct {
-	persistence.Session[User, UserSessionMeta]
+// Session is the user session entity.
+// It is a persistence.Session with the User as the payload and SessionMeta as the meta.
+type Session struct {
+	persistence.Session[User, SessionMeta]
 }
 
-// UserSessionMeta is the metainformation about a user session.
-type UserSessionMeta struct{}
+// SessionMeta is the metainformation about a user session.
+type SessionMeta struct{}
 
-// PGUserSessionRepository is the Postgres implementation of the UserSessionRepository interface.
+// PGUserSessionRepository is the Postgres implementation of the SessionRepository interface.
 // It allows saving and reading user sessions from the application's Postgres database.
 type PGUserSessionRepository struct {
 	db *pgxpool.Pool
 }
 
-// UserSessionRepository defines the session store for user sessions.
-// It is a persistence.SessionRepository with the UserSession as the session.
-type UserSessionRepository interface {
-	persistence.SessionRepository[*UserSession]
+// SessionRepository defines the session store for user sessions.
+// It is a persistence.SessionRepository with the Session as the session.
+type SessionRepository interface {
+	persistence.SessionRepository[*Session]
 }
 
 // NewPGUserSessionRepository creates a new PGUserSessionRepository. It requires a Postgres database connection pool.
-func NewPGUserSessionRepository(db *pgxpool.Pool) UserSessionRepository {
+func NewPGUserSessionRepository(db *pgxpool.Pool) SessionRepository {
 	return &PGUserSessionRepository{db: db}
 }
 
 // RepositoryName returns the name of the repository.
 func (r *PGUserSessionRepository) RepositoryName() string {
-	return UserSessionRepositoryName
+	return SessionRepositoryName
 }
 
 // Read reads a valid user session from the database by id.
 // If the session has expired it will return a persistence.ErrReadRow and a persistence.ErrSessionExpired.
 // The invalid session is thereafter deleted from the database.
-func (r *PGUserSessionRepository) Read(ctx context.Context, id uuid.UUID) (*UserSession, error) {
-	session := &UserSession{
-		Session: persistence.Session[User, UserSessionMeta]{},
+func (r *PGUserSessionRepository) Read(ctx context.Context, id uuid.UUID) (*Session, error) {
+	session := &Session{
+		Session: persistence.Session[User, SessionMeta]{},
 	}
 
 	err := persistence.PGReadValidSession(ctx, r.db, id, &session.Session)
@@ -65,7 +65,7 @@ func (r *PGUserSessionRepository) Read(ctx context.Context, id uuid.UUID) (*User
 
 // Write writes a user session to the database. The session is identified by the id *not* the session id.
 // Also, the session id will be overwritten by the id passed as second argument to PGUserSessionRepository.Write.
-func (r *PGUserSessionRepository) Write(ctx context.Context, id uuid.UUID, session *UserSession) error {
+func (r *PGUserSessionRepository) Write(ctx context.Context, id uuid.UUID, session *Session) error {
 	session.ID = id
 
 	err := persistence.PGWriteSession(ctx, r.db, &session.Session)
@@ -88,7 +88,7 @@ func (r *PGUserSessionRepository) Delete(ctx context.Context, id uuid.UUID) erro
 }
 
 // Insert inserts a new user session into the database.
-func (r *PGUserSessionRepository) Insert(ctx context.Context, session *UserSession) error {
+func (r *PGUserSessionRepository) Insert(ctx context.Context, session *Session) error {
 	id := uuid.New()
 	session.ID = id
 
@@ -100,20 +100,20 @@ func (r *PGUserSessionRepository) Insert(ctx context.Context, session *UserSessi
 	return nil
 }
 
-// UserSessionStore returns the user session store from the application context.
+// SessionStore returns the user session store from the application context.
 // It panics if the user session store is not registered in the application context.
 // Thus, it should only be used after the application context has been initialized.
-func UserSessionStore(app hctx.AppContext) UserSessionRepository {
-	return util.UnwrapType[UserSessionRepository](app.Repository(UserSessionRepositoryName))
+func SessionStore(app hctx.AppContext) SessionRepository {
+	return util.UnwrapType[SessionRepository](app.Repository(SessionRepositoryName))
 }
 
 // NewUserSession creates a new user session with the given user that expires now + duration.
-func NewUserSession(user *User, duration time.Duration) *UserSession {
-	return &UserSession{
-		Session: persistence.Session[User, UserSessionMeta]{
-			Type:      UserSessionType,
+func NewUserSession(user *User, duration time.Duration) *Session {
+	return &Session{
+		Session: persistence.Session[User, SessionMeta]{
+			Type:      SessionType,
 			Payload:   *user,
-			Meta:      UserSessionMeta{},
+			Meta:      SessionMeta{},
 			CreatedAt: time.Now(),
 			ExpiresAt: time.Now().Add(duration),
 		},

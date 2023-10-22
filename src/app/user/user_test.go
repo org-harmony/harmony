@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 
 var (
 	db   *pgxpool.Pool
-	repo UserRepository
+	repo Repository
 	ctx  context.Context
 )
 
@@ -63,8 +63,8 @@ func TestPGUserRepository(t *testing.T) {
 	assert.Equal(t, id, user.ID)
 }
 
-func fooUserToCreate() *UserToCreate {
-	return &UserToCreate{
+func fooUserToCreate() *ToCreate {
+	return &ToCreate{
 		Email:     "foo@bar.com",
 		Firstname: "Foo",
 		Lastname:  "Bar",
