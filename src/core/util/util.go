@@ -54,26 +54,10 @@ func ErrErr(e1, e2 error) error {
 	return fmt.Errorf("%w: %w", e1, e2)
 }
 
-// CtxPtr returns a pointer to the value of the context key.
-// If the value is not of type *T, it returns false.
-func CtxPtr[T any](ctx context.Context, key any) (*T, bool) {
-	v := ctx.Value(key)
-	if v == nil {
-		return nil, false
-	}
-
-	vT, ok := v.(*T)
-	if !ok {
-		return nil, false
-	}
-
-	return vT, true
-}
-
 // CtxValue returns the value of the context key.
-// If the value is not of type T, it returns false and the empty value.
-// The empty value is required because the zero value of T could not be inferred.
-func CtxValue[T any](ctx context.Context, key any, empty T) (T, bool) {
+func CtxValue[T any](ctx context.Context, key any) (T, bool) {
+	var empty T
+
 	v := ctx.Value(key)
 	if v == nil {
 		return empty, false
