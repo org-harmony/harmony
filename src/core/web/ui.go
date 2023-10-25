@@ -247,7 +247,7 @@ func BaseTemplate(ui *UICfg) (*template.Template, error) {
 // makeTemplateTranslatable overrides the translation functions t/tf on the template using the translator from the context.
 // This function is intended to be used with the trans.Middleware.
 func makeTemplateTranslatable(ctx context.Context, t *template.Template) error {
-	translator, ok := util.CtxValue[trans.Translator](ctx, trans.TranslatorContextKey, nil)
+	translator, ok := util.CtxValue[trans.Translator](ctx, trans.TranslatorContextKey)
 	if !ok {
 		return trans.ErrTranslatorNotFound
 	}

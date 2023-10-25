@@ -132,7 +132,7 @@ func SessionIDFromRequest(r *http.Request) (uuid.UUID, error) {
 // This is ideally paired with the user.Middleware which sets the user in the context with the key user.ContextKey.
 // CtxUser looks for the user.ContextKey in the context.
 func CtxUser(ctx context.Context) (*User, error) {
-	u, ok := util.CtxPtr[User](ctx, ContextKey)
+	u, ok := util.CtxValue[*User](ctx, ContextKey)
 	if !ok {
 		return nil, ErrNotInContext
 	}
