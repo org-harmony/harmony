@@ -38,7 +38,7 @@ type MockSession struct {
 	Session[MockPayload, MockMeta]
 }
 
-func TestPGReadSession(t *testing.T) {
+func TestPGSessionFunctions(t *testing.T) {
 	sessionWrite := newMockSession()
 
 	err := PGWriteSession(ctx, db, &sessionWrite.Session)
@@ -75,6 +75,22 @@ func TestPGReadSession(t *testing.T) {
 
 	err = PGDeleteSession(ctx, db, uuid.New())
 	assert.NoError(t, err)
+
+	expiredSessionWrite := newMockSession()
+	expiredSessionWrite.ExpiresAt = time.Now().Add(-time.Hour)
+	err = PGWriteSession(ctx, db, &expiredSessionWrite.Session)
+
+	var sessionReadExpired MockSession
+	err = PGReadSession(ctx, db, expiredSessionWrite.ID, &sessionReadExpired.Session)
+	assert.NoError(t, err)
+	assert.Equal(t, expiredSessionWrite.ID, sessionReadExpired.ID)
+
+	sessionReadExpired = MockSession{}
+	err = PGReadValidSession(ctx, db, expiredSessionWrite.ID, &sessionReadExpired.Session)
+	assert.ErrorIs(t, err, ErrSessionExpired)
+
+	err = PGReadSession(ctx, db, expiredSessionWrite.ID, &sessionReadExpired.Session)
+	assert.ErrorIs(t, err, pgx.ErrNoRows)
 }
 
 func newMockSession() MockSession {
@@ -87,15 +103,5 @@ func newMockSession() MockSession {
 			CreatedAt: time.Now(),
 			ExpiresAt: time.Now().Add(time.Hour),
 		},
-	}
-}
-
-// TruncateSessionDates truncates the session's dates to the millisecond.
-// This is necessary because the database truncates the dates to the millisecond. (PostgreSQL)
-func TruncateSessionDates(session *Session[MockPayload, MockMeta]) {
-	session.CreatedAt = session.CreatedAt.Truncate(time.Millisecond)
-	session.ExpiresAt = session.ExpiresAt.Truncate(time.Millisecond)
-	if session.UpdatedAt != nil {
-		*session.UpdatedAt = session.UpdatedAt.Truncate(time.Millisecond)
 	}
 }
