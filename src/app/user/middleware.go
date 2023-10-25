@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/org-harmony/harmony/src/core/util"
 	"net/http"
 )
 
@@ -131,13 +132,8 @@ func SessionIDFromRequest(r *http.Request) (uuid.UUID, error) {
 // This is ideally paired with the user.Middleware which sets the user in the context with the key user.ContextKey.
 // CtxUser looks for the user.ContextKey in the context.
 func CtxUser(ctx context.Context) (*User, error) {
-	user := ctx.Value(ContextKey)
-	if user == nil {
-		return nil, ErrNotInContext
-	}
-
-	u, ok := user.(*User)
-	if !ok || u == nil {
+	u, ok := util.CtxPtr[User](ctx, ContextKey)
+	if !ok {
 		return nil, ErrNotInContext
 	}
 

@@ -1,0 +1,10 @@
+translations_dir = "translations"
+
+[locales.de]
+path = "de"
+name = "Deutsch"
+default = true
+
+[locales.en]
+path = "en"
+name = "English"

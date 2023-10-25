@@ -13,31 +13,16 @@ import (
 type AppCtx struct {
 	logger    trace.Logger
 	repos     persistence.RepositoryProvider
-	validator *validator.Validate
+	Validator *validator.Validate
 }
 
-// AppContext is the interface for the application context.
-// It contains parts that are common to all parts of the application.
-// AppContext is itself a trace.Logger and a persistence.RepositoryProvider.
-type AppContext interface {
-	trace.Logger
-	persistence.RepositoryProvider
-
-	Validator() *validator.Validate
-}
-
-// NewAppContext creates a new application context.
-func NewAppContext(l trace.Logger, v *validator.Validate, repos persistence.RepositoryProvider) AppContext {
+// NewAppCtx creates a new application context.
+func NewAppCtx(l trace.Logger, v *validator.Validate, repos persistence.RepositoryProvider) *AppCtx {
 	return &AppCtx{
 		logger:    l,
-		validator: v,
+		Validator: v,
 		repos:     repos,
 	}
-}
-
-// Validator returns the validator.
-func (c *AppCtx) Validator() *validator.Validate {
-	return c.validator
 }
 
 // Debug logs a debug message with the trace.Logger of the application context.
@@ -72,6 +57,6 @@ func (c *AppCtx) RegisterRepository(init func(db any) (persistence.Repository, e
 
 // SessionStore returns a session store by name and type.
 // It uses util.UnwrapType which panics if the session store is not found or the type is wrong.
-func SessionStore[V any](app AppContext, name string) persistence.SessionRepository[V] {
+func SessionStore[V any](app *AppCtx, name string) persistence.SessionRepository[V] {
 	return util.UnwrapType[persistence.SessionRepository[V]](app.Repository(name))
 }

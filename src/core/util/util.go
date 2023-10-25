@@ -1,6 +1,9 @@
 package util
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // Unwrap panics if the error is not nil. Otherwise, it returns the value.
 func Unwrap[T any](v T, e error) T {
@@ -44,7 +47,42 @@ func Wrap(e error, msg string) error {
 	return fmt.Errorf("%s: %w", msg, e)
 }
 
+// TODO remove and use errors.Join instead
+
 // ErrErr wraps an error with another error.
 func ErrErr(e1, e2 error) error {
 	return fmt.Errorf("%w: %w", e1, e2)
+}
+
+// CtxPtr returns a pointer to the value of the context key.
+// If the value is not of type *T, it returns false.
+func CtxPtr[T any](ctx context.Context, key any) (*T, bool) {
+	v := ctx.Value(key)
+	if v == nil {
+		return nil, false
+	}
+
+	vT, ok := v.(*T)
+	if !ok {
+		return nil, false
+	}
+
+	return vT, true
+}
+
+// CtxValue returns the value of the context key.
+// If the value is not of type T, it returns false and the empty value.
+// The empty value is required because the zero value of T could not be inferred.
+func CtxValue[T any](ctx context.Context, key any, empty T) (T, bool) {
+	v := ctx.Value(key)
+	if v == nil {
+		return empty, false
+	}
+
+	vT, ok := v.(T)
+	if !ok {
+		return empty, false
+	}
+
+	return vT, true
 }

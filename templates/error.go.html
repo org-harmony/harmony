@@ -5,7 +5,7 @@
 {{ define "content-body" }}
     <div class="notification is-danger is-light">
         <p>
-            {{ t "Es ist ein Fehler aufgetreten:" }} {{ .Err }}
+            {{ t "error.generic.an-error-occured" }} {{ t .Err }}
         </p>
     </div>
 {{ end }}
