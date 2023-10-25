@@ -1,23 +1,31 @@
-// Package auth provides authentication details and logic for HARMONY.
-// Auth is a part of the core package as it provides user authentication for all domains.
+// Package auth manages authentication in HARMONY.
 package auth
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/org-harmony/harmony/src/core/persistence"
-	"github.com/org-harmony/harmony/src/core/web"
 	"golang.org/x/oauth2"
 	"net/http"
 	"time"
 )
 
-// Cfg is the config for the auth package.
+import (
+	"context"
+)
+
+var (
+	// ErrInvalidOAuthState is returned when the OAuth state is invalid.
+	ErrInvalidOAuthState = errors.New("invalid oauth state")
+	// ErrCodeExchangeFailed is returned when the OAuth code exchange failed.
+	ErrCodeExchangeFailed = errors.New("code exchange failed")
+)
+
+// Cfg holds the authentication configuration.
 type Cfg struct {
 	// Providers contains a list of OAuth2 providers.
-	Providers    map[string]ProviderCfg `toml:"provider"`
-	EnableOAuth2 bool                   `toml:"enable_oauth2"`
+	Providers    map[string]*ProviderCfg `toml:"provider"`
+	EnableOAuth2 bool                    `toml:"enable_oauth2"`
 }
 
 // ProviderCfg is the config for an OAuth2 provider.
@@ -32,21 +40,14 @@ type ProviderCfg struct {
 	Scopes         []string `toml:"scopes" validate:"required"`
 }
 
-func OAuthLogin[P, M any](
-	request *http.Request,
-	providers map[string]ProviderCfg,
-	baseURL string,
-	login func(context.Context, *oauth2.Token, *ProviderCfg) (*persistence.Session[P, M], error),
-) (*persistence.Session[P, M], error) {
-	ctx := request.Context()
-	name := web.URLParam(request, "provider")
-	state := request.FormValue("state")
-	code := request.FormValue("code")
+type LoginFunc[P, M any] func(context.Context, *oauth2.Token, *ProviderCfg) (*persistence.Session[P, M], error)
 
-	oAuthCfg, provider, err := OAuthConfig(name, providers, baseURL)
-	if err != nil {
-		return nil, err
-	}
+// OAuthLogin handles the OAuth2 login process, including state and code verification.
+// The login callback is responsible for creating the user session.
+//
+// Login happens through a callback because the user session is not part of the auth package rather it is domain specific.
+func OAuthLogin[P, M any](ctx context.Context, state, code string, provider *ProviderCfg, login LoginFunc[P, M]) (*persistence.Session[P, M], error) {
+	oAuthCfg := OAuthCfgFromProviderCfg(provider, "") // empty redirect URL because it is not used in this function
 
 	token, err := OAuthVerify(ctx, code, state, oAuthCfg)
 	if err != nil {
@@ -56,32 +57,22 @@ func OAuthLogin[P, M any](
 	return login(ctx, token, provider)
 }
 
-// OAuthVerify verifies the oauth login by verifying the state and exchanging the code for a token.
+// OAuthVerify verifies the OAuth2 state and exchanges the code for a token.
 func OAuthVerify(ctx context.Context, code string, state string, cfg *oauth2.Config) (*oauth2.Token, error) {
-	if state != "state" {
-		return nil, errors.New("invalid oauth state")
+	if state != "state" { // TODO add checks for dynamic state
+		return nil, ErrInvalidOAuthState
 	}
 
 	token, err := cfg.Exchange(ctx, code)
 	if err != nil {
-		return nil, fmt.Errorf("code exchange failed: %s", err.Error())
+		return nil, fmt.Errorf("%w: %s", ErrCodeExchangeFailed, err.Error())
 	}
 
 	return token, nil
 }
 
-// OAuthConfig returns the OAuth2 config for the given provider name.
-func OAuthConfig(name string, providers map[string]ProviderCfg, baseURL string) (*oauth2.Config, *ProviderCfg, error) {
-	p, ok := providers[name]
-	if !ok {
-		return nil, nil, fmt.Errorf("auth: provider %s not found", name)
-	}
-
-	return OAuthCfgFromProviderCfg(p, baseURL), &p, nil
-}
-
-// OAuthCfgFromProviderCfg returns the OAuth2 config for the given provider config.
-func OAuthCfgFromProviderCfg(p ProviderCfg, baseURL string) *oauth2.Config {
+// OAuthCfgFromProviderCfg returns the oauth2.Config for the given provider and redirect URL config.
+func OAuthCfgFromProviderCfg(p *ProviderCfg, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     p.ClientID,
 		ClientSecret: p.ClientSecret,
@@ -90,13 +81,13 @@ func OAuthCfgFromProviderCfg(p ProviderCfg, baseURL string) *oauth2.Config {
 			TokenURL: p.AccessTokenURI,
 		},
 		Scopes:      p.Scopes,
-		RedirectURL: fmt.Sprintf("%s%s", baseURL, fmt.Sprintf("/auth/login/%s/success", p.Name)),
+		RedirectURL: redirectURL,
 	}
 }
 
-// SetSession sets the user session cookie on the response.
-// The session id is used as the cookie value.
-// The session expires at the time of the session.
+// SetSession sets the session cookie on the response.
+// The session ID is used as the cookie value.
+// The cookie expires at the same time as the session.
 func SetSession[P, M any](w http.ResponseWriter, name string, session *persistence.Session[P, M]) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,
@@ -109,7 +100,7 @@ func SetSession[P, M any](w http.ResponseWriter, name string, session *persisten
 	})
 }
 
-// ClearSession clears the user session cookie on the response.
+// ClearSession clears the session cookie on the response.
 func ClearSession(w http.ResponseWriter, name string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,

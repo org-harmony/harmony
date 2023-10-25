@@ -4,6 +4,7 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/trace"
@@ -46,7 +47,7 @@ type Ctx struct {
 // The Controller is aware of the application context and the web context.
 // The Controller implements the http.Handler interface and can therefore be used as a handler.
 type Controller struct {
-	app     hctx.AppContext
+	app     *hctx.AppCtx
 	ctx     Context
 	handler func(io IO) error
 }
@@ -60,6 +61,8 @@ type HIO struct {
 	rt Router
 }
 
+// TODO Context to Struct?
+
 // Context is the web application context.
 type Context interface {
 	Router() Router                 // Router returns an instance of Router.
@@ -67,12 +70,15 @@ type Context interface {
 	TemplaterStore() TemplaterStore // TemplaterStore returns an instance of TemplaterStore.
 }
 
+// TODO Add Template() Method to IO
+
 // IO allows for simplified access to the http.ResponseWriter and http.Request.
 // IO is passed to a Controller's handler function allowing the handler to interact with the http.ResponseWriter and http.Request.
 // At the same time, IO allows the handler to interact with frequently used functionality such as logging and rendering.
 type IO interface {
 	Response() http.ResponseWriter        // Response returns the http.ResponseWriter.
 	Request() *http.Request               // Request returns the http.Request.
+	Context() context.Context             // Context returns the context.Context.
 	Logger() trace.Logger                 // Logger returns the application logger.
 	TemplaterStore() TemplaterStore       // TemplaterStore returns an instance of TemplaterStore.
 	Router() Router                       // Router returns an instance of Router.
@@ -106,7 +112,7 @@ func (c *Ctx) TemplaterStore() TemplaterStore {
 }
 
 // NewController returns a new Controller.
-func NewController(app hctx.AppContext, ctx Context, handler func(io IO) error) http.Handler {
+func NewController(app *hctx.AppCtx, ctx Context, handler func(io IO) error) http.Handler {
 	if app == nil || ctx == nil || handler == nil {
 		panic("nil contexts or handler")
 	}
@@ -136,7 +142,7 @@ func (c *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Writer returns the http.ResponseWriter.
+// Response returns the http.ResponseWriter.
 func (h *HIO) Response() http.ResponseWriter {
 	return h.w
 }
@@ -144,6 +150,11 @@ func (h *HIO) Response() http.ResponseWriter {
 // Request returns the http.Request.
 func (h *HIO) Request() *http.Request {
 	return h.r
+}
+
+// Context returns the context.Context.
+func (h *HIO) Context() context.Context {
+	return h.r.Context()
 }
 
 // Logger returns the application logger.
@@ -163,7 +174,10 @@ func (h *HIO) Router() Router {
 
 // Render renders a template with data. If an error occurs, the error is returned.
 func (h *HIO) Render(t *template.Template, data any) error {
-	// TODO add translations through HIO with language detection
+	if err := makeTemplateTranslatable(h.r.Context(), t); err != nil {
+		return util.ErrErr(ErrTemplateNotTranslatable, err)
+	}
+
 	return util.Wrap(t.Execute(h.w, data), "failed to render template")
 }
 
@@ -177,6 +191,10 @@ func (h *HIO) Error(e error) error {
 	errTemplate, err := errTemplater.Template("error", "error.go.html")
 	if err != nil {
 		return err
+	}
+
+	if err = makeTemplateTranslatable(h.r.Context(), errTemplate); err != nil {
+		return util.ErrErr(ErrTemplateNotTranslatable, err)
 	}
 
 	return errTemplate.Execute(h.w, NewErrorTemplateData(h.r.Context(), e.Error()))
@@ -217,14 +235,4 @@ func MountFileServer(r Router, cfg *FileServerCfg) {
 // Serve starts a web server with a router and config.
 func Serve(r Router, cfg *ServerCfg) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%s", cfg.Addr, cfg.Port), r)
-}
-
-// RegisterHome registers the home page on a router.
-func RegisterHome(appCtx hctx.AppContext, webCtx Context) {
-	lp := util.Unwrap(webCtx.TemplaterStore().Templater(LandingPageTemplateName))
-	t := util.Unwrap(lp.Template("home", "home.go.html"))
-
-	webCtx.Router().Get("/", NewController(appCtx, webCtx, func(io IO) error {
-		return io.Render(t, nil)
-	}).ServeHTTP)
 }

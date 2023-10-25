@@ -3,7 +3,7 @@
 {{ end }}
 
 {{ define "title" }}
-    {{ t "Willkommen bei HARMONY" }}
+    {{ t "harmony.head.welcome" }}
 {{ end }}
 
 {{ define "header" }}
@@ -21,22 +21,13 @@
 {{ end }}
 
 {{ define "content-body" }}
-    <h1>{{ t "Willkommen bei HARMONY" }}</h1>
+    <h1>{{ t "harmony.head.welcome" }}</h1>
 
-    <p>
-        {{ t "HARMONY ist ein anpassbares Tool zur Erfassung, zum Management und zur Organisation von Anforderungen." }}
-        {{ t "Wir möchten ein einfaches, aber leistungsstarkes Werkzeug zur Verwaltung von Anforderungen und langfristig auch zur besseren Organisation von Projekten zur Verfügung stellen." }}
-        {{ t "Wir bemühen uns sehr HARMONY konstant zu verbessern und weiterzuentwickeln. Wenn Sie also Vorschläge haben, lassen Sie es uns bitte wissen!" }}
-    </p>
-
-    <p>
-        {{ t "HARMONY befindet sich derzeit in der Alpha-Phase, daher kann es sein, dass es noch Fehler und fehlende Funktionen gibt." }}
-        {{ t "Wir sind auf Ihr Feedback und Erfahrungen gespannt. :)" }}
-    </p>
+    {{ t "harmony.text.welcome" | safeHTML }}
 
     <div class="columns">
         <div class="column">
-            <a href="/auth/login" class="button is-primary is-action-button">{{ t "Anmelden" }}</a>
+            <a href="auth/login" class="button is-primary is-action-button">{{ t "user.auth.login.action" }}</a>
         </div>
     </div>
 {{ end }}

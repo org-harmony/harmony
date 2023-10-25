@@ -13,25 +13,26 @@ import (
 	"net/http"
 )
 
-func oAuthLoginController(appCtx hctx.AppContext, webCtx web.Context, providers map[string]auth.ProviderCfg) http.Handler {
+func oAuthLoginController(appCtx *hctx.AppCtx, webCtx web.Context, providers map[string]*auth.ProviderCfg) http.Handler {
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		name := web.URLParam(io.Request(), "provider")
+		redirectURL := oAuthProviderRedirectURL(webCtx, name)
 
-		oAuthCfg, _, err := auth.OAuthConfig(name, providers, webCtx.Configuration().Server.BaseURL)
+		oAuthCfg, _, err := oAuthCfgFromProviderMap(name, providers, redirectURL)
 		if err != nil {
 			return io.Error(web.ExtErr("auth.error.invalid-provider"))
 		}
 
-		url := oAuthCfg.AuthCodeURL("state") // TODO state
+		url := oAuthCfg.AuthCodeURL("state") // TODO dynamize state through method in auth.go
 
 		return io.Redirect(url, http.StatusTemporaryRedirect)
 	})
 }
 
 func oAuthLoginSuccessController(
-	appCtx hctx.AppContext,
+	appCtx *hctx.AppCtx,
 	webCtx web.Context,
-	providers map[string]auth.ProviderCfg,
+	providers map[string]*auth.ProviderCfg,
 	adapters map[string]user.OAuthUserAdapter,
 ) http.Handler {
 	userRepository := util.UnwrapType[user.Repository](appCtx.Repository(user.RepositoryName))
@@ -39,11 +40,17 @@ func oAuthLoginSuccessController(
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		request := io.Request()
+		name := web.URLParam(request, "provider")
+		provider, ok := providers[name]
+		if !ok {
+			return io.Error(web.ExtErr("auth.error.invalid-provider"))
+		}
 
 		session, err := auth.OAuthLogin(
-			request,
-			providers,
-			webCtx.Configuration().Server.BaseURL,
+			request.Context(),
+			request.FormValue("state"),
+			request.FormValue("code"),
+			provider,
 			func(
 				ctx context.Context,
 				token *oauth2.Token,
@@ -72,4 +79,23 @@ func oAuthLoginSuccessController(
 
 		return io.Redirect("/auth/user", http.StatusTemporaryRedirect)
 	})
+}
+
+// oAuthProviderRedirectURL returns the redirect URL for a specified provider.
+func oAuthProviderRedirectURL(webCtx web.Context, providerName string) string {
+	return fmt.Sprintf(
+		"%s%s",
+		webCtx.Configuration().Server.BaseURL,
+		fmt.Sprintf("/auth/login/%s/success", providerName),
+	)
+}
+
+// oAuthCfgFromProviderMap returns the OAuth2 configuration for a specified provider.
+func oAuthCfgFromProviderMap(name string, providers map[string]*auth.ProviderCfg, redirectURL string) (*oauth2.Config, *auth.ProviderCfg, error) {
+	p, ok := providers[name]
+	if !ok {
+		return nil, nil, fmt.Errorf("auth: provider %s not found", name)
+	}
+
+	return auth.OAuthCfgFromProviderCfg(p, redirectURL), p, nil
 }

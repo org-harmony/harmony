@@ -12,11 +12,11 @@ import (
 
 const Pkg = "app.user"
 
-func RegisterController(appCtx hctx.AppContext, webCtx web.Context) {
+func RegisterController(appCtx *hctx.AppCtx, webCtx web.Context) {
 	router := webCtx.Router()
 
 	authCfg := &auth.Cfg{}
-	util.Ok(config.C(authCfg, config.From("auth"), config.Validate(appCtx.Validator())))
+	util.Ok(config.C(authCfg, config.From("auth"), config.Validate(appCtx.Validator)))
 
 	router.With(user.Middleware(user.SessionStore(appCtx), user.AllowAnonymous)).
 		Get("/auth/login", loginController(appCtx, webCtx, authCfg).ServeHTTP)
@@ -28,21 +28,21 @@ func RegisterController(appCtx hctx.AppContext, webCtx web.Context) {
 	}
 }
 
-func loginController(appCtx hctx.AppContext, webCtx web.Context, providers *auth.Cfg) http.Handler {
+func loginController(appCtx *hctx.AppCtx, webCtx web.Context, providers *auth.Cfg) http.Handler {
 	loginTemplate := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
 		Template("auth.login", "auth/login.go.html"))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		_, err := user.CtxUser(io.Request().Context())
+		_, err := user.CtxUser(io.Context())
 		if err == nil {
 			return io.Redirect("/auth/user", http.StatusTemporaryRedirect)
 		}
 
-		return io.Render(loginTemplate, providers)
+		return io.Render(loginTemplate, web.NewTemplateData(providers))
 	})
 }
 
-func logoutController(appCtx hctx.AppContext, webCtx web.Context) http.Handler {
+func logoutController(appCtx *hctx.AppCtx, webCtx web.Context) http.Handler {
 	sessionStore := user.SessionStore(appCtx)
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
@@ -52,7 +52,7 @@ func logoutController(appCtx hctx.AppContext, webCtx web.Context) http.Handler {
 		}
 
 		auth.ClearSession(io.Response(), user.SessionCookieName)
-		err = sessionStore.Delete(io.Request().Context(), sessionID)
+		err = sessionStore.Delete(io.Context(), sessionID)
 		if err != nil {
 			return err
 		}
@@ -61,18 +61,18 @@ func logoutController(appCtx hctx.AppContext, webCtx web.Context) http.Handler {
 	})
 }
 
-func userController(appCtx hctx.AppContext, webCtx web.Context) http.Handler {
+func userController(appCtx *hctx.AppCtx, webCtx web.Context) http.Handler {
 	userTemplate := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
 		Template("auth.user", "auth/user.go.html"))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		user := util.Unwrap(user.CtxUser(io.Request().Context()))
+		user := util.Unwrap(user.CtxUser(io.Context()))
 
 		return io.Render(userTemplate, user)
 	})
 }
 
-func registerOAuth2Controller(appCtx hctx.AppContext, webCtx web.Context, authCfg *auth.Cfg) {
+func registerOAuth2Controller(appCtx *hctx.AppCtx, webCtx web.Context, authCfg *auth.Cfg) {
 	providers := authCfg.Providers
 	router := webCtx.Router()
 

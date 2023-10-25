@@ -1,0 +1,20 @@
+{
+  "user": {
+    "auth": {
+      "login": {
+        "title": "Anmelden"
+      }
+    }
+  },
+  "harmony": {
+    "head": {
+      "welcome": "Willkommen bei Harmony"
+    },
+    "text": {
+      "welcome": "<p>HARMONY ist ein anpassbares Tool zur Erfassung, zum Management und zur Organisation von Anforderungen. Wir möchten ein einfaches, aber leistungsstarkes Werkzeug zur Verwaltung von Anforderungen und langfristig auch zur besseren Organisation von Projekten zur Verfügung stellen. Wir bemühen uns sehr HARMONY konstant zu verbessern und weiterzuentwickeln. Wenn Sie also Vorschläge haben, lassen Sie es uns bitte wissen!</p><p>HARMONY befindet sich derzeit in der Alpha-Phase, daher kann es sein, dass es noch Fehler und fehlende Funktionen gibt.<br />Wir sind auf Ihr Feedback und Erfahrungen gespannt. :)</p>"
+    },
+    "footer": {
+      "visit": "Besuchen Sie <strong>HARMONY</strong> auf {{ .link }}."
+    }
+  }
+}

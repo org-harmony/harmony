@@ -5,7 +5,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/trace"
-	"github.com/org-harmony/harmony/src/core/trans"
 	"github.com/org-harmony/harmony/src/core/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,11 +86,11 @@ func TestController(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.Code)
 }
 
-func setupMockCtxs(t *testing.T) (hctx.AppContext, Context) {
+func setupMockCtxs(t *testing.T) (*hctx.AppCtx, Context) {
 	r, ts := setupMock(t)
 	templatesDir, baseDir := setupDirectories(t)
 
-	return hctx.NewAppContext(
+	return hctx.NewAppCtx(
 			trace.NewLogger(),
 			validator.New(validator.WithRequiredStructEnabled()),
 			nil,
@@ -106,9 +105,8 @@ func setupMockCtxs(t *testing.T) (hctx.AppContext, Context) {
 func setupMock(t *testing.T) (Router, TemplaterStore) {
 	templateDir, baseDir := setupDirectories(t)
 	cfg := setupConfig(templateDir, baseDir)
-	tr := trans.NewTranslator()
 
-	s, err := SetupTemplaterStore(cfg.UI, tr)
+	s, err := SetupTemplaterStore(cfg.UI)
 	require.NoError(t, err)
 
 	return NewRouter(), s

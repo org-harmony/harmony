@@ -6,12 +6,12 @@
     <section class="section content login">
         <div class="card auth-login-providers">
             <div class="card-header">
-                <p class="card-header-title">{{ t "Anmelden" }}</p>
+                <p class="card-header-title">{{ t "user.auth.login.title" }}</p>
             </div>
             <div class="card-content">
                 {{ block "auth.login.providers" . }}
-                    {{ range $provider := .Providers }}
-                        <a href="/auth/login/{{ $provider.Name }}" class="button is-action-button is-fullwidth is-{{ $provider.Name }}">{{ tf "Anmelden mit {{.name}}" "name" $provider.DisplayName }}</a>
+                    {{ range $provider := .Data.Providers }}
+                        <a href="/auth/login/{{ $provider.Name }}" class="button is-action-button is-fullwidth is-{{ $provider.Name }}">{{ tf "user.auth.login.with-provider" "name" $provider.DisplayName }}</a>
                     {{ end }}
                 {{ end }}
             </div>

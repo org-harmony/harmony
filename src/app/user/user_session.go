@@ -103,7 +103,7 @@ func (r *PGUserSessionRepository) Insert(ctx context.Context, session *Session) 
 // SessionStore returns the user session store from the application context.
 // It panics if the user session store is not registered in the application context.
 // Thus, it should only be used after the application context has been initialized.
-func SessionStore(app hctx.AppContext) SessionRepository {
+func SessionStore(app *hctx.AppCtx) SessionRepository {
 	return util.UnwrapType[SessionRepository](app.Repository(SessionRepositoryName))
 }
 

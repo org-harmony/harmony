@@ -1,8 +1,10 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"github.com/org-harmony/harmony/src/core/trans"
+	"github.com/org-harmony/harmony/src/core/util"
 	"html/template"
 	"path/filepath"
 	"sync"
@@ -18,10 +20,16 @@ const (
 )
 
 var (
+	// ErrTemplaterNotFound is returned when a Templater is not found.
 	ErrTemplaterNotFound = fmt.Errorf("templater not found")
-	ErrNoBaseTemplate    = fmt.Errorf("no base template")
-	ErrCanNotLoad        = fmt.Errorf("template not loaded")
-	ErrCanNotClone       = fmt.Errorf("template not cloned")
+	// ErrNoBaseTemplate is returned when a base template is not found.
+	ErrNoBaseTemplate = fmt.Errorf("no base template")
+	// ErrCanNotLoad is returned when a template can not be loaded.
+	ErrCanNotLoad = fmt.Errorf("template not loaded")
+	// ErrCanNotClone is returned when a template can not be cloned.
+	ErrCanNotClone = fmt.Errorf("template not cloned")
+	// ErrTemplateNotTranslatable is returned when a template is not translatable.
+	ErrTemplateNotTranslatable = fmt.Errorf("template not translatable")
 )
 
 // UICfg is the web packages UI configuration.
@@ -34,6 +42,13 @@ type UICfg struct {
 type TemplatesCfg struct {
 	Dir     string `toml:"dir" validate:"required"`
 	BaseDir string `toml:"base_dir" validate:"required"`
+}
+
+// BaseTemplateData is the base template data.
+// It is a generic struct containing certain data and soon maybe some extra data that is common to all templates.
+// Maybe this data structure will be removed in the future.
+type BaseTemplateData[T any] struct {
+	Data T
 }
 
 // HTemplaterStore is a store of Templater. Templaters can each derive from a template.
@@ -66,6 +81,13 @@ type Templater interface {
 	Template(name string, path string) (*template.Template, error) // Template returns a template by name and path.
 	Name() string                                                  // Name returns the name of the Templater.
 	Base() (*template.Template, error)                             // Base returns the base template.
+}
+
+// NewTemplateData returns a new BaseTemplateData.
+func NewTemplateData[T any](data T) *BaseTemplateData[T] {
+	return &BaseTemplateData[T]{
+		Data: data,
+	}
 }
 
 // NewTemplaterStore returns a new TemplaterStore.
@@ -171,18 +193,18 @@ func (t *HTemplater) Base() (*template.Template, error) {
 }
 
 // SetupTemplaterStore returns a new TemplaterStore.
-func SetupTemplaterStore(ui *UICfg, t trans.Translator) (TemplaterStore, error) {
-	base, err := BaseTemplate(ui, t)
+func SetupTemplaterStore(ui *UICfg) (TemplaterStore, error) {
+	base, err := BaseTemplate(ui)
 	if err != nil {
 		return nil, err
 	}
 
-	landingPage, err := LandingPageTemplate(ui, t)
+	landingPage, err := LandingPageTemplate(ui)
 	if err != nil {
 		return nil, err
 	}
 
-	errorPage, err := ErrorTemplate(ui, t)
+	errorPage, err := ErrorTemplate(ui)
 	if err != nil {
 		return nil, err
 	}
@@ -195,8 +217,8 @@ func SetupTemplaterStore(ui *UICfg, t trans.Translator) (TemplaterStore, error) 
 }
 
 // ErrorTemplate returns the error template.
-func ErrorTemplate(ui *UICfg, t trans.Translator) (*template.Template, error) {
-	landingPage, err := LandingPageTemplate(ui, t)
+func ErrorTemplate(ui *UICfg) (*template.Template, error) {
+	landingPage, err := LandingPageTemplate(ui)
 	if err != nil {
 		return nil, err
 	}
@@ -205,8 +227,8 @@ func ErrorTemplate(ui *UICfg, t trans.Translator) (*template.Template, error) {
 }
 
 // LandingPageTemplate returns the landing page template.
-func LandingPageTemplate(ui *UICfg, t trans.Translator) (*template.Template, error) {
-	base, err := BaseTemplate(ui, t)
+func LandingPageTemplate(ui *UICfg) (*template.Template, error) {
+	base, err := BaseTemplate(ui)
 	if err != nil {
 		return nil, err
 	}
@@ -215,28 +237,48 @@ func LandingPageTemplate(ui *UICfg, t trans.Translator) (*template.Template, err
 }
 
 // BaseTemplate returns the base template.
-func BaseTemplate(ui *UICfg, t trans.Translator) (*template.Template, error) {
+func BaseTemplate(ui *UICfg) (*template.Template, error) {
 	return template.
 		New(BaseTemplateName).
-		Funcs(templateFuncs(ui, t)).
+		Funcs(templateFuncs(ui)).
 		ParseGlob(filepath.Join(ui.Templates.BaseDir, "*.go.html"))
+}
+
+// makeTemplateTranslatable overrides the translation functions t/tf on the template using the translator from the context.
+// This function is intended to be used with the trans.Middleware.
+func makeTemplateTranslatable(ctx context.Context, t *template.Template) error {
+	translator, ok := util.CtxValue[trans.Translator](ctx, trans.TranslatorContextKey, nil)
+	if !ok {
+		return trans.ErrTranslatorNotFound
+	}
+
+	t.Funcs(template.FuncMap{
+		"t": func(s string) string {
+			return translator.T(s)
+		},
+		"tf": func(s string, args ...string) string {
+			return translator.Tf(s, args...)
+		},
+	})
+
+	return nil
 }
 
 // templateFuncs returns a template.FuncMap for use in templates.
 // It contains the functions that are expected to be used in "base" templates.
-func templateFuncs(ui *UICfg, t trans.Translator) template.FuncMap {
+func templateFuncs(ui *UICfg) template.FuncMap {
 	return template.FuncMap{
-		"t": func(s string) string {
-			return t.T(s)
-		},
-		"tf": func(s string, args ...string) string {
-			return t.Tf(s, args...)
-		},
 		"asset": func(filename string) string {
 			return filepath.Join(ui.AssetsUri, filename)
 		},
 		"safeHTML": func(s string) template.HTML {
 			return template.HTML(s)
+		},
+		"t": func(s string) string {
+			return s
+		},
+		"tf": func(s string, args ...string) string {
+			return s
 		},
 	}
 }
