@@ -2,7 +2,13 @@
   "user": {
     "auth": {
       "login": {
-        "title": "Anmelden"
+        "title": "Anmelden",
+        "action": "Anmelden",
+        "with-provider": "Mit {{ .provider }} anmelden",
+        "error": {
+          "oauth": "Fehler bei der Anmeldung mit OAuth. Bitte erneut versuchen.",
+          "invalid-provider": "Dieser Anbieter wird nicht für den OAuth-Login unterstützt."
+        }
       }
     }
   },
@@ -15,6 +21,11 @@
     },
     "footer": {
       "visit": "Besuchen Sie <strong>HARMONY</strong> auf {{ .link }}."
+    },
+    "error": {
+      "generic": "Leider ist ein Fehler aufgetreten.",
+      "generic-reload": "Leider ist ein Fehler aufgetreten. Bitte laden Sie die Seite neu.",
+      "prefix-generic": "Leider ist ein Fehler aufgetreten:"
     }
   }
 }
