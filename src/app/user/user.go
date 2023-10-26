@@ -17,8 +17,6 @@ import (
 const RepositoryName = "Repository"
 const ContextKey = "harmony-app-user"
 
-var ErrNotInContext = errors.New("user not in context")
-
 // User is the user entity.
 // The User is also part of the Session which is stored in the session store.
 // The Session.ID is stored in a cookie on the client the default session store is the PGUserSessionRepository.
@@ -42,12 +40,10 @@ type ToCreate struct {
 	Lastname  string
 }
 
-// PGUserRepository is the Postgres implementation of the Repository interface.
 type PGUserRepository struct {
 	db *pgxpool.Pool
 }
 
-// Repository is the interface for the user repository.
 type Repository interface {
 	persistence.Repository
 
@@ -57,12 +53,10 @@ type Repository interface {
 	Delete(ctx context.Context, id uuid.UUID) error               // Delete deletes a user by id. Returns ErrDelete if the user could not be deleted.
 }
 
-// NewUserRepository creates a new Repository.
 func NewUserRepository(db *pgxpool.Pool) Repository {
 	return &PGUserRepository{db: db}
 }
 
-// RepositoryName returns the name of the repository.
 func (r *PGUserRepository) RepositoryName() string {
 	return RepositoryName
 }
@@ -93,7 +87,7 @@ func (r *PGUserRepository) FindByID(ctx context.Context, id uuid.UUID) (*User, e
 	return user, nil
 }
 
-// Create creates a new user and return it. CreatedAt and ID are set.
+// Create creates a new user and return it. CreatedAt and id are set.
 // Returns ErrInsert if the user could not be created.
 func (r *PGUserRepository) Create(ctx context.Context, user *ToCreate) (*User, error) {
 	newUser := &User{
@@ -128,7 +122,6 @@ func (r *PGUserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// Login logs the user in and returns the session.
 func Login(ctx context.Context, user *User, sessionStore SessionRepository) (*Session, error) {
 	session := NewUserSession(user, time.Hour)
 	err := sessionStore.Insert(ctx, session)

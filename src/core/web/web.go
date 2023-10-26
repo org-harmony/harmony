@@ -16,13 +16,11 @@ import (
 
 const Pkg = "sys.web"
 
-// Cfg is the web packages configuration.
 type Cfg struct {
 	Server *ServerCfg `toml:"server" validate:"required"`
 	UI     *UICfg     `toml:"ui" validate:"required"`
 }
 
-// ServerCfg contains the configuration for a web server.
 type ServerCfg struct {
 	AssetFsCfg *FileServerCfg `toml:"asset_fs" validate:"required"`
 	Addr       string         `toml:"address" env:"ADDR"`
@@ -30,13 +28,11 @@ type ServerCfg struct {
 	BaseURL    string         `toml:"base_url" env:"BASE_URL" validate:"required"`
 }
 
-// FileServerCfg contains the configuration for a file server.
 type FileServerCfg struct {
 	Root  string `toml:"root" validate:"required"`
 	Route string `toml:"route" validate:"required"`
 }
 
-// Ctx is the web application context.
 type Ctx struct {
 	Router         Router
 	Config         *Cfg
@@ -52,7 +48,7 @@ type Controller struct {
 	handler func(io IO) error
 }
 
-// HIO is the implementation of the IO interface.
+// HIO is a web.IO allowing for simplified access to the http.ResponseWriter and http.Request.
 type HIO struct {
 	w  http.ResponseWriter
 	r  *http.Request
@@ -65,21 +61,20 @@ type HIO struct {
 // IO is passed to a Controller's handler function allowing the handler to interact with the http.ResponseWriter and http.Request.
 // At the same time, IO allows the handler to interact with frequently used functionality such as logging and rendering.
 type IO interface {
-	Response() http.ResponseWriter        // Response returns the http.ResponseWriter.
-	Request() *http.Request               // Request returns the http.Request.
-	Context() context.Context             // Context returns the context.Context.
-	Logger() trace.Logger                 // Logger returns the application logger.
-	TemplaterStore() TemplaterStore       // TemplaterStore returns an instance of TemplaterStore.
-	Router() Router                       // Router returns an instance of Router.
-	Render(*template.Template, any) error // Render renders a template with data.
-	Error(error) error                    // Error renders an error template with an error.
-	Redirect(string, int) error           // Redirect redirects the client to a URL with a status code.
+	Response() http.ResponseWriter
+	Request() *http.Request
+	Context() context.Context
+	Logger() trace.Logger
+	TemplaterStore() TemplaterStore
+	Router() Router
+	Render(*template.Template, any) error
+	Error(error) error
+	Redirect(string, int) error
 	// Template returns a template by a name from the TemplateStore.
 	// Template just wraps the call to TemplaterStore and consecutive Template call.
 	Template(store, template, path string) (*template.Template, error)
 }
 
-// NewContext returns a new Context.
 func NewContext(router Router, cfg *Cfg, ts TemplaterStore) *Ctx {
 	return &Ctx{
 		Router:         router,
@@ -88,7 +83,6 @@ func NewContext(router Router, cfg *Cfg, ts TemplaterStore) *Ctx {
 	}
 }
 
-// NewController returns a new Controller.
 func NewController(app *hctx.AppCtx, ctx *Ctx, handler func(io IO) error) http.Handler {
 	if app == nil || ctx == nil || handler == nil {
 		panic("nil contexts or handler")
@@ -119,37 +113,30 @@ func (c *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Response returns the http.ResponseWriter.
 func (h *HIO) Response() http.ResponseWriter {
 	return h.w
 }
 
-// Request returns the http.Request.
 func (h *HIO) Request() *http.Request {
 	return h.r
 }
 
-// Context returns the context.Context.
 func (h *HIO) Context() context.Context {
 	return h.r.Context()
 }
 
-// Logger returns the application logger.
 func (h *HIO) Logger() trace.Logger {
 	return h.l
 }
 
-// TemplaterStore returns an instance of TemplaterStore.
 func (h *HIO) TemplaterStore() TemplaterStore {
 	return h.t
 }
 
-// Router returns an instance of Router.
 func (h *HIO) Router() Router {
 	return h.rt
 }
 
-// Render renders a template with data. If an error occurs, the error is returned.
 func (h *HIO) Render(t *template.Template, data any) error {
 	if err := makeTemplateTranslatable(h.r.Context(), t); err != nil {
 		h.l.Warn(Pkg, "failed to make template translatable, likely context does not contain translator", "error", err)
@@ -158,7 +145,6 @@ func (h *HIO) Render(t *template.Template, data any) error {
 	return util.Wrap(t.Execute(h.w, data), "failed to render template")
 }
 
-// Error renders an error template with an error. If an error occurs, the error is returned.
 func (h *HIO) Error(e error) error {
 	errTemplater, err := h.t.Templater(ErrorTemplateName)
 	if err != nil {
@@ -177,7 +163,6 @@ func (h *HIO) Error(e error) error {
 	return errTemplate.Execute(h.w, NewErrorTemplateData(h.r.Context(), e.Error()))
 }
 
-// Redirect redirects the client to a URL with a status code.
 func (h *HIO) Redirect(url string, code int) error {
 	http.Redirect(h.w, h.r, url, code)
 	return nil
@@ -220,7 +205,6 @@ func MountFileServer(r Router, cfg *FileServerCfg) {
 	})
 }
 
-// Serve starts a web server with a router and config.
 func Serve(r Router, cfg *ServerCfg) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%s", cfg.Addr, cfg.Port), r)
 }

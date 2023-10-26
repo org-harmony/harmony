@@ -9,9 +9,8 @@ import (
 
 const LogPkgKey = "module"
 
-// HLogger is the system's default logger.
+// HLogger is the system's default logger using the log/slog package as the underlying logger.
 type HLogger struct {
-	// slog is the underlying structured logger used by the HLogger.
 	slog *slog.Logger
 }
 
@@ -27,7 +26,6 @@ type Logger interface {
 	Error(mod, msg string, err error, args ...any)
 }
 
-// NewLogger creates a new standard logger that writes to stdout.
 func NewLogger() Logger {
 	return &HLogger{
 		slog: slog.New(slog.NewTextHandler(os.Stdout, nil)),

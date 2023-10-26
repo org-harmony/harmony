@@ -47,7 +47,7 @@ func Wrap(e error, msg string) error {
 	return fmt.Errorf("%s: %w", msg, e)
 }
 
-// CtxValue returns the value of the context key.
+// CtxValue returns the value of the context key from the context.
 func CtxValue[T any](ctx context.Context, key any) (T, bool) {
 	var empty T
 

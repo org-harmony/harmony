@@ -11,32 +11,24 @@ import (
 )
 
 const (
-	// BaseTemplateName is the base template name.
-	BaseTemplateName = "base"
-	// LandingPageTemplateName is the landing page template name.
+	BaseTemplateName        = "base"
 	LandingPageTemplateName = "landing-page"
-	// ErrorTemplateName is the error template name.
-	ErrorTemplateName = "error"
+	ErrorTemplateName       = "error"
 )
 
 var (
-	// ErrTemplaterNotFound is returned when a Templater is not found.
 	ErrTemplaterNotFound = fmt.Errorf("templater not found")
-	// ErrNoBaseTemplate is returned when a base template is not found.
-	ErrNoBaseTemplate = fmt.Errorf("no base template")
-	// ErrCanNotLoad is returned when a template can not be loaded.
-	ErrCanNotLoad = fmt.Errorf("template not loaded")
-	// ErrCanNotClone is returned when a template can not be cloned.
-	ErrCanNotClone = fmt.Errorf("template not cloned")
+	ErrNoBaseTemplate    = fmt.Errorf("no base template")
+	ErrCanNotLoad        = fmt.Errorf("template not loaded")
+	ErrCanNotClone       = fmt.Errorf("template not cloned")
 )
 
-// UICfg is the web packages UI configuration.
 type UICfg struct {
 	AssetsUri string        `toml:"assets_uri" validate:"required"`
 	Templates *TemplatesCfg `toml:"templates" validate:"required"`
 }
 
-// TemplatesCfg is the web packages UI templates configuration.
+// TemplatesCfg is the config for the templates. BaseDir is parsed as a glob. Dir is used to load individual templates.
 type TemplatesCfg struct {
 	Dir     string `toml:"dir" validate:"required"`
 	BaseDir string `toml:"base_dir" validate:"required"`
@@ -45,14 +37,13 @@ type TemplatesCfg struct {
 // BaseTemplateData is the base template data.
 // It is a generic struct containing certain data and soon maybe some extra data that is common to all templates.
 // Maybe this data structure will be removed in the future.
+//
+// Deprecated: This struct is deprecated and will be removed in the future.
 type BaseTemplateData[T any] struct {
 	Data T
 }
 
-// HTemplaterStore is a store of Templater. Templaters can each derive from a template.
-// Each Templater is stored in a map and can be retrieved by name.
-// E.g. a "base" Templater containing all templates deriving the base template.
-// HTemplaterStore is safe for concurrent use by multiple goroutines.
+// HTemplaterStore is a thread-safe store of Templater.
 type HTemplaterStore struct {
 	templaters map[string]Templater
 	lock       sync.RWMutex
@@ -62,33 +53,33 @@ type HTemplaterStore struct {
 // Templates are cached in a map and loaded from the filesystem when not found in the map.
 // HTemplater is safe for concurrent use by multiple goroutines.
 type HTemplater struct {
-	name      string                        // name of the templater (usually the name of the base template)
-	dir       string                        // dir the templates are loaded from when not found in the map
-	templates map[string]*template.Template // map of templates cached
-	lock      sync.RWMutex                  // lock for the map
+	name      string
+	dir       string
+	templates map[string]*template.Template
+	lock      sync.RWMutex
 }
 
-// TemplaterStore is a store of Templater.
+// TemplaterStore is a store of Templater. TemplaterStore is expected to be thread-safe.
 type TemplaterStore interface {
-	Templater(string) (Templater, error) // Templater returns a Templater by name.
-	Set(string, Templater)               // Set sets a Templater by name.
+	Templater(string) (Templater, error)
+	Set(string, Templater)
 }
 
-// Templater retrieves templates by name and path.
+// Templater allows retrieving templates by name and path extending from a base template.
+// Templater is expected to be thread-safe.
 type Templater interface {
-	Template(name string, path string) (*template.Template, error) // Template returns a template by name and path.
-	Name() string                                                  // Name returns the name of the Templater.
-	Base() (*template.Template, error)                             // Base returns the base template.
+	Template(name, path string) (*template.Template, error)
+	Name() string
+	Base() (*template.Template, error) // Base returns the base template all templates derive from.
 }
 
-// NewTemplateData returns a new BaseTemplateData.
+// Deprecated: This function is deprecated and will be removed in the future.
 func NewTemplateData[T any](data T) *BaseTemplateData[T] {
 	return &BaseTemplateData[T]{
 		Data: data,
 	}
 }
 
-// NewTemplaterStore returns a new TemplaterStore.
 func NewTemplaterStore(t ...Templater) TemplaterStore {
 	templaters := make(map[string]Templater)
 	for _, t := range t {
@@ -100,7 +91,6 @@ func NewTemplaterStore(t ...Templater) TemplaterStore {
 	}
 }
 
-// NewTemplater returns a new Templater.
 func NewTemplater(base *template.Template, dir string) Templater {
 	if base == nil {
 		panic("base template is nil")
@@ -117,7 +107,6 @@ func NewTemplater(base *template.Template, dir string) Templater {
 	}
 }
 
-// Templater returns a Templater by name.
 func (s *HTemplaterStore) Templater(name string) (Templater, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -130,7 +119,6 @@ func (s *HTemplaterStore) Templater(name string) (Templater, error) {
 	return t, nil
 }
 
-// Set sets a Templater by name.
 func (s *HTemplaterStore) Set(name string, t Templater) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -138,7 +126,7 @@ func (s *HTemplaterStore) Set(name string, t Templater) {
 	s.templaters[name] = t
 }
 
-// Template returns a template by name and path.
+// Template returns a template by name and path. The template file is loaded from the filesystem when not found in the map.
 func (t *HTemplater) Template(name string, path string) (*template.Template, error) {
 	t.lock.RLock()
 	tmpl, ok := t.templates[path]
@@ -167,7 +155,6 @@ func (t *HTemplater) Template(name string, path string) (*template.Template, err
 	return tmpl, nil
 }
 
-// Name returns the name of the Templater.
 func (t *HTemplater) Name() string {
 	return t.name
 }
@@ -190,7 +177,7 @@ func (t *HTemplater) Base() (*template.Template, error) {
 	return b, nil
 }
 
-// SetupTemplaterStore returns a new TemplaterStore.
+// SetupTemplaterStore sets up a TemplaterStore with the base, landing page and error templates.
 func SetupTemplaterStore(ui *UICfg) (TemplaterStore, error) {
 	base, err := BaseTemplate(ui)
 	if err != nil {
@@ -214,7 +201,6 @@ func SetupTemplaterStore(ui *UICfg) (TemplaterStore, error) {
 	), nil
 }
 
-// ErrorTemplate returns the error template.
 func ErrorTemplate(ui *UICfg) (*template.Template, error) {
 	landingPage, err := LandingPageTemplate(ui)
 	if err != nil {
@@ -224,7 +210,6 @@ func ErrorTemplate(ui *UICfg) (*template.Template, error) {
 	return landingPage.New(ErrorTemplateName).ParseFiles(filepath.Join(ui.Templates.Dir, "error.go.html"))
 }
 
-// LandingPageTemplate returns the landing page template.
 func LandingPageTemplate(ui *UICfg) (*template.Template, error) {
 	base, err := BaseTemplate(ui)
 	if err != nil {
@@ -234,7 +219,6 @@ func LandingPageTemplate(ui *UICfg) (*template.Template, error) {
 	return base.New(LandingPageTemplateName).ParseFiles(filepath.Join(ui.Templates.Dir, "landing-page.go.html"))
 }
 
-// BaseTemplate returns the base template.
 func BaseTemplate(ui *UICfg) (*template.Template, error) {
 	return template.
 		New(BaseTemplateName).
@@ -262,8 +246,7 @@ func makeTemplateTranslatable(ctx context.Context, t *template.Template) error {
 	return nil
 }
 
-// templateFuncs returns a template.FuncMap for use in templates.
-// It contains the functions that are expected to be used in "base" templates.
+// templateFuncs returns a template.FuncMap containing basic template functions.
 func templateFuncs(ui *UICfg) template.FuncMap {
 	return template.FuncMap{
 		"asset": func(filename string) string {
