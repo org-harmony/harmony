@@ -12,8 +12,8 @@ import (
 
 const Pkg = "app.user"
 
-func RegisterController(appCtx *hctx.AppCtx, webCtx web.Context) {
-	router := webCtx.Router()
+func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
+	router := webCtx.Router
 
 	authCfg := &auth.Cfg{}
 	util.Ok(config.C(authCfg, config.From("auth"), config.Validate(appCtx.Validator)))
@@ -28,8 +28,8 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx web.Context) {
 	}
 }
 
-func loginController(appCtx *hctx.AppCtx, webCtx web.Context, providers *auth.Cfg) http.Handler {
-	loginTemplate := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
+func loginController(appCtx *hctx.AppCtx, webCtx *web.Ctx, providers *auth.Cfg) http.Handler {
+	loginTemplate := util.Unwrap(util.Unwrap(webCtx.TemplaterStore.Templater(web.LandingPageTemplateName)).
 		Template("auth.login", "auth/login.go.html"))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
@@ -42,7 +42,7 @@ func loginController(appCtx *hctx.AppCtx, webCtx web.Context, providers *auth.Cf
 	})
 }
 
-func logoutController(appCtx *hctx.AppCtx, webCtx web.Context) http.Handler {
+func logoutController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	sessionStore := user.SessionStore(appCtx)
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
@@ -61,8 +61,8 @@ func logoutController(appCtx *hctx.AppCtx, webCtx web.Context) http.Handler {
 	})
 }
 
-func userController(appCtx *hctx.AppCtx, webCtx web.Context) http.Handler {
-	userTemplate := util.Unwrap(util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName)).
+func userController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	userTemplate := util.Unwrap(util.Unwrap(webCtx.TemplaterStore.Templater(web.LandingPageTemplateName)).
 		Template("auth.user", "auth/user.go.html"))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
@@ -72,9 +72,9 @@ func userController(appCtx *hctx.AppCtx, webCtx web.Context) http.Handler {
 	})
 }
 
-func registerOAuth2Controller(appCtx *hctx.AppCtx, webCtx web.Context, authCfg *auth.Cfg) {
+func registerOAuth2Controller(appCtx *hctx.AppCtx, webCtx *web.Ctx, authCfg *auth.Cfg) {
 	providers := authCfg.Providers
-	router := webCtx.Router()
+	router := webCtx.Router
 
 	router.Get("/auth/login/{provider}", oAuthLoginController(appCtx, webCtx, providers).ServeHTTP)
 	router.Get("/auth/login/{provider}/success", oAuthLoginSuccessController(appCtx, webCtx, providers, user.Adapters()).ServeHTTP)

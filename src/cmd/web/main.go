@@ -33,10 +33,10 @@ func main() {
 	homeWeb.RegisterController(appCtx, webCtx)
 	userWeb.RegisterController(appCtx, webCtx)
 
-	util.Ok(web.Serve(r, webCtx.Configuration().Server))
+	util.Ok(web.Serve(r, webCtx.Config.Server))
 }
 
-func initWeb(v *validator.Validate, tp trans.TranslatorProvider) (web.Context, web.Router) {
+func initWeb(v *validator.Validate, tp trans.TranslatorProvider) (*web.Ctx, web.Router) {
 	webCfg := &web.Cfg{}
 	util.Ok(config.C(webCfg, config.From("web"), config.Validate(v)))
 	store := util.Unwrap(web.SetupTemplaterStore(webCfg.UI))

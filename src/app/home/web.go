@@ -7,11 +7,11 @@ import (
 )
 
 // RegisterController registers the home page on a router.
-func RegisterController(appCtx *hctx.AppCtx, webCtx web.Context) {
-	lp := util.Unwrap(webCtx.TemplaterStore().Templater(web.LandingPageTemplateName))
+func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
+	lp := util.Unwrap(webCtx.TemplaterStore.Templater(web.LandingPageTemplateName))
 	t := util.Unwrap(lp.Template("home", "home.go.html"))
 
-	webCtx.Router().Get("/", web.NewController(appCtx, webCtx, func(io web.IO) error {
+	webCtx.Router.Get("/", web.NewController(appCtx, webCtx, func(io web.IO) error {
 		return io.Render(t, nil)
 	}).ServeHTTP)
 }
