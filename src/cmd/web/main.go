@@ -15,9 +15,6 @@ import (
 	"github.com/org-harmony/harmony/src/core/web"
 )
 
-// TODO move user to app and decouple from auth
-// TODO Add translations
-// TODO Add tests for new translation stuff
 // TODO Migrate to Bootstrap 5
 
 func main() {
