@@ -3,6 +3,8 @@ package event
 import (
 	"fmt"
 	"github.com/org-harmony/harmony/src/core/trace"
+	"github.com/org-harmony/harmony/src/core/util"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -40,6 +42,12 @@ func (e *mockEvent) Payload() any {
 
 func (e *mockEvent) DoneChan() chan []error {
 	return e.d
+}
+
+func TestMain(m *testing.M) {
+	util.Ok(os.Setenv("TEST_LOG_SILENCE_DEBUG", "true"))
+
+	os.Exit(m.Run())
 }
 
 func TestBasicEventSubscribing(t *testing.T) {
