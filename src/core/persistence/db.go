@@ -17,7 +17,7 @@ var (
 	DBConnError = fmt.Errorf("error connecting to database")
 )
 
-// PostgresDBCfg is the configuration for the Postgres database.
+// PostgresDBCfg is the configuration for a Postgres database connection.
 type PostgresDBCfg struct {
 	Host          string `toml:"host" env:"DB_HOST" validate:"required"`
 	Port          string `toml:"port" env:"DB_PORT" validate:"required"`
@@ -29,30 +29,24 @@ type PostgresDBCfg struct {
 	MigrationsDir string `toml:"migrations_dir" env:"DB_MIGRATIONS_DIR"`
 }
 
-// PGRepositoryProvider is the Postgres implementation of the RepositoryProvider interface.
-// It contains all the repositories using the Postgres database.
-// The repositories are stored in a map and can be retrieved by name.
-//
-// PGRepositoryProvider is safe for concurrent use by multiple goroutines.
+// PGRepositoryProvider implements the RepositoryProvider interface for Postgres databases,
+// safely managing concurrent access to multiple repositories.
 type PGRepositoryProvider struct {
 	db           *pgxpool.Pool
 	repositories map[string]Repository
 	mu           sync.RWMutex
 }
 
-// Repository is the interface for a repository.
 type Repository interface {
 	RepositoryName() string
 }
 
-// RepositoryProvider is the interface for a repository provider.
-// RepositoryProviders should be safe for concurrent use by multiple goroutines.
+// RepositoryProvider interface should be safe for concurrent use by multiple goroutines.
 type RepositoryProvider interface {
 	Repository(name string) (Repository, error)
 	RegisterRepository(init func(db any) (Repository, error)) error
 }
 
-// NewDB creates a new database connection pool.
 func NewDB(cfg *PostgresDBCfg) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(cfg.String())
 	if err != nil {
@@ -62,7 +56,7 @@ func NewDB(cfg *PostgresDBCfg) (*pgxpool.Pool, error) {
 	return newDBWithConfig(config)
 }
 
-// NewDBWithString creates a new database connection pool from a string.
+// NewDBWithString creates a new database connection pool from a Postgres connection string.
 func NewDBWithString(cfg string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(cfg)
 	if err != nil {
@@ -82,20 +76,19 @@ func newDBWithConfig(config *pgxpool.Config) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// String returns the string representation of the database configuration.
+// String returns the Postgres connection string as used by pgxpool.ParseConfig.
 func (cfg *PostgresDBCfg) String() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s pool_max_conns=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.Name, cfg.SSLMode, cfg.MaxConns)
 }
 
-// StringWoDBName returns the string representation of the database configuration without the database name.
+// StringWoDBName returns the Postgres connection string as used by pgxpool.ParseConfig without the database name.
 // This is useful for creating and dropping the database in tests.
 func (cfg *PostgresDBCfg) StringWoDBName() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s pool_max_conns=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.SSLMode, cfg.MaxConns)
 }
 
-// NewPGRepositoryProvider creates a new PGRepositoryProvider.
 func NewPGRepositoryProvider(db *pgxpool.Pool) RepositoryProvider {
 	return &PGRepositoryProvider{
 		db:           db,
@@ -103,7 +96,6 @@ func NewPGRepositoryProvider(db *pgxpool.Pool) RepositoryProvider {
 	}
 }
 
-// Repository returns a repository by name.
 func (rp *PGRepositoryProvider) Repository(name string) (Repository, error) {
 	rp.mu.RLock()
 	r, ok := rp.repositories[name]
@@ -115,7 +107,6 @@ func (rp *PGRepositoryProvider) Repository(name string) (Repository, error) {
 	return r, nil
 }
 
-// RegisterRepository registers a new repository.
 func (rp *PGRepositoryProvider) RegisterRepository(init func(db any) (Repository, error)) error {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()

@@ -17,47 +17,31 @@ import (
 )
 
 const (
-	// Pkg is the package name used for logging.
-	Pkg = "sys.trans"
-	// TranslatorContextKey is the key used to store the translator in the request context.
+	Pkg                  = "sys.trans"
 	TranslatorContextKey = "translator"
-	// LocaleSessionKey is the key used to store the locale in the request cookie.
-	LocaleSessionKey = "harmony-app-locale"
+	LocaleSessionKey     = "harmony-app-locale"
 )
 
 var (
-	// ErrLocaleNotFound is returned if a locale is not found.
-	ErrLocaleNotFound = errors.New("locale not found")
-	// ErrTranslatorNotFound is returned if a translator is not found.
+	ErrLocaleNotFound     = errors.New("locale not found")
 	ErrTranslatorNotFound = errors.New("translator not found")
 )
 
-// Cfg is the translation configuration.
 type Cfg struct {
-	// Locales contains a list of locales.
-	Locales map[string]*Locale `toml:"locales" validate:"required"`
-	// TranslationsDir is the directory where the translation files are stored.
-	TranslationsDir string `toml:"translations_dir" validate:"required"`
+	Locales         map[string]*Locale `toml:"locales" validate:"required"`
+	TranslationsDir string             `toml:"translations_dir" validate:"required"` // TranslationsDir is the directory where the translation files are stored. E.g. /translations.
 }
 
-// Locale is a locale for a language
 type Locale struct {
-	// Path defines the path of the locale. E.g. de/de-DE/en/en-US.
-	Path string `toml:"path" validate:"required"`
-	// Name is the name of the locale. E.g. Deutsch, English.
-	Name string `toml:"name" validate:"required"`
-	// Default defines if this is the default locale.
-	Default bool `toml:"default"`
+	Path    string `toml:"path" validate:"required"` // Path of the locale. E.g. de/de-DE/en/en-US.
+	Name    string `toml:"name" validate:"required"`
+	Default bool   `toml:"default"` // Default declares the locale as default.
 }
 
-// HTranslator is a translator for user facing strings.
-// It uses templates to translate strings with arguments. Scheme: {{.argName}}.
-// The template is stored in a map with the md5 hash of the string as key. This allows to cache the template per string.
-// The HTranslator contains a map of translations.
-// If a translation is not found in the map, the original string is returned.
-// Therefore, this translator can be instantiated with any translation map, it works like a lookup table.
-// The HTranslator is safe for concurrent use by multiple goroutines as long as the translations map is not changed.
-// If it would ever be changed that the HTranslator needs to have changeable translations, the map needs to be protected by a mutex.
+// HTranslator is a thread-safe translator using templates ({{.argName}}) for user-facing strings.
+// Translations are cached with the md5 hash of the string as the key.
+// It acts as a lookup table; if a translation is not found, the original string is returned.
+// The translations map should not be modified concurrently to maintain thread safety.
 type HTranslator struct {
 	translations map[string]string
 	template     *template.Template
@@ -66,56 +50,53 @@ type HTranslator struct {
 	locale       *Locale
 }
 
-// HTranslatorProvider provides translators for various locales.
-// HTranslatorProvider map is thread-safe as long as the map is not changed.
-// If it would ever be changed that the HTranslatorProvider needs to have changeable translators, the map needs to be protected by a mutex.
+// HTranslatorProvider provides translators for various locales in a thread-safe manner,
+// assuming the translators map remains unmodified. If mutable translators are needed,
+// a mutex should be added to protect the map.
 type HTranslatorProvider struct {
 	translators  map[string]Translator
 	defaultTrans Translator
 }
 
-// HTranslatorOption is a function that sets an option on the HTranslator.
 type HTranslatorOption func(*HTranslator)
 
 // Translator allows translating of strings to other languages.
 // It also contains a method to translate strings with arguments.
 // Translator is required to be thread-safe for read-only operations after initialization.
 type Translator interface {
-	T(s string) string                  // T translates a string.
-	Tf(s string, args ...string) string // Tf translates a string with arguments.
-	Locale() *Locale                    // Locale returns the locale the translator translates to.
+	T(s string) string // T translates a string.
+	// Tf translates a string with arguments. The arguments are passed as key value pairs.
+	// Example:
+	// 	Tf("Hello {{.name}}", "name", "John") => "Hello John"
+	Tf(s string, args ...string) string
+	Locale() *Locale // Locale returns the locale the translator translates to.
 }
 
 // TranslatorProvider provides translators for various locales.
-// TranslatorProvider is required to be thread-safe for read-only operations after initialization.
+// It is required to be thread-safe for read-only operations after initialization.
 type TranslatorProvider interface {
 	Translator(locale string) (Translator, error) // Translator returns a translator for a locale.
-	Default() (Translator, error)                 // Default returns the default translator.
+	Default() (Translator, error)                 // Default returns the default translator as a fallback.
 }
 
-// WithLogger sets the logger for the translator.
 func WithLogger(logger trace.Logger) HTranslatorOption {
 	return func(t *HTranslator) {
 		t.logger = logger
 	}
 }
 
-// WithTranslations sets the translations for the translator.
 func WithTranslations(translations map[string]string) HTranslatorOption {
 	return func(t *HTranslator) {
 		t.translations = translations
 	}
 }
 
-// ForLocale sets the locale for the translator.
 func ForLocale(locale *Locale) HTranslatorOption {
 	return func(t *HTranslator) {
 		t.locale = locale
 	}
 }
 
-// NewTranslator returns a new HTranslator covered by the Translator interface.
-// A logger, translations and a locale can and should be passed in.
 func NewTranslator(opts ...HTranslatorOption) Translator {
 	translator := &HTranslator{
 		translations: make(map[string]string),
@@ -147,7 +128,10 @@ func (t *HTranslator) T(s string) string {
 }
 
 // Tf translates a string with arguments. The arguments are passed as key value pairs.
-// The key is the name of the argument in the template, the value is the value of the argument.
+// Example:
+//
+//	Tf("Hello {{.name}}", "name", "John") => "Hello John"
+//
 // This parsing of args is done by the ArgsAsMap function.
 func (t *HTranslator) Tf(s string, args ...string) string {
 	var err error
@@ -182,12 +166,12 @@ func (t *HTranslator) Tf(s string, args ...string) string {
 	return wr.String()
 }
 
-// Locale returns the locale the translator translates to.
 func (t *HTranslator) Locale() *Locale {
 	return t.locale
 }
 
-// ArgsAsMap returns a map of arguments for HTranslator.Tf.
+// ArgsAsMap converts a list of arguments to a map.
+// Scheme: key1, value1, key2, value2, ...
 func ArgsAsMap(args ...string) map[string]string {
 	params := make(map[string]string)
 	for i := 0; i+1 < len(args); i += 2 {
@@ -225,10 +209,10 @@ func FromLocale(locale *Locale, translationsDir string, logger trace.Logger) (Tr
 }
 
 // LoadTranslations loads the translations from a file.
-// The file content will be flattened to a map of strings, where the key is the path of the translation.
+// The file content will be flattened to a map of strings keeping case-sensitivity, where the key is the path of the translation.
 // Example:
 //
-//	{"a": {"B": "c"}} => {"a.B": "c"} => keep case-sensitivity
+//	{"a": {"B": "c"}} => {"a.B": "c"}
 func LoadTranslations(translationsDir string, locale string) (map[string]string, error) {
 	filePath := filepath.Join(translationsDir, fmt.Sprintf("%s.json", locale))
 	bytes, err := os.ReadFile(filePath)
@@ -269,7 +253,6 @@ func NewTranslatorProvider(lt ...Translator) TranslatorProvider {
 	return p
 }
 
-// Translator returns a translator for a locale.
 func (t *HTranslatorProvider) Translator(locale string) (Translator, error) {
 	if translator, ok := t.translators[locale]; ok {
 		return translator, nil
@@ -278,7 +261,6 @@ func (t *HTranslatorProvider) Translator(locale string) (Translator, error) {
 	return nil, ErrLocaleNotFound
 }
 
-// Default returns the default translator.
 func (t *HTranslatorProvider) Default() (Translator, error) {
 	if t.defaultTrans == nil {
 		return nil, ErrLocaleNotFound
@@ -287,7 +269,6 @@ func (t *HTranslatorProvider) Default() (Translator, error) {
 	return t.defaultTrans, nil
 }
 
-// DefaultLocale returns the default locale.
 func (cfg *Cfg) DefaultLocale() (*Locale, error) {
 	for _, locale := range cfg.Locales {
 		if locale.Default {
@@ -298,7 +279,6 @@ func (cfg *Cfg) DefaultLocale() (*Locale, error) {
 	return nil, ErrLocaleNotFound
 }
 
-// Locale returns a locale by name.
 func (cfg *Cfg) Locale(name string) (*Locale, error) {
 	for _, locale := range cfg.Locales {
 		if locale.Name == name {

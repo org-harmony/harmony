@@ -15,16 +15,12 @@ import (
 )
 
 var (
-	// ErrInvalidOAuthState is returned when the OAuth state is invalid.
-	ErrInvalidOAuthState = errors.New("invalid oauth state")
-	// ErrCodeExchangeFailed is returned when the OAuth code exchange failed.
+	ErrInvalidOAuthState  = errors.New("invalid oauth state")
 	ErrCodeExchangeFailed = errors.New("code exchange failed")
 )
 
-// Cfg holds the authentication configuration.
 type Cfg struct {
-	// Providers contains a list of OAuth2 providers.
-	Providers    map[string]*ProviderCfg `toml:"provider"`
+	Providers    map[string]*ProviderCfg `toml:"provider"` // Providers contains a list of OAuth2 providers.
 	EnableOAuth2 bool                    `toml:"enable_oauth2"`
 }
 
@@ -40,6 +36,7 @@ type ProviderCfg struct {
 	Scopes         []string `toml:"scopes" validate:"required"`
 }
 
+// LoginFunc is the callback function for the OAuthLogin function it is responsible for creating the user session.
 type LoginFunc[P, M any] func(context.Context, *oauth2.Token, *ProviderCfg) (*persistence.Session[P, M], error)
 
 // OAuthLogin handles the OAuth2 login process, including state and code verification.
@@ -86,7 +83,7 @@ func OAuthCfgFromProviderCfg(p *ProviderCfg, redirectURL string) *oauth2.Config 
 }
 
 // SetSession sets the session cookie on the response.
-// The session ID is used as the cookie value.
+// The session id is used as the cookie value.
 // The cookie expires at the same time as the session.
 func SetSession[P, M any](w http.ResponseWriter, name string, session *persistence.Session[P, M]) {
 	http.SetCookie(w, &http.Cookie{

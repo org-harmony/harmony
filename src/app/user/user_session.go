@@ -17,40 +17,31 @@ const (
 	SessionType           = "user"
 )
 
-// Session is the user session entity.
-// It is a persistence.Session with the User as the payload and SessionMeta as the meta.
+// Session is a persistence.Session with the User as the payload and SessionMeta as the meta.
 type Session struct {
 	persistence.Session[User, SessionMeta]
 }
 
-// SessionMeta is the metainformation about a user session.
 type SessionMeta struct{}
 
-// PGUserSessionRepository is the Postgres implementation of the SessionRepository interface.
-// It allows saving and reading user sessions from the application's Postgres database.
 type PGUserSessionRepository struct {
 	db *pgxpool.Pool
 }
 
-// SessionRepository defines the session store for user sessions.
-// It is a persistence.SessionRepository with the Session as the session.
 type SessionRepository interface {
 	persistence.SessionRepository[*Session]
 }
 
-// NewPGUserSessionRepository creates a new PGUserSessionRepository. It requires a Postgres database connection pool.
 func NewPGUserSessionRepository(db *pgxpool.Pool) SessionRepository {
 	return &PGUserSessionRepository{db: db}
 }
 
-// RepositoryName returns the name of the repository.
 func (r *PGUserSessionRepository) RepositoryName() string {
 	return SessionRepositoryName
 }
 
 // Read reads a valid user session from the database by id.
-// If the session has expired it will return a persistence.ErrReadRow and a persistence.ErrSessionExpired.
-// The invalid session is thereafter deleted from the database.
+// If the session has expired it will be deleted and the Read returns a persistence.ErrSessionExpired.
 func (r *PGUserSessionRepository) Read(ctx context.Context, id uuid.UUID) (*Session, error) {
 	session := &Session{
 		Session: persistence.Session[User, SessionMeta]{},
@@ -64,8 +55,8 @@ func (r *PGUserSessionRepository) Read(ctx context.Context, id uuid.UUID) (*Sess
 	return session, nil
 }
 
-// Write writes a user session to the database. The session is identified by the id *not* the session id.
-// Also, the session id will be overwritten by the id passed as second argument to PGUserSessionRepository.Write.
+// Write writes a user session to the database, identified by the id passed in *not* the session's id on the struct.
+// The session struct's id will be overwritten by the id passed as second argument to PGUserSessionRepository.Write.
 func (r *PGUserSessionRepository) Write(ctx context.Context, id uuid.UUID, session *Session) error {
 	session.ID = id
 
@@ -77,7 +68,6 @@ func (r *PGUserSessionRepository) Write(ctx context.Context, id uuid.UUID, sessi
 	return errors.Join(persistence.ErrInsert, err)
 }
 
-// Delete deletes a user session from the database by id.
 func (r *PGUserSessionRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	err := persistence.PGDeleteSession(ctx, r.db, id)
 
@@ -88,7 +78,6 @@ func (r *PGUserSessionRepository) Delete(ctx context.Context, id uuid.UUID) erro
 	return errors.Join(persistence.ErrDelete, err)
 }
 
-// Insert inserts a new user session into the database.
 func (r *PGUserSessionRepository) Insert(ctx context.Context, session *Session) error {
 	id := uuid.New()
 	session.ID = id

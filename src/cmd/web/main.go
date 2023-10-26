@@ -16,6 +16,7 @@ import (
 )
 
 // TODO Migrate to Bootstrap 5
+// TODO Check correct usage of file.Join and filepath.Join
 
 func main() {
 	l := trace.NewLogger()

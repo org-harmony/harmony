@@ -17,14 +17,14 @@ type GitHubUserAdapter struct{}
 
 // OAuthUserAdapter adapts the OAuth2 user data to the user entity.
 // The Email method returns the email address of the user this is used to find the user in the database.
-// If the user was not found and can therefore not be logged in, the CreateUser method is called.
+// If the user was not found and can therefore not be logged-in, the CreateUser method is called.
 // CreateUser then returns a ToCreate struct which is used to create a new user.
 type OAuthUserAdapter interface {
 	Email(ctx context.Context, token *oauth2.Token, cfg *auth.ProviderCfg, client *http.Client) (string, error)
 	CreateUser(ctx context.Context, email string, token *oauth2.Token, cfg *auth.ProviderCfg, client *http.Client) (*ToCreate, error)
 }
 
-// Adapters returns a map of OAuthUserAdapters.
+// Adapters returns a map of OAuthUserAdapters with the provider name as key.
 // These adapters are used to adapt the OAuth2 user data to the user entity.
 func Adapters() map[string]OAuthUserAdapter {
 	return map[string]OAuthUserAdapter{
@@ -33,7 +33,7 @@ func Adapters() map[string]OAuthUserAdapter {
 }
 
 // LoginWithAdapter logs in the user with the given OAuthUserAdapter.
-// First it checks if the user already exists in the database. If so, the user is logged in.
+// First it checks if the user already exists in the database. If so, the user is logged-in.
 // The email address of the user is used to find the user in the database.
 // If the user doesn't exist, the OAuthUserAdapter.CreateUser creates the user.
 // After creating the user, the user is logged in and LoginWithAdapter returns the session.
@@ -84,7 +84,7 @@ func LoginWithAdapter(
 
 // Email on the GitHubUserAdapter returns the email address of the user.
 // It will first try to get the email from the userinfo endpoint.
-// If that fails, it will try to get the primary email from the GitHub api.
+// If that fails, it will try to get the primary email from the GitHub API.
 func (g *GitHubUserAdapter) Email(ctx context.Context, token *oauth2.Token, cfg *auth.ProviderCfg, client *http.Client) (string, error) {
 	userinfo, err := githubGetUserinfo(ctx, token.AccessToken, cfg.UserinfoURI, client)
 	if err != nil {
@@ -104,7 +104,6 @@ func (g *GitHubUserAdapter) Email(ctx context.Context, token *oauth2.Token, cfg 
 }
 
 // CreateUser on the GitHubUserAdapter creates a new user with the given email address and name from the userinfo endpoint.
-// It splits the name into firstname and lastname.
 func (g *GitHubUserAdapter) CreateUser(ctx context.Context, email string, token *oauth2.Token, cfg *auth.ProviderCfg, client *http.Client) (*ToCreate, error) {
 	userinfo, err := githubGetUserinfo(ctx, token.AccessToken, cfg.UserinfoURI, client)
 	if err != nil {
@@ -146,7 +145,8 @@ func githubGetUserinfo(ctx context.Context, token string, url string, client *ht
 	return string(content), nil
 }
 
-// githubPrimaryEmail returns the primary email from the GitHub api.
+// githubPrimaryEmail returns the primary email from the GitHub API.
+// This can be used after the userinfo didn't contain the email because it is not public for the user.
 func githubPrimaryEmail(ctx context.Context, token string, client *http.Client) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/user/emails", nil)
 	if err != nil {
@@ -185,6 +185,7 @@ func githubPrimaryEmail(ctx context.Context, token string, client *http.Client) 
 }
 
 // emailFromUserinfo returns the email from the userinfo.
+// It converts the userinfo string to a struct, extracts the email converts it to lowercase and returns it.
 func emailFromUserinfo(userinfo string) (string, error) {
 	var email struct{ Email string }
 	err := json.Unmarshal([]byte(userinfo), &email)

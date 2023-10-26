@@ -4,6 +4,8 @@ import (
 	"context"
 )
 
+// TODO remove
+
 // HandlerError contains the error, status code, and message to be issued.
 //
 // It is safe to display the message to the client.

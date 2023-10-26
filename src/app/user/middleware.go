@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/org-harmony/harmony/src/core/util"
 	"net/http"
@@ -14,11 +15,15 @@ type MiddlewareOptions struct {
 	sessionStore       SessionRepository
 }
 
-// MiddlewareOption describes a function modifying the MiddlewareOptions.
+// ErrNotInContext is returned by the CtxUser function if the user is not in the context.
+var ErrNotInContext = errors.New("user not in context")
+
+// MiddlewareOption modifies MiddlewareOptions and is used to set options for the Middleware.
 type MiddlewareOption func(*MiddlewareOptions)
 
 // RedirectToLogin redirects the user to the login page.
 // This is the default NotLoggedInHandler.
+// TODO add a cookie to redirect the user back to the page he was on before logging-in.
 func RedirectToLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/auth/login", http.StatusTemporaryRedirect)
 }
@@ -34,7 +39,7 @@ func AllowAnonymous(o *MiddlewareOptions) {
 //
 // Example:
 //
-//	router.With(auth.Middleware(sessionStore, auth.NotLoggedInHandler(auth.RedirectToLogin))).Get("/some/route", someHandler)
+//	router.With(user.Middleware(sessionStore, user.NotLoggedInHandler(auth.RedirectToLogin))).Get("/some/route", someHandler)
 func NotLoggedInHandler(h func(w http.ResponseWriter, r *http.Request)) MiddlewareOption {
 	return func(o *MiddlewareOptions) {
 		o.notLoggedInHandler = http.HandlerFunc(h)
@@ -79,7 +84,7 @@ func Middleware(sessionStore SessionRepository, opts ...MiddlewareOption) func(n
 	}
 }
 
-// LoggedInUser reads the session id from the request reads the user from the passed in session store and returns it.
+// LoggedInUser reads the session id from the request, reads the user from the passed in session store and returns it.
 // If the user is not logged in, an error is returned.
 //
 // Important: The function does not look the user up in the database. It simply returns the user from the session.
@@ -140,7 +145,6 @@ func CtxUser(ctx context.Context) (*User, error) {
 	return u, nil
 }
 
-// defaultUserMiddlewareOptions returns the default options for the Middleware.
 func defaultUserMiddlewareOptions(sessionStore SessionRepository) *MiddlewareOptions {
 	return &MiddlewareOptions{
 		requireAuth:        true,
