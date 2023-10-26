@@ -1,76 +1,44 @@
 {{ define "layout" }}
     {{ block "header" . }}
-        {{ block "header-branding" . }}
-            <section class="hero header">
-                <div class="hero-body header-body">
-                    <div class="tile is-ancestor">
-                        <div class="tile is-2 is-parent">
-                            <div class="tile">
-                                <img class="is-logo" src="{{ asset "img/harmony.png" }}" alt="HARMONY Logo" />
-                            </div>
-                        </div>
-                        <div class="tile is-vertical is-parent">
-                            <div class="tile is-child">
-                                <h2 class="title">
-                                    {{ block "header-title" . }}HARMONY{{ end }}
-                                </h2>
-                            </div>
-                            <div class="tile is-child">
-                                <h3 class="subtitle">
-                                    {{ block "header-subtitle" . }}Highly Adaptable Requirements Management and OrgaNization sYstem{{ end }}
-                                </h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {{ end }}
-
+        <section class="header">
             {{ block "header-navigation" . }}
-                <div class="hero-foot header-navigation">
-                    <nav class="tabs is-boxed is-fullwidth">
-                        <div class="container">
-                            <ul>
+                <nav class="navbar navbar-expand-lg">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">
+                            <img class="img-fluid rounded border-light" width="70rem" src="{{ asset "img/harmony-logo.jpg" }}" alt="HARMONY Logo" />
+                        </a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbar">
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                                 {{ template "header-navigation-menu" . }}
                             </ul>
                         </div>
-                    </nav>
-                </div>
+                    </div>
+                </nav>
             {{ end }}
         </section>
     {{ end }}
 
     {{ block "content" . }}
-        <section class="section content">
-            <div class="content-inner">
-                <div class="tile is-ancestor">
-                    <div class="tile is-3 is-parent content-sidebar">
-                        <div class="tile is-child box">
-                            {{ block "content-sidebar" . }}
-                                <aside class="content-sidebar">
-                                    {{ template "content-sidebar-menu" . }}
-                                </aside>
-                            {{ end }}
-                        </div>
-                    </div>
-
-                    <div class="tile is-parent content-body">
-                        <div class="tile is-child">
-                            {{ template "content-body" . }}
-                        </div>
-                    </div>
+        <section class="section content mt-3">
+            <div class="content-inner container-xl">
+                <div class="col-8 container">
+                    {{ template "content-body" . }}
                 </div>
             </div>
         </section>
     {{ end }}
 
     {{ block "footer" . }}
-        <footer class="footer">
-            <div class="content has-text-centered">
+        <footer class="footer mt-5 py-3 bg-light">
+            <div class="container text-center">
                 <p>
                     {{ tf "harmony.footer.visit"
-                        "link"
-                        "<a href=\"https://github.com/org-harmony/harmony\" target=\"_blank\">GitHub</a>" |
-                        safeHTML
+                    "link"
+                    "<a href=\"https://github.com/org-harmony/harmony\" target=\"_blank\">GitHub</a>" |
+                    safeHTML
                     }}
                 </p>
             </div>

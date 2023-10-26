@@ -2,32 +2,12 @@
     {{ template "index" . }}
 {{ end }}
 
-{{ define "title" }}
-    {{ t "harmony.head.welcome" }}
-{{ end }}
-
-{{ define "header" }}
-    {{ template "header-branding" . }}
-{{ end }}
-
-{{ block "content" . }}
-    <section class="section content">
-        <div class="content-inner">
-            <div class="content-body container box">
-                {{ template "content-body" . }}
-            </div>
-        </div>
-    </section>
-{{ end }}
-
 {{ define "content-body" }}
     <h1>{{ t "harmony.head.welcome" }}</h1>
 
     {{ t "harmony.text.welcome" | safeHTML }}
 
-    <div class="columns">
-        <div class="column">
-            <a href="auth/login" class="button is-primary is-action-button">{{ t "user.auth.login.action" }}</a>
-        </div>
+    <div class="d-grid">
+        <a href="/auth/login" class="btn btn-primary">{{ t "user.auth.login.action" }}</a>
     </div>
 {{ end }}

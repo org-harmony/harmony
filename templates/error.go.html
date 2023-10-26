@@ -3,9 +3,7 @@
 {{ end }}
 
 {{ define "content-body" }}
-    <div class="notification is-danger is-light">
-        <p>
-            {{ t "harmony.error.prefix-generic" }} {{ t .Err }}
-        </p>
+    <div class="alert alert-danger">
+        {{ t "harmony.error.prefix-generic" }} {{ t .Err }}
     </div>
 {{ end }}
