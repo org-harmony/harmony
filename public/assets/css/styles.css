@@ -1,14 +1,3 @@
-@import "bulma.min.css";
+@import "bootstrap.min.css";
 
-.is-action-button {
-    margin: 0 auto;
-    max-width: 60vw;
-    display: block;
-}
-
-.is-logo {
-    border: 2px solid #e0e0e0;
-    height: 128px;
-    margin: 0 auto;
-    width: 128px;
-}
+/* TODO add sass file to import bootstrap and allow variable overrides */

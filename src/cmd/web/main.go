@@ -15,8 +15,6 @@ import (
 	"github.com/org-harmony/harmony/src/core/web"
 )
 
-// TODO Migrate to Bootstrap 5
-
 func main() {
 	l := trace.NewLogger()
 	v := validator.New(validator.WithRequiredStructEnabled())

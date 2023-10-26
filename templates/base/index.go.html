@@ -10,7 +10,7 @@
                 {{ end }}
 
                 {{ block "title-container" . }}
-                    <title>{{ block "title" . }}Home{{ end }} - HARMONY</title>
+                    <title>{{ block "title" . }}{{ t "harmony.head.welcome" }}{{ end }} - {{ t "harmony.head.title.suffix" }}</title>
                 {{ end }}
 
                 {{ block "styles" . }}
@@ -19,6 +19,7 @@
 
                 {{ block "scripts" . }}
                     <script defer src="{{ asset "js/htmx.min.js" }}"></script>
+                    <script defer src="{{ asset "js/bootstrap.min.js" }}"></script>
                 {{ end }}
             {{ end }}
         </head>
