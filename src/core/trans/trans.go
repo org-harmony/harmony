@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/org-harmony/harmony/src/core/herr"
 	"github.com/org-harmony/harmony/src/core/trace"
-	"github.com/org-harmony/harmony/src/core/util"
 	"os"
 	"path/filepath"
 	"strings"
@@ -240,7 +239,7 @@ func LoadTranslations(translationsDir string, locale string) (map[string]string,
 	var translations map[string]any
 	err = json.Unmarshal(bytes, &translations)
 	if err != nil {
-		return nil, util.ErrErr(herr.ErrReadFile, err)
+		return nil, errors.Join(herr.ErrReadFile, err)
 	}
 
 	return flattenTranslations(translations), nil
