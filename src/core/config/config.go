@@ -9,7 +9,7 @@ import (
 	"github.com/org-harmony/harmony/src/core/herr"
 	"github.com/pelletier/go-toml/v2"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -120,13 +120,13 @@ func C(c any, opts ...Option) error {
 		opt(o)
 	}
 
-	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
+	fPath := filepath.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
 		return errors.Join(herr.ErrReadFile, err)
 	}
 
-	flPath := path.Join(o.dir, fmt.Sprintf("%s.local.%s", o.filename, o.fileExt))
+	flPath := filepath.Join(o.dir, fmt.Sprintf("%s.local.%s", o.filename, o.fileExt))
 	bl, _ := os.ReadFile(flPath) // ignore error
 
 	if err := parseConfig(c, b, bl); err != nil {
@@ -164,7 +164,7 @@ func ToEnv(opts ...Option) error {
 		opt(o)
 	}
 
-	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
+	fPath := filepath.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
 		return errors.Join(herr.ErrReadFile, err)
