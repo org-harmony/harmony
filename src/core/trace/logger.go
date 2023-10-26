@@ -63,11 +63,19 @@ func NewTestLogger(t *testing.T) Logger {
 }
 
 func (l *TestLogger) Debug(mod, msg string, args ...any) {
-	// l.test.Logf("DEBUG %s: %s | %v", mod, msg, args) silence debug logs
+	if os.Getenv("TEST_LOG_SILENCE_DEBUG") != "" {
+		return
+	}
+
+	l.test.Logf("DEBUG %s: %s | %v", mod, msg, args)
 }
 
 func (l *TestLogger) Info(mod, msg string, args ...any) {
-	// l.test.Logf("INFO %s: %s | %v", mod, msg, args) silence info logs
+	if os.Getenv("TEST_LOG_SILENCE_INFO") != "" {
+		return
+	}
+
+	l.test.Logf("INFO %s: %s | %v", mod, msg, args)
 }
 
 func (l *TestLogger) Warn(mod, msg string, args ...any) {
