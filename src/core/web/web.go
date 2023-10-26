@@ -175,7 +175,7 @@ func (h *HIO) Router() Router {
 // Render renders a template with data. If an error occurs, the error is returned.
 func (h *HIO) Render(t *template.Template, data any) error {
 	if err := makeTemplateTranslatable(h.r.Context(), t); err != nil {
-		return util.ErrErr(ErrTemplateNotTranslatable, err)
+		h.l.Warn(Pkg, "failed to make template translatable, likely context does not contain translator", "error", err)
 	}
 
 	return util.Wrap(t.Execute(h.w, data), "failed to render template")
@@ -194,7 +194,7 @@ func (h *HIO) Error(e error) error {
 	}
 
 	if err = makeTemplateTranslatable(h.r.Context(), errTemplate); err != nil {
-		return util.ErrErr(ErrTemplateNotTranslatable, err)
+		h.l.Warn(Pkg, "failed to make template translatable, likely context does not contain translator", "error", err)
 	}
 
 	return errTemplate.Execute(h.w, NewErrorTemplateData(h.r.Context(), e.Error()))
