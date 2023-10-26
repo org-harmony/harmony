@@ -67,8 +67,11 @@ type IO interface {
 	Logger() trace.Logger
 	TemplaterStore() TemplaterStore
 	Router() Router
+	// Render renders a template with the passed in data and writes it to the http.ResponseWriter.
 	Render(*template.Template, any) error
+	// Error renders an error page with the passed in error as the user facing error message.
 	Error(error) error
+	// Redirect will send a redirect to the client.
 	Redirect(string, int) error
 	// Template returns a template by a name from the TemplateStore.
 	// Template just wraps the call to TemplaterStore and consecutive Template call.
