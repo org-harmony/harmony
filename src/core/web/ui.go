@@ -28,8 +28,6 @@ var (
 	ErrCanNotLoad = fmt.Errorf("template not loaded")
 	// ErrCanNotClone is returned when a template can not be cloned.
 	ErrCanNotClone = fmt.Errorf("template not cloned")
-	// ErrTemplateNotTranslatable is returned when a template is not translatable.
-	ErrTemplateNotTranslatable = fmt.Errorf("template not translatable")
 )
 
 // UICfg is the web packages UI configuration.
