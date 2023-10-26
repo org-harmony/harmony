@@ -160,7 +160,7 @@ func (h *HIO) Error(e error) error {
 		h.l.Warn(Pkg, "failed to make template translatable, likely context does not contain translator", "error", err)
 	}
 
-	return errTemplate.Execute(h.w, NewErrorTemplateData(h.r.Context(), e.Error()))
+	return errTemplate.Execute(h.w, map[string]string{"Err": e.Error()})
 }
 
 func (h *HIO) Redirect(url string, code int) error {

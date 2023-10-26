@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/auth"
@@ -20,7 +21,7 @@ func oAuthLoginController(appCtx *hctx.AppCtx, webCtx *web.Ctx, providers map[st
 
 		oAuthCfg, _, err := oAuthCfgFromProviderMap(name, providers, redirectURL)
 		if err != nil {
-			return io.Error(web.ExtErr("auth.error.invalid-provider"))
+			return io.Error(errors.New("user.auth.login.error.invalid-provider"))
 		}
 
 		url := oAuthCfg.AuthCodeURL("state") // TODO dynamize state through method in auth.go
@@ -43,7 +44,7 @@ func oAuthLoginSuccessController(
 		name := web.URLParam(request, "provider")
 		provider, ok := providers[name]
 		if !ok {
-			return io.Error(web.ExtErr("auth.error.invalid-provider"))
+			return io.Error(errors.New("auth.error.invalid-provider"))
 		}
 
 		session, err := auth.OAuthLogin(
@@ -72,7 +73,7 @@ func oAuthLoginSuccessController(
 
 		if err != nil {
 			appCtx.Error(Pkg, "error logging in with oauth", err)
-			return io.Error(web.ExtErr("An error occurred while logging in with OAuth 2, please again later."))
+			return io.Error(errors.New("user.auth.login.error.oauth"))
 		}
 
 		auth.SetSession(io.Response(), user.SessionCookieName, session)
