@@ -47,13 +47,6 @@ func Wrap(e error, msg string) error {
 	return fmt.Errorf("%s: %w", msg, e)
 }
 
-// TODO remove and use errors.Join instead
-
-// ErrErr wraps an error with another error.
-func ErrErr(e1, e2 error) error {
-	return fmt.Errorf("%w: %w", e1, e2)
-}
-
 // CtxValue returns the value of the context key.
 func CtxValue[T any](ctx context.Context, key any) (T, bool) {
 	var empty T

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/src/core/herr"
-	"github.com/org-harmony/harmony/src/core/util"
 	"github.com/pelletier/go-toml/v2"
 	"os"
 	"path"
@@ -124,14 +123,14 @@ func C(c any, opts ...Option) error {
 	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
-		return util.ErrErr(herr.ErrReadFile, err)
+		return errors.Join(herr.ErrReadFile, err)
 	}
 
 	flPath := path.Join(o.dir, fmt.Sprintf("%s.local.%s", o.filename, o.fileExt))
 	bl, _ := os.ReadFile(flPath) // ignore error
 
 	if err := parseConfig(c, b, bl); err != nil {
-		return util.ErrErr(ErrParse, err)
+		return errors.Join(ErrParse, err)
 	}
 
 	if !o.disableEnvOverwrite {
@@ -145,7 +144,7 @@ func C(c any, opts ...Option) error {
 	}
 
 	if err := o.validator.Struct(c); err != nil {
-		return util.ErrErr(ErrInvalidConfig, err)
+		return errors.Join(ErrInvalidConfig, err)
 	}
 
 	return nil
@@ -168,13 +167,13 @@ func ToEnv(opts ...Option) error {
 	fPath := path.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
 	b, err := os.ReadFile(fPath)
 	if err != nil {
-		return util.ErrErr(herr.ErrReadFile, err)
+		return errors.Join(herr.ErrReadFile, err)
 	}
 
 	m := make(map[string]any)
 	err = toml.Unmarshal(b, &m)
 	if err != nil {
-		return util.ErrErr(ErrParse, err)
+		return errors.Join(ErrParse, err)
 	}
 
 	fm := makeEnvMap(m)

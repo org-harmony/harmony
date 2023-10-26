@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/org-harmony/harmony/src/core/util"
 	"sync"
 )
 
@@ -139,8 +138,8 @@ func PGReadErr(err error) error {
 	}
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return util.ErrErr(ErrNotFound, err)
+		return errors.Join(ErrNotFound, err)
 	}
 
-	return util.ErrErr(ErrReadRow, err)
+	return errors.Join(ErrReadRow, err)
 }

@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/org-harmony/harmony/src/core/hctx"
@@ -73,7 +74,7 @@ func (r *PGUserSessionRepository) Write(ctx context.Context, id uuid.UUID, sessi
 		return nil
 	}
 
-	return util.ErrErr(persistence.ErrInsert, err)
+	return errors.Join(persistence.ErrInsert, err)
 }
 
 // Delete deletes a user session from the database by id.
@@ -84,7 +85,7 @@ func (r *PGUserSessionRepository) Delete(ctx context.Context, id uuid.UUID) erro
 		return nil
 	}
 
-	return util.ErrErr(persistence.ErrDelete, err)
+	return errors.Join(persistence.ErrDelete, err)
 }
 
 // Insert inserts a new user session into the database.
@@ -94,7 +95,7 @@ func (r *PGUserSessionRepository) Insert(ctx context.Context, session *Session) 
 
 	err := persistence.PGWriteSession(ctx, r.db, &session.Session)
 	if err != nil {
-		return util.ErrErr(persistence.ErrInsert, err)
+		return errors.Join(persistence.ErrInsert, err)
 	}
 
 	return nil

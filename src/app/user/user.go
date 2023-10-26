@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/org-harmony/harmony/src/core/persistence"
-	"github.com/org-harmony/harmony/src/core/util"
 	"time"
 )
 
@@ -112,7 +111,7 @@ func (r *PGUserRepository) Create(ctx context.Context, user *ToCreate) (*User, e
 	)
 
 	if err != nil {
-		return nil, util.ErrErr(persistence.ErrInsert, err)
+		return nil, errors.Join(persistence.ErrInsert, err)
 	}
 
 	return newUser, nil
@@ -123,7 +122,7 @@ func (r *PGUserRepository) Create(ctx context.Context, user *ToCreate) (*User, e
 func (r *PGUserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.Exec(ctx, "DELETE FROM users WHERE id = $1", id)
 	if err != nil {
-		return util.ErrErr(persistence.ErrDelete, err)
+		return errors.Join(persistence.ErrDelete, err)
 	}
 
 	return nil
