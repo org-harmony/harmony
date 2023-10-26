@@ -38,9 +38,9 @@ type FileServerCfg struct {
 
 // Ctx is the web application context.
 type Ctx struct {
-	router Router
-	cfg    *Cfg
-	t      TemplaterStore
+	Router         Router
+	Config         *Cfg
+	TemplaterStore TemplaterStore
 }
 
 // Controller is convenience struct for handling web requests.
@@ -48,7 +48,7 @@ type Ctx struct {
 // The Controller implements the http.Handler interface and can therefore be used as a handler.
 type Controller struct {
 	app     *hctx.AppCtx
-	ctx     Context
+	ctx     *Ctx
 	handler func(io IO) error
 }
 
@@ -60,17 +60,6 @@ type HIO struct {
 	t  TemplaterStore
 	rt Router
 }
-
-// TODO Context to Struct?
-
-// Context is the web application context.
-type Context interface {
-	Router() Router                 // Router returns an instance of Router.
-	Configuration() Cfg             // Configuration returns a copy of the web configuration.
-	TemplaterStore() TemplaterStore // TemplaterStore returns an instance of TemplaterStore.
-}
-
-// TODO Add Template() Method to IO
 
 // IO allows for simplified access to the http.ResponseWriter and http.Request.
 // IO is passed to a Controller's handler function allowing the handler to interact with the http.ResponseWriter and http.Request.
@@ -85,34 +74,22 @@ type IO interface {
 	Render(*template.Template, any) error // Render renders a template with data.
 	Error(error) error                    // Error renders an error template with an error.
 	Redirect(string, int) error           // Redirect redirects the client to a URL with a status code.
+	// Template returns a template by a name from the TemplateStore.
+	// Template just wraps the call to TemplaterStore and consecutive Template call.
+	Template(store, template, path string) (*template.Template, error)
 }
 
 // NewContext returns a new Context.
-func NewContext(router Router, cfg *Cfg, t TemplaterStore) Context {
+func NewContext(router Router, cfg *Cfg, ts TemplaterStore) *Ctx {
 	return &Ctx{
-		router: router,
-		cfg:    cfg,
-		t:      t,
+		Router:         router,
+		Config:         cfg,
+		TemplaterStore: ts,
 	}
 }
 
-// Router returns an instance of Router.
-func (c *Ctx) Router() Router {
-	return c.router
-}
-
-// Configuration returns a copy of the web configuration.
-func (c *Ctx) Configuration() Cfg {
-	return *c.cfg // return a copy
-}
-
-// TemplaterStore returns an instance of TemplaterStore.
-func (c *Ctx) TemplaterStore() TemplaterStore {
-	return c.t
-}
-
 // NewController returns a new Controller.
-func NewController(app *hctx.AppCtx, ctx Context, handler func(io IO) error) http.Handler {
+func NewController(app *hctx.AppCtx, ctx *Ctx, handler func(io IO) error) http.Handler {
 	if app == nil || ctx == nil || handler == nil {
 		panic("nil contexts or handler")
 	}
@@ -131,8 +108,8 @@ func (c *Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w:  w,
 		r:  r,
 		l:  c.app,
-		t:  c.ctx.TemplaterStore(),
-		rt: c.ctx.Router(),
+		t:  c.ctx.TemplaterStore,
+		rt: c.ctx.Router,
 	}
 
 	err := c.handler(io)
@@ -204,6 +181,17 @@ func (h *HIO) Error(e error) error {
 func (h *HIO) Redirect(url string, code int) error {
 	http.Redirect(h.w, h.r, url, code)
 	return nil
+}
+
+// Template returns a template by a name from the TemplateStore.
+// Template just wraps the call to TemplaterStore and consecutive Template call.
+func (h *HIO) Template(store, template, path string) (*template.Template, error) {
+	templaterStore, err := h.t.Templater(store)
+	if err != nil {
+		return nil, err
+	}
+
+	return templaterStore.Template(template, path)
 }
 
 // MountFileServer registers a file server with a config on a router.

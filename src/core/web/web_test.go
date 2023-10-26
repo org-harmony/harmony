@@ -41,7 +41,7 @@ func TestMountFileServer(t *testing.T) {
 func TestController(t *testing.T) {
 	app, ctx := setupMockCtxs(t)
 
-	tmplter := util.Unwrap(ctx.TemplaterStore().Templater(LandingPageTemplateName))
+	tmplter := util.Unwrap(ctx.TemplaterStore.Templater(LandingPageTemplateName))
 	lp := util.Unwrap(tmplter.Base())
 
 	c := NewController(app, ctx, func(io IO) error {
@@ -61,7 +61,7 @@ func TestController(t *testing.T) {
 		return nil
 	})
 
-	router := ctx.Router()
+	router := ctx.Router
 	router.Get("/test", c.ServeHTTP)
 	router.Get("/error", e.ServeHTTP)
 	router.Get("/redirect", re.ServeHTTP)
@@ -86,7 +86,7 @@ func TestController(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.Code)
 }
 
-func setupMockCtxs(t *testing.T) (*hctx.AppCtx, Context) {
+func setupMockCtxs(t *testing.T) (*hctx.AppCtx, *Ctx) {
 	r, ts := setupMock(t)
 	templatesDir, baseDir := setupDirectories(t)
 
@@ -96,9 +96,9 @@ func setupMockCtxs(t *testing.T) (*hctx.AppCtx, Context) {
 			nil,
 		),
 		&Ctx{
-			router: r,
-			cfg:    setupConfig(templatesDir, baseDir),
-			t:      ts,
+			Router:         r,
+			Config:         setupConfig(templatesDir, baseDir),
+			TemplaterStore: ts,
 		}
 }
 

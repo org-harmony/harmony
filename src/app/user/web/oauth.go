@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-func oAuthLoginController(appCtx *hctx.AppCtx, webCtx web.Context, providers map[string]*auth.ProviderCfg) http.Handler {
+func oAuthLoginController(appCtx *hctx.AppCtx, webCtx *web.Ctx, providers map[string]*auth.ProviderCfg) http.Handler {
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		name := web.URLParam(io.Request(), "provider")
 		redirectURL := oAuthProviderRedirectURL(webCtx, name)
@@ -31,7 +31,7 @@ func oAuthLoginController(appCtx *hctx.AppCtx, webCtx web.Context, providers map
 
 func oAuthLoginSuccessController(
 	appCtx *hctx.AppCtx,
-	webCtx web.Context,
+	webCtx *web.Ctx,
 	providers map[string]*auth.ProviderCfg,
 	adapters map[string]user.OAuthUserAdapter,
 ) http.Handler {
@@ -82,10 +82,10 @@ func oAuthLoginSuccessController(
 }
 
 // oAuthProviderRedirectURL returns the redirect URL for a specified provider.
-func oAuthProviderRedirectURL(webCtx web.Context, providerName string) string {
+func oAuthProviderRedirectURL(webCtx *web.Ctx, providerName string) string {
 	return fmt.Sprintf(
 		"%s%s",
-		webCtx.Configuration().Server.BaseURL,
+		webCtx.Config.Server.BaseURL,
 		fmt.Sprintf("/auth/login/%s/success", providerName),
 	)
 }
