@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
 	homeWeb "github.com/org-harmony/harmony/src/app/home"
 	"github.com/org-harmony/harmony/src/app/user"
@@ -12,12 +11,13 @@ import (
 	"github.com/org-harmony/harmony/src/core/trace"
 	"github.com/org-harmony/harmony/src/core/trans"
 	"github.com/org-harmony/harmony/src/core/util"
+	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/org-harmony/harmony/src/core/web"
 )
 
 func main() {
 	l := trace.NewLogger()
-	v := validator.New(validator.WithRequiredStructEnabled())
+	v := initValidator()
 
 	translatorProvider := initTrans(v, l)
 	webCtx, r := initWeb(v, translatorProvider)
@@ -31,7 +31,11 @@ func main() {
 	util.Ok(web.Serve(r, webCtx.Config.Server))
 }
 
-func initWeb(v *validator.Validate, tp trans.TranslatorProvider) (*web.Ctx, web.Router) {
+func initValidator() validation.V {
+	return validation.New()
+}
+
+func initWeb(v validation.V, tp trans.TranslatorProvider) (*web.Ctx, web.Router) {
 	webCfg := &web.Cfg{}
 	util.Ok(config.C(webCfg, config.From("web"), config.Validate(v)))
 	store := util.Unwrap(web.SetupTemplaterStore(webCfg.UI))
@@ -46,7 +50,7 @@ func initWeb(v *validator.Validate, tp trans.TranslatorProvider) (*web.Ctx, web.
 	return webCtx, r
 }
 
-func initDB(v *validator.Validate) (persistence.RepositoryProvider, *pgxpool.Pool) {
+func initDB(v validation.V) (persistence.RepositoryProvider, *pgxpool.Pool) {
 	dbCfg := &persistence.Cfg{}
 	util.Ok(config.C(dbCfg, config.From("persistence"), config.Validate(v)))
 	db := util.Unwrap(persistence.NewDB(dbCfg.DB))
@@ -67,7 +71,7 @@ func initRepositoryProvider(db *pgxpool.Pool) persistence.RepositoryProvider {
 	return p
 }
 
-func initTrans(v *validator.Validate, logger trace.Logger) trans.TranslatorProvider {
+func initTrans(v validation.V, logger trace.Logger) trans.TranslatorProvider {
 	transCfg := &trans.Cfg{}
 	util.Ok(config.C(transCfg, config.From("trans"), config.Validate(v)))
 	provider := util.Unwrap(trans.FromCfg(transCfg, logger))

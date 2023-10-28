@@ -19,13 +19,13 @@ var (
 
 // PostgresDBCfg is the configuration for a Postgres database connection.
 type PostgresDBCfg struct {
-	Host          string `toml:"host" env:"DB_HOST" validate:"required"`
-	Port          string `toml:"port" env:"DB_PORT" validate:"required"`
-	User          string `toml:"user" env:"DB_USER" validate:"required"`
-	Pass          string `toml:"pass" env:"DB_PASS" validate:"required"`
-	Name          string `toml:"name" env:"DB_NAME" validate:"required"`
-	SSLMode       string `toml:"ssl_mode" env:"DB_SSL_MODE" validate:"required"`
-	MaxConns      string `toml:"max_conns" env:"DB_MAX_CONNS" validate:"required"`
+	Host          string `toml:"host" env:"DB_HOST" hvalidate:"required"`
+	Port          string `toml:"port" env:"DB_PORT" hvalidate:"required"`
+	User          string `toml:"user" env:"DB_USER" hvalidate:"required"`
+	Pass          string `toml:"pass" env:"DB_PASS" hvalidate:"required"`
+	Name          string `toml:"name" env:"DB_NAME" hvalidate:"required"`
+	SSLMode       string `toml:"ssl_mode" env:"DB_SSL_MODE" hvalidate:"required"`
+	MaxConns      string `toml:"max_conns" env:"DB_MAX_CONNS" hvalidate:"required"`
 	MigrationsDir string `toml:"migrations_dir" env:"DB_MIGRATIONS_DIR"`
 }
 

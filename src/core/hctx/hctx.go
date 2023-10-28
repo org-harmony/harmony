@@ -1,9 +1,9 @@
 package hctx
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/src/core/persistence"
 	"github.com/org-harmony/harmony/src/core/trace"
+	"github.com/org-harmony/harmony/src/core/validation"
 )
 
 // AppCtx is the application context.
@@ -11,11 +11,11 @@ import (
 // It implements the trace.Logger and persistence.RepositoryProvider interfaces.
 type AppCtx struct {
 	Logger       trace.Logger
-	Validator    *validator.Validate
+	Validator    validation.V
 	Repositories persistence.RepositoryProvider
 }
 
-func NewAppCtx(l trace.Logger, v *validator.Validate, repos persistence.RepositoryProvider) *AppCtx {
+func NewAppCtx(l trace.Logger, v validation.V, repos persistence.RepositoryProvider) *AppCtx {
 	return &AppCtx{
 		Logger:       l,
 		Validator:    v,

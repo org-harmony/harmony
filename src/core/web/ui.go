@@ -13,6 +13,7 @@ import (
 const (
 	BaseTemplateName        = "base"
 	LandingPageTemplateName = "landing-page"
+	EmptyTemplateName       = "empty"
 	ErrorTemplateName       = "error"
 )
 
@@ -24,23 +25,28 @@ var (
 )
 
 type UICfg struct {
-	AssetsUri string        `toml:"assets_uri" validate:"required"`
-	Templates *TemplatesCfg `toml:"templates" validate:"required"`
+	AssetsUri string        `toml:"assets_uri" hvalidate:"required"`
+	Templates *TemplatesCfg `toml:"templates" hvalidate:"required"`
 }
 
 // TemplatesCfg is the config for the templates. BaseDir is parsed as a glob. Dir is used to load individual templates.
 type TemplatesCfg struct {
-	Dir     string `toml:"dir" validate:"required"`
-	BaseDir string `toml:"base_dir" validate:"required"`
+	Dir     string `toml:"dir" hvalidate:"required"`
+	BaseDir string `toml:"base_dir" hvalidate:"required"`
 }
 
 // BaseTemplateData is the base template data.
 // It is a generic struct containing certain data and soon maybe some extra data that is common to all templates.
 // Maybe this data structure will be removed in the future.
-//
-// Deprecated: This struct is deprecated and will be removed in the future.
 type BaseTemplateData[T any] struct {
 	Data T
+}
+
+// FormTemplateData is the generic template data for forms. It contains any form object and a map of violations.
+// The key of the violations map is the field name and the value is the violation message.
+type FormTemplateData[T any] struct {
+	Form       T
+	Violations map[string]string
 }
 
 // HTemplaterStore is a thread-safe store of Templater.
@@ -55,7 +61,7 @@ type HTemplaterStore struct {
 type HTemplater struct {
 	name      string
 	dir       string
-	templates map[string]*template.Template
+	templates map[string]*template.Template // TODO replace with one base template and use template.Lookup + template.Clone
 	lock      sync.RWMutex
 }
 
@@ -71,12 +77,30 @@ type Templater interface {
 	Template(name, path string) (*template.Template, error)
 	Name() string
 	Base() (*template.Template, error) // Base returns the base template all templates derive from.
+	// JoinedTemplate returns a template that is a combination of the base template and the passed in templates.
+	// Scheme: base -> templates[0] -> templates[1] -> ...
+	// Args: name, path, path, ...
+	JoinedTemplate(...string) (*template.Template, error)
 }
 
-// Deprecated: This function is deprecated and will be removed in the future.
 func NewTemplateData[T any](data T) *BaseTemplateData[T] {
 	return &BaseTemplateData[T]{
 		Data: data,
+	}
+}
+
+// NewFormTemplateData constructs a FormTemplateData with violations set by the args.
+// Scheme: field, violation, field, violation, ...
+func NewFormTemplateData[T any](form T, args ...string) *FormTemplateData[T] {
+	violations := make(map[string]string)
+
+	for i := 0; i+1 < len(args); i += 2 {
+		violations[args[i]] = args[i+1]
+	}
+
+	return &FormTemplateData[T]{
+		Form:       form,
+		Violations: violations,
 	}
 }
 
@@ -177,6 +201,38 @@ func (t *HTemplater) Base() (*template.Template, error) {
 	return b, nil
 }
 
+// JoinedTemplate returns a template that is a combination of the base template and the passed in templates.
+// Scheme: base -> templates[0] -> templates[1] -> ...
+// Args: name, path, path, ...
+// TODO add tests
+func (t *HTemplater) JoinedTemplate(args ...string) (*template.Template, error) {
+	if len(args) < 2 {
+		return nil, fmt.Errorf("at least one template path must be passed in")
+	}
+
+	name := args[0]
+	paths := args[1:]
+
+	base, err := t.Base()
+	if err != nil {
+		return nil, err
+	}
+
+	tmpl, err := base.New(name).ParseFiles(filepath.Join(t.dir, paths[0]))
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrCanNotLoad, err)
+	}
+
+	for _, path := range paths[1:] {
+		tmpl, err = tmpl.ParseFiles(filepath.Join(t.dir, path))
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", ErrCanNotLoad, err)
+		}
+	}
+
+	return tmpl, nil
+}
+
 // SetupTemplaterStore sets up a TemplaterStore with the base, landing page and error templates.
 func SetupTemplaterStore(ui *UICfg) (TemplaterStore, error) {
 	base, err := BaseTemplate(ui)
@@ -194,10 +250,13 @@ func SetupTemplaterStore(ui *UICfg) (TemplaterStore, error) {
 		return nil, err
 	}
 
+	empty := EmptyTemplate(ui)
+
 	return NewTemplaterStore(
 		NewTemplater(base, ui.Templates.Dir),
 		NewTemplater(landingPage, ui.Templates.Dir),
 		NewTemplater(errorPage, ui.Templates.Dir),
+		NewTemplater(empty, ui.Templates.Dir),
 	), nil
 }
 
@@ -224,6 +283,10 @@ func BaseTemplate(ui *UICfg) (*template.Template, error) {
 		New(BaseTemplateName).
 		Funcs(templateFuncs(ui)).
 		ParseGlob(filepath.Join(ui.Templates.BaseDir, "*.go.html"))
+}
+
+func EmptyTemplate(ui *UICfg) *template.Template {
+	return template.New(EmptyTemplateName).Funcs(templateFuncs(ui))
 }
 
 // makeTemplateTranslatable overrides the translation functions t/tf on the template using the translator from the context.

@@ -2,10 +2,10 @@ package web
 
 import (
 	"errors"
-	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/trace"
 	"github.com/org-harmony/harmony/src/core/util"
+	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -92,7 +92,7 @@ func setupMockCtxs(t *testing.T) (*hctx.AppCtx, *Ctx) {
 
 	return hctx.NewAppCtx(
 			trace.NewLogger(),
-			validator.New(validator.WithRequiredStructEnabled()),
+			validation.New(),
 			nil,
 		),
 		&Ctx{

@@ -26,14 +26,14 @@ type Cfg struct {
 
 // ProviderCfg is the config for an OAuth2 provider.
 type ProviderCfg struct {
-	Name           string   `toml:"name" validate:"required"`
-	DisplayName    string   `toml:"display_name" validate:"required"`
-	AuthorizeURI   string   `toml:"authorize_uri" validate:"required"`
-	AccessTokenURI string   `toml:"access_token_uri" validate:"required"`
+	Name           string   `toml:"name" hvalidate:"required"`
+	DisplayName    string   `toml:"display_name" hvalidate:"required"`
+	AuthorizeURI   string   `toml:"authorize_uri" hvalidate:"required"`
+	AccessTokenURI string   `toml:"access_token_uri" hvalidate:"required"`
 	UserinfoURI    string   `toml:"userinfo_uri"`
-	ClientID       string   `toml:"client_id" validate:"required"`
-	ClientSecret   string   `toml:"client_secret" validate:"required"`
-	Scopes         []string `toml:"scopes" validate:"required"`
+	ClientID       string   `toml:"client_id" hvalidate:"required"`
+	ClientSecret   string   `toml:"client_secret" hvalidate:"required"`
+	Scopes         []string `toml:"scopes" hvalidate:"required"`
 }
 
 // LoginFunc is the callback function for the OAuthLogin function it is responsible for creating the user session.
