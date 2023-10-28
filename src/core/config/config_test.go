@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/src/core/herr"
+	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -11,7 +11,7 @@ import (
 )
 
 type MockConfig struct {
-	Name string `env:"NAME" validate:"required"`
+	Name string `env:"NAME" hvalidate:"required"`
 }
 
 type MockEnvConfig struct {
@@ -27,7 +27,7 @@ type MockEnvConfig struct {
 }
 
 func TestC(t *testing.T) {
-	v := validator.New()
+	v := validation.New()
 
 	t.Run("file not readable", func(t *testing.T) {
 		config := &MockConfig{}

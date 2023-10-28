@@ -28,13 +28,13 @@ var (
 )
 
 type Cfg struct {
-	Locales         map[string]*Locale `toml:"locales" validate:"required"`
-	TranslationsDir string             `toml:"translations_dir" validate:"required"` // TranslationsDir is the directory where the translation files are stored. E.g. /translations.
+	Locales         map[string]*Locale `toml:"locales" hvalidate:"required"`
+	TranslationsDir string             `toml:"translations_dir" hvalidate:"required"` // TranslationsDir is the directory where the translation files are stored. E.g. /translations.
 }
 
 type Locale struct {
-	Path    string `toml:"path" validate:"required"` // Path of the locale. E.g. de/de-DE/en/en-US.
-	Name    string `toml:"name" validate:"required"`
+	Path    string `toml:"path" hvalidate:"required"` // Path of the locale. E.g. de/de-DE/en/en-US.
+	Name    string `toml:"name" hvalidate:"required"`
 	Default bool   `toml:"default"` // Default declares the locale as default.
 }
 

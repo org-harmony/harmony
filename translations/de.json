@@ -1,5 +1,8 @@
 {
   "user": {
+    "firstname": "Vorname",
+    "lastname": "Nachname",
+    "email": "E-Mail",
     "auth": {
       "login": {
         "title": "Anmelden",
@@ -10,6 +13,9 @@
           "invalid-provider": "Dieser Anbieter wird nicht für den OAuth-Login unterstützt."
         }
       }
+    },
+    "settings": {
+      "for": "Einstellungen für {{ .firstname }} {{ .lastname }}"
     }
   },
   "harmony": {
@@ -26,7 +32,17 @@
     "error": {
       "generic": "Leider ist ein Fehler aufgetreten.",
       "generic-reload": "Leider ist ein Fehler aufgetreten. Bitte laden Sie die Seite neu.",
-      "prefix-generic": "Leider ist ein Fehler aufgetreten:"
+      "prefix-generic": "Leider ist ein Fehler aufgetreten:",
+      "validation": {
+        "email": {
+          "generic": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+        },
+        "required": {
+          "generic": "Bitte füllen Sie dieses Feld aus.",
+          "Firstname": "Bitte geben Sie Ihren Vornamen ein.",
+          "Lastname": "Bitte geben Sie Ihren Nachnamen ein."
+        }
+      }
     }
   }
 }

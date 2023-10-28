@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/src/core/config"
 	"github.com/org-harmony/harmony/src/core/persistence"
 	"github.com/org-harmony/harmony/src/core/util"
+	"github.com/org-harmony/harmony/src/core/validation"
 	"os"
 )
 
@@ -23,7 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	v := validator.New(validator.WithRequiredStructEnabled())
+	v := validation.New()
 
 	dbCfg := &persistence.Cfg{}
 	util.Ok(config.C(dbCfg, config.From("persistence"), config.Validate(v)))

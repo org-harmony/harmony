@@ -3,12 +3,12 @@ package persistence
 import (
 	"context"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/org-harmony/harmony/src/core/config"
 	"github.com/org-harmony/harmony/src/core/util"
+	"github.com/org-harmony/harmony/src/core/validation"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,7 +16,7 @@ import (
 
 // ReadTestDBCfg reads the test database configuration from the config directory.
 func ReadTestDBCfg(configDir string) *Cfg {
-	v := validator.New(validator.WithRequiredStructEnabled())
+	v := validation.New()
 	cfg := &Cfg{}
 	util.Ok(config.C(cfg, config.From("persistence"), config.FromDir(configDir)))
 	util.Ok(config.C(cfg, config.From("persistence.test"), config.FromDir(configDir), config.Validate(v)))

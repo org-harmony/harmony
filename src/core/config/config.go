@@ -5,8 +5,8 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"github.com/org-harmony/harmony/src/core/herr"
+	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/pelletier/go-toml/v2"
 	"os"
 	"path/filepath"
@@ -27,7 +27,7 @@ type Options struct {
 	dir                 string
 	filename            string
 	fileExt             string
-	validator           *validator.Validate
+	validator           validation.V
 	disableEnvOverwrite bool
 }
 
@@ -43,7 +43,7 @@ func From(filename string) Option {
 
 // Validate sets a validator.Validate to validate the config struct.
 // Without passing a non-nil validator.Validate the config will not be validated.
-func Validate(v *validator.Validate) Option {
+func Validate(v validation.V) Option {
 	return func(o *Options) {
 		o.validator = v
 	}
@@ -143,8 +143,13 @@ func C(c any, opts ...Option) error {
 		return nil
 	}
 
-	if err := o.validator.Struct(c); err != nil {
-		return errors.Join(ErrInvalidConfig, err)
+	err, validationErrs := o.validator.ValidateStruct(c)
+	if err != nil {
+		return err
+	}
+
+	if len(validationErrs) > 0 {
+		return errors.Join(append([]error{ErrInvalidConfig}, validationErrs...)...)
 	}
 
 	return nil

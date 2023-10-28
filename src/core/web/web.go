@@ -17,20 +17,20 @@ import (
 const Pkg = "sys.web"
 
 type Cfg struct {
-	Server *ServerCfg `toml:"server" validate:"required"`
-	UI     *UICfg     `toml:"ui" validate:"required"`
+	Server *ServerCfg `toml:"server" hvalidate:"required"`
+	UI     *UICfg     `toml:"ui" hvalidate:"required"`
 }
 
 type ServerCfg struct {
-	AssetFsCfg *FileServerCfg `toml:"asset_fs" validate:"required"`
+	AssetFsCfg *FileServerCfg `toml:"asset_fs" hvalidate:"required"`
 	Addr       string         `toml:"address" env:"ADDR"`
-	Port       string         `toml:"port" env:"PORT" validate:"required"`
-	BaseURL    string         `toml:"base_url" env:"BASE_URL" validate:"required"`
+	Port       string         `toml:"port" env:"PORT" hvalidate:"required"`
+	BaseURL    string         `toml:"base_url" env:"BASE_URL" hvalidate:"required"`
 }
 
 type FileServerCfg struct {
-	Root  string `toml:"root" validate:"required"`
-	Route string `toml:"route" validate:"required"`
+	Root  string `toml:"root" hvalidate:"required"`
+	Route string `toml:"route" hvalidate:"required"`
 }
 
 type Ctx struct {
@@ -69,8 +69,9 @@ type IO interface {
 	Router() Router
 	// Render renders a template with the passed in data and writes it to the http.ResponseWriter.
 	Render(*template.Template, any) error
-	// Error renders an error page with the passed in error as the user facing error message.
-	Error(error) error
+	// Error renders an error page with the first passed in error as the user facing error message.
+	// All other errors will be logged. If no errors are provided a generic error message is rendered.
+	Error(...error) error
 	// Redirect will send a redirect to the client.
 	Redirect(string, int) error
 	// Template returns a template by a name from the TemplateStore.
@@ -148,13 +149,26 @@ func (h *HIO) Render(t *template.Template, data any) error {
 	return util.Wrap(t.Execute(h.w, data), "failed to render template")
 }
 
-func (h *HIO) Error(e error) error {
+func (h *HIO) Error(errs ...error) error {
+	if len(errs) == 0 {
+		errs = append(errs, fmt.Errorf("harmony.error.generic"))
+	}
+
+	if len(errs) > 1 {
+		logErrs := errs[1:]
+		for _, err := range logErrs {
+			h.l.Error(Pkg, "error in controller", err)
+		}
+	}
+
+	e := errs[0]
+
 	errTemplater, err := h.t.Templater(ErrorTemplateName)
 	if err != nil {
 		return err
 	}
 
-	errTemplate, err := errTemplater.Template("error", "error.go.html")
+	errTemplate, err := errTemplater.Base()
 	if err != nil {
 		return err
 	}
