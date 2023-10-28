@@ -15,6 +15,8 @@ import (
 	"github.com/org-harmony/harmony/src/core/web"
 )
 
+// TODO add comments for at least each exported function/method/type to follow go convention, if the element would not need a comment, it should not be exported(/existing)
+
 func main() {
 	l := trace.NewLogger()
 	v := initValidator()
