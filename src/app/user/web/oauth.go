@@ -78,7 +78,7 @@ func oAuthLoginSuccessController(
 
 		auth.SetSession(io.Response(), user.SessionCookieName, session)
 
-		return io.Redirect("/auth/user", http.StatusTemporaryRedirect)
+		return io.Redirect("/", http.StatusTemporaryRedirect)
 	})
 }
 
