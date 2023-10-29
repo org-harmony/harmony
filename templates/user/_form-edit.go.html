@@ -1,0 +1,23 @@
+{{ define "user.edit.form" }}
+    <form hx-post="/user/me" hx-trigger="submit" hx-swap="outerHTML">
+        <div id="form-messages">
+            {{ range $violation := .Violations }}
+                <div class="alert alert-danger">{{ $violation }}</div>
+            {{ end }}
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <label for="firstname" class="form-label">{{ t "user.firstname" }}</label>
+                <input id="firstname" type="text" class="form-control" name="Firstname" placeholder="{{ t "user.firstname" }}" value="{{ .Form.Firstname }}">
+            </div>
+            <div class="col-6">
+                <label for="lastname" class="form-label">{{ t "user.lastname" }}</label>
+                <input id="lastname" type="text" class="form-control" name="Lastname" placeholder="{{ t "user.lastname" }}" value="{{ .Form.Lastname }}">
+            </div>
+            <div class="col mt-2">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+    </form>
+{{ end }}
