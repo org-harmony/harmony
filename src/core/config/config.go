@@ -216,18 +216,8 @@ func overwriteWithEnv(c any) (err error) {
 		}
 	}()
 
-	typeOfC := reflect.TypeOf(c)
-	valueOfC := reflect.ValueOf(c)
-
-	if typeOfC.Kind() == reflect.Pointer {
-		if valueOfC.IsNil() {
-			return
-		}
-
-		typeOfC = typeOfC.Elem()
-		valueOfC = valueOfC.Elem()
-	}
-
+	// ensure that pointers are de-referenced and the underlying value is a struct.
+	typeOfC, valueOfC := dereferencePointer(c)
 	if typeOfC.Kind() != reflect.Struct {
 		return
 	}
@@ -240,49 +230,81 @@ func overwriteWithEnv(c any) (err error) {
 			continue
 		}
 
-		kind := typeOfField.Type.Kind()
-		if kind == reflect.Struct {
-			if err := overwriteWithEnv(valueOfField.Addr().Interface()); err != nil {
-				return err
-			}
-			continue
-		}
-
-		if kind == reflect.Ptr {
-			if err := overwriteWithEnv(valueOfField.Interface()); err != nil {
-				return err
-			}
-
-			continue
-		}
-
-		if kind != reflect.String && kind != reflect.Bool {
-			continue
-		}
-
-		envVar := typeOfField.Tag.Get("env")
-		if envVar == "" {
-			continue
-		}
-
-		envVal := os.Getenv(envVar)
-		if envVal == "" {
-			continue
-		}
-
-		fieldToSet := valueOfC.FieldByName(typeOfField.Name)
-		if !fieldToSet.CanSet() {
-			continue
-		}
-
-		switch kind {
-		case reflect.Bool:
-			fieldToSet.SetBool(strings.ToLower(envVal) == "true")
-		case reflect.String:
-			fieldToSet.SetString(envVal)
+		// recursively handle nested structs and pointers.
+		if err := overwriteFieldWithEnv(valueOfField, typeOfField); err != nil {
+			return err
 		}
 	}
 
+	return nil
+}
+
+// dereferencePointer dereferences a pointer to a struct, returning the type and value of the struct.
+// If the input is not a pointer, it returns the original type and value.
+func dereferencePointer(c any) (reflect.Type, reflect.Value) {
+	typeOfC := reflect.TypeOf(c)
+	valueOfC := reflect.ValueOf(c)
+
+	if typeOfC.Kind() == reflect.Pointer && !valueOfC.IsNil() {
+		typeOfC = typeOfC.Elem()
+		valueOfC = valueOfC.Elem()
+	}
+
+	return typeOfC, valueOfC
+}
+
+// overwriteFieldWithEnv overwrites a struct field with the corresponding environment variable.
+// It processes nested structs and pointers recursively, and overwrites string and bool fields based on "env" tags.
+func overwriteFieldWithEnv(field reflect.Value, fieldType reflect.StructField) error {
+	switch field.Kind() {
+	case reflect.Ptr:
+		return handlePointerField(field)
+	case reflect.Struct:
+		return handleStructField(field)
+	case reflect.String, reflect.Bool:
+		return setFieldFromEnv(field, fieldType)
+	}
+	return nil
+}
+
+// handlePointerField processes fields in a struct that are pointers.
+// If the pointer is not nil, it invokes overwriteWithEnv on the de-referenced pointer,
+// allowing further processing of the fields within the struct that the pointer is pointing to.
+func handlePointerField(field reflect.Value) error {
+	if field.IsNil() {
+		return nil
+	}
+	return overwriteWithEnv(field.Interface())
+}
+
+// handleStructField processes struct fields within another struct.
+// It invokes overwriteWithEnv on the address of the field, allowing it to overwrite
+// the values within the nested struct based on the environment variables.
+func handleStructField(field reflect.Value) error {
+	return overwriteWithEnv(field.Addr().Interface())
+}
+
+// setFieldFromEnv overwrites the value of a field based on an environment variable.
+// It uses the "env" tag to find the corresponding environment variable and sets the field’s value accordingly.
+// Only bool and string fields are processed. For bool fields, the environment variable should be "true"
+// (case-insensitive) to set the field to true; any other value sets the field to false.
+func setFieldFromEnv(field reflect.Value, fieldType reflect.StructField) error {
+	envVar := fieldType.Tag.Get("env")
+	if envVar == "" {
+		return nil
+	}
+
+	envVal := os.Getenv(envVar)
+	if envVal == "" {
+		return nil
+	}
+
+	switch field.Kind() {
+	case reflect.Bool:
+		field.SetBool(strings.ToLower(envVal) == "true")
+	case reflect.String:
+		field.SetString(envVal)
+	}
 	return nil
 }
 
