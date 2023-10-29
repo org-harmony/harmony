@@ -268,12 +268,16 @@ func overwriteFieldWithEnv(field reflect.Value, fieldType reflect.StructField) e
 }
 
 // handlePointerField processes fields in a struct that are pointers.
-// If the pointer is not nil, it invokes overwriteWithEnv on the de-referenced pointer,
+// If the pointer is nil, it initializes the pointer with a new object of the respective type.
+// It then invokes overwriteWithEnv on the de-referenced pointer,
 // allowing further processing of the fields within the struct that the pointer is pointing to.
 func handlePointerField(field reflect.Value) error {
+	// check if the pointer is nil, and if so, initialize it with a new object.
 	if field.IsNil() {
-		return nil
+		field.Set(reflect.New(field.Type().Elem()))
 	}
+
+	// continue processing the fields of the object that the pointer is pointing to.
 	return overwriteWithEnv(field.Interface())
 }
 
