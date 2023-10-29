@@ -109,6 +109,8 @@ func New(opts ...ValidatorOption) V {
 // ValidateStruct implements the ValidateStruct method of the V interface.
 // It performs validation on struct fields based on defined validation functions.
 // Refer to the documentation of the V interface for more detailed information.
+//
+// TODO break this function up into smaller functions
 func (v *Validator) ValidateStruct(s any, path ...string) (hardErr error, validationErrs []error) {
 	defer func() {
 		if r := recover(); r != nil {
