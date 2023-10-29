@@ -10,10 +10,26 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+type SimpleTestStruct struct {
+	Name string `hvalidate:"required"`
+	Age  int    `hvalidate:"positive"`
+}
+
+type TestStruct struct {
+	Name          string
+	Age           uint
+	Height        float32
+	CookieConsent bool
+	Offset        int64
+	Roles         []string
+	Inner         *SimpleTestStruct
+}
 
 func TestMountFileServer(t *testing.T) {
 	r, _ := setupMock(t)
@@ -84,6 +100,97 @@ func TestController(t *testing.T) {
 	req, _ = http.NewRequest("GET", "/verify-template", nil)
 	resp = executeRequest(req, router)
 	assert.Equal(t, http.StatusOK, resp.Code)
+}
+
+func TestValuesIntoStruct(t *testing.T) {
+	ts := TestStruct{}
+	values := map[string][]string{
+		"Name":          {"John"},
+		"Age":           {"30"},
+		"Height":        {"1.865"},
+		"CookieConsent": {"true"},
+		"Offset":        {"-1"},
+		"Roles":         {"admin", "user"},
+		"Inner.Name":    {"John"},
+	}
+
+	err := ValuesIntoStruct(values, &ts)
+	assert.NoError(t, err)
+	assert.Equal(t, "John", ts.Name)
+	assert.Equal(t, uint(30), ts.Age)
+	assert.Equal(t, float32(1.865), ts.Height)
+	assert.Equal(t, true, ts.CookieConsent)
+	assert.Equal(t, int64(-1), ts.Offset)
+	assert.Nil(t, ts.Roles) // not supported yet
+	assert.Nil(t, ts.Inner) // not supported yet
+
+	// Invalid values where error occurs should be skipped
+	ts = TestStruct{}
+	values = map[string][]string{
+		"Name": {"John"},
+		"Age":  {"-30"},
+	}
+
+	err = ValuesIntoStruct(values, &ts)
+	assert.NoError(t, err)
+	assert.Equal(t, "John", ts.Name)
+	assert.Equal(t, uint(0), ts.Age)
+}
+
+func TestReadForm(t *testing.T) {
+	v := validation.New()
+
+	ts := SimpleTestStruct{}
+	values := map[string][]string{
+		"Name": {"John"},
+		"Age":  {"30"},
+	}
+
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.PostForm = values
+
+	err := ReadForm(req, &ts, v)
+	assert.NoError(t, err)
+	assert.Equal(t, "John", ts.Name)
+	assert.Equal(t, 30, ts.Age)
+
+	// Invalid values
+	ts = SimpleTestStruct{}
+	values = map[string][]string{
+		"Age": {"-30"},
+	}
+
+	req, _ = http.NewRequest("GET", "/", nil)
+	req.PostForm = values
+
+	err = ReadForm(req, &ts, v)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "required")
+	assert.ErrorContains(t, err, "Name")
+	assert.ErrorContains(t, err, "positive")
+	assert.Empty(t, ts.Name)
+	assert.Equal(t, -30, ts.Age)
+}
+
+func TestReadFormPanicsForNonPointer(t *testing.T) {
+	ts := TestStruct{} // not a pointer
+
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.PostForm = url.Values{"Name": {"John"}}
+
+	assert.PanicsWithError(t, ErrNotPointerToStruct.Error(), func() {
+		_ = ReadForm(req, ts, nil)
+	}, "ReadForm should panic when data is not a pointer to a struct")
+}
+
+func TestValuesIntoStructNoPanicForNonPointer(t *testing.T) {
+	ts := TestStruct{} // not a pointer
+	values := url.Values{"Name": {"John"}}
+
+	err := ValuesIntoStruct(values, ts)
+	assert.ErrorIs(t, err, ErrNotPointerToStruct)
+
+	assert.Equal(t, TestStruct{}, ts)
 }
 
 func setupMockCtxs(t *testing.T) (*hctx.AppCtx, *Ctx) {
