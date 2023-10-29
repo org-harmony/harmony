@@ -100,6 +100,7 @@ type IO interface {
 	Render(*template.Template, any) error
 	// Error renders an error page with the first passed in error as the user facing error message.
 	// All errors will be logged. If no errors are provided a generic error message is rendered and the error is logged.
+	// TODO add support for htmx errors => only rendering the error template from empty templater
 	Error(...error) error
 	// Redirect will send a redirect to the client with the specified status code.
 	Redirect(string, int) error
