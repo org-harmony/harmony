@@ -236,7 +236,7 @@ func setupMockCtxs(t *testing.T) (*hctx.AppCtx, *Ctx) {
 			Config:         setupConfig(templatesDir, baseDir),
 			TemplaterStore: ts,
 			Navigation:     NewNavigation(),
-			Extensions:     NewTemplateDataExtensions(),
+			Extensions:     NewExtensions(),
 		}
 }
 

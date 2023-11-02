@@ -122,14 +122,14 @@ type IO interface {
 }
 
 // NewContext creates a new web context using the passed in router, config and templater store.
-// The Navigation and TemplateDataExtensions are initialized with NewNavigation and NewTemplateDataExtensions respectively.
+// The Navigation and TemplateDataExtensions are initialized with NewNavigation and NewExtensions respectively.
 func NewContext(router Router, cfg *Cfg, ts TemplaterStore) *Ctx {
 	return &Ctx{
 		Router:         router,
 		Config:         cfg,
 		TemplaterStore: ts,
 		Navigation:     NewNavigation(),
-		Extensions:     NewTemplateDataExtensions(),
+		Extensions:     NewExtensions(),
 	}
 }
 

@@ -113,7 +113,7 @@ func userProfileController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 		u := util.Unwrap(user.CtxUser(io.Context()))
 
 		return io.RenderJoined(
-			web.NewFormData(u.ToUpdate()),
+			web.NewFormData(u.ToUpdate(), nil),
 			"user.edit",
 			"user/edit.go.html",
 			"user/_form-edit.go.html",
@@ -136,12 +136,12 @@ func userProfileEditController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handle
 		}
 
 		if validationErrs != nil {
-			return io.Render("user.edit.form", "user/_form-edit.go.html", web.NewFormData(toUpdate, validationErrs...))
+			return io.Render("user.edit.form", "user/_form-edit.go.html", web.NewFormData(toUpdate, nil, validationErrs...))
 		}
 
 		err = user.UpdateUser(context, u, toUpdate, userRepository)
 
-		return io.Render("user.edit.form", "user/_form-edit.go.html", web.NewFormData(u.ToUpdate(), err))
+		return io.Render("user.edit.form", "user/_form-edit.go.html", web.NewFormData(u.ToUpdate(), nil, err))
 	})
 }
 

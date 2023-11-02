@@ -41,6 +41,16 @@ func (i *NavItem) Active() bool {
 	return i.active
 }
 
+// display is a nil-safe wrapper around the NavItem.Display function. It returns true if the Display function is nil.
+// Otherwise, it calls the Display function with the given IO and returns its result.
+func (i *NavItem) display(io IO) (bool, error) {
+	if i.Display == nil {
+		return true, nil
+	}
+
+	return i.Display(io)
+}
+
 // NewNavigation returns a new Navigation with an empty but allocated map of NavItems.
 // The sorted cache is neither allocated nor initialized.
 func NewNavigation() *Navigation {
@@ -140,7 +150,7 @@ func BuildNavigation(navigation []NavItem, io IO, parent ...*NavItem) ([]NavItem
 	var nav []NavItem
 
 	for _, item := range navigation {
-		display, err := item.Display(io)
+		display, err := item.display(io)
 		if err != nil {
 			return nil, err
 		}
