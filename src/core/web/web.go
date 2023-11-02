@@ -328,15 +328,9 @@ func (io *HIO) getBaseTemplater() (Templater, error) {
 	return io.webCtx.TemplaterStore.Templater(BaseTemplateName)
 }
 
-// getBaseInlineTemplater returns the base Templater based on the request (HTMX or not).
-// If the request is an HTMX request, it returns the empty Templater (EmptyTemplateName).
-// Otherwise, it will return the base Templater (BaseTemplateName).
+// getBaseInlineTemplater returns the base Templater for inline errors which is the empty Templater (EmptyTemplateName).
 func (io *HIO) getBaseInlineTemplater() (Templater, error) {
-	if io.IsHTMX() {
-		return io.webCtx.TemplaterStore.Templater(EmptyTemplateName)
-	}
-
-	return io.webCtx.TemplaterStore.Templater(BaseTemplateName)
+	return io.webCtx.TemplaterStore.Templater(EmptyTemplateName)
 }
 
 // MountFileServer registers a file server with a config on a router.
