@@ -66,7 +66,7 @@ type BaseTemplateData struct {
 	Extra      map[string]any // Extra might be the user session or other data that is not part of the template data.
 }
 
-// FormData is the generic template data for forms. It contains any form object and a map of violations.
+// FormData is the generic template data for forms. It contains any form object, a slice of success messages and a map of violations.
 // The key of the violations map is the field name and the value is a slice of errors.
 //
 // Using FormData.ValidationErrors all validation errors for a field can be retrieved as a slice of validation.Error.
@@ -75,6 +75,7 @@ type BaseTemplateData struct {
 type FormData[T any] struct {
 	Form       T
 	Violations map[string][]error
+	Success    []string // Slice of success messages
 }
 
 // TemplateDataExtensions is a collection of template data extensions.
@@ -159,35 +160,16 @@ func NewBaseTemplateData(appCtx *hctx.AppCtx, webCtx *Ctx, io IO, data any) (*Ba
 // The violations are set by calling FormData.ViolationsFromErrors.
 // Thus, every error that is not a validation.Error will be added to the FormData's violations as a WildcardViolation.
 // If the error is a validation.Error it will be added to the FormData's violations with the field as the key.
-func NewFormData[T any](form T, errs ...error) *FormData[T] {
+func NewFormData[T any](form T, success []string, errs ...error) *FormData[T] {
 	formData := &FormData[T]{
 		Form:       form,
 		Violations: make(map[string][]error),
+		Success:    success,
 	}
 
 	formData.ViolationsFromErrors(errs...)
 
 	return formData
-}
-
-// NewFormDataWithViolations constructs a FormData with violations constructed as errors from the passed in strings.
-//
-// Scheme: field, violation, field, violation, ...
-//
-// Each violation will become an error's message.
-func NewFormDataWithViolations[T any](form T, args ...string) *FormData[T] {
-	violations := make(map[string][]error)
-
-	for i := 0; i+1 < len(args); i += 2 {
-		violationsForField, _ := violations[args[i]]
-		violationsForField = append(violationsForField, errors.New(args[i+1]))
-		violations[args[i]] = violationsForField
-	}
-
-	return &FormData[T]{
-		Form:       form,
-		Violations: violations,
-	}
 }
 
 // NewTemplaterStore constructs a TemplaterStore with the passed in Templaters.
@@ -367,8 +349,8 @@ func (t *HTemplater) JoinedTemplate(name string, paths ...string) (*template.Tem
 	return clone, nil
 }
 
-// NewTemplateDataExtensions constructs a TemplateDataExtensions collection with an empty map of extensions.
-func NewTemplateDataExtensions() *TemplateDataExtensions {
+// NewExtensions constructs a TemplateDataExtensions collection with an empty map of extensions.
+func NewExtensions() *TemplateDataExtensions {
 	return &TemplateDataExtensions{
 		extensions: make(map[string]func(IO, *BaseTemplateData) error),
 	}
@@ -406,6 +388,12 @@ func (e *TemplateDataExtensions) Extensions() []func(IO, *BaseTemplateData) erro
 	}
 
 	return e.ext
+}
+
+// Successes returns the success messages of the FormData. They are usually displayed after a successful form submission.
+// TODO implement toast via events and HTMX
+func (d *FormData[T]) Successes() []string {
+	return d.Success
 }
 
 // ViolationsFromErrors adds the passed in non-nil errors to the FormData's violations. Nil errors are ignored.
