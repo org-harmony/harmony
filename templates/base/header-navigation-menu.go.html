@@ -1,20 +1,16 @@
 {{ define "header-navigation-menu" }}
-    <li class="nav-item">
-        <a class="nav-link active" href="/">Overview</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">Modifiers</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">Grid</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">Elements</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">Components</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">Layout</a>
-    </li>
+    {{ if .Navigation }}
+        {{ range .Navigation }}
+            {{/* TODO display nested items */}}
+            <li class="nav-item">
+                <a
+                    {{ if not .Redirect }}hx-boost="true" hx-target="body" hx-swap="innerHTML"{{ end }}
+                    class="nav-link {{ if .Active }}active{{ end }}"
+                    href="{{ .URL }}"
+                >
+                    {{ t .Name }}
+                </a>
+            </li>
+        {{ end }}
+    {{ end }}
 {{ end }}

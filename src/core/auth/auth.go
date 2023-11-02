@@ -15,16 +15,23 @@ import (
 )
 
 var (
-	ErrInvalidOAuthState  = errors.New("invalid oauth state")
+	// ErrInvalidOAuthState is returned after an invalid OAuth2 state is detected.
+	// This error might occur if a stale OAuth2 state is passed to the login success handler.
+	ErrInvalidOAuthState = errors.New("invalid oauth state")
+	// ErrCodeExchangeFailed is returned after an OAuth2 code exchange fails.
+	// This error might occur if the OAuth2 code is invalid or expired.
+	// The user should be redirected to the login page with an error message.
 	ErrCodeExchangeFailed = errors.New("code exchange failed")
 )
 
+// Cfg is the config for the auth package. It contains necessary information about the OAuth2 providers.
 type Cfg struct {
 	Providers    map[string]*ProviderCfg `toml:"provider"` // Providers contains a list of OAuth2 providers.
 	EnableOAuth2 bool                    `toml:"enable_oauth2"`
 }
 
 // ProviderCfg is the config for an OAuth2 provider.
+// The config struct can be used to show the login page and handle the login callback based on various providers.
 type ProviderCfg struct {
 	Name           string   `toml:"name" hvalidate:"required"`
 	DisplayName    string   `toml:"display_name" hvalidate:"required"`
@@ -90,7 +97,7 @@ func SetSession[P, M any](w http.ResponseWriter, name string, session *persisten
 		Name:     name,
 		Value:    session.ID.String(),
 		Expires:  session.ExpiresAt,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode, // must be lax for OAuth2, otherwise redirect will lead to weird states
 		Path:     "/",
 		Secure:   true,
 		HttpOnly: true,

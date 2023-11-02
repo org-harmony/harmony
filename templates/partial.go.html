@@ -1,0 +1,11 @@
+{{ define "partial" }}
+    {{ block "index" . }}
+        <body>
+            {{ template "body" . }}
+        </body>
+    {{ end }}
+{{ end }}
+
+{{ define "content" }}
+    {{ template "content-partial" . }}
+{{ end }}

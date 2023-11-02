@@ -2,15 +2,24 @@ package home
 
 import (
 	"github.com/org-harmony/harmony/src/core/hctx"
-	"github.com/org-harmony/harmony/src/core/util"
 	"github.com/org-harmony/harmony/src/core/web"
 )
 
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
-	lp := util.Unwrap(webCtx.TemplaterStore.Templater(web.LandingPageTemplateName))
-	t := util.Unwrap(lp.Template("home", "home.go.html"))
+	registerNavigation(appCtx, webCtx)
 
 	webCtx.Router.Get("/", web.NewController(appCtx, webCtx, func(io web.IO) error {
-		return io.Render(t, nil)
+		return io.Render("home", "home.go.html", nil)
 	}).ServeHTTP)
+}
+
+func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
+	webCtx.Navigation.Add("home", web.NavItem{
+		URL:  "/",
+		Name: "harmony.menu.home",
+		Display: func(io web.IO) (bool, error) {
+			return true, nil
+		},
+		Position: 0,
+	})
 }

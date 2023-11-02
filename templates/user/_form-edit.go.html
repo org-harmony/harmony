@@ -1,7 +1,7 @@
 {{ define "user.edit.form" }}
     <form hx-post="/user/me" hx-trigger="submit" hx-swap="outerHTML">
         <div id="form-messages">
-            {{ range $violation := .Violations }}
+            {{ range $violation := .Data.WildcardViolations }}
                 <div class="alert alert-danger">{{ $violation }}</div>
             {{ end }}
         </div>
@@ -9,11 +9,31 @@
         <div class="row">
             <div class="col-6">
                 <label for="firstname" class="form-label">{{ t "user.firstname" }}</label>
-                <input id="firstname" type="text" class="form-control" name="Firstname" placeholder="{{ t "user.firstname" }}" value="{{ .Form.Firstname }}">
+                <input
+                    id="firstname"
+                    type="text"
+                    class="form-control {{ if .Data.HasViolations "Firstname" }}is-invalid{{ end }}"
+                    name="Firstname"
+                    placeholder="{{ t "user.firstname" }}"
+                    value="{{ .Data.Form.Firstname }}"
+                />
+                {{ range $validation := .Data.ValidationErrors "Firstname" }}
+                    <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
+                {{ end }}
             </div>
             <div class="col-6">
                 <label for="lastname" class="form-label">{{ t "user.lastname" }}</label>
-                <input id="lastname" type="text" class="form-control" name="Lastname" placeholder="{{ t "user.lastname" }}" value="{{ .Form.Lastname }}">
+                <input
+                    id="lastname"
+                    type="text"
+                    class="form-control {{ if .Data.HasViolations "Lastname" }}is-invalid{{ end }}"
+                    name="Lastname"
+                    placeholder="{{ t "user.lastname" }}"
+                    value="{{ .Data.Form.Lastname }}"
+                />
+                {{ range $validation := .Data.ValidationErrors "Lastname" }}
+                    <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
+                {{ end }}
             </div>
             <div class="col mt-2">
                 <button type="submit" class="btn btn-primary">Submit</button>

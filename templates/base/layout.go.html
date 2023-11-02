@@ -21,11 +21,11 @@
         </section>
     {{ end }}
 
-    {{ block "content" . }}
-        <section class="section content mt-3">
-            <div class="content-inner container-xl">
-                <div class="col-8 container">
-                    {{ template "content-body" . }}
+    {{ block "content-container" . }}
+        <section class="section content-section mt-3">
+            <div class="content-container container col-8">
+                <div id="content">
+                    {{ template "content" . }}
                 </div>
             </div>
         </section>
