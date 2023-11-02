@@ -1,10 +1,8 @@
 package web
 
 import (
-	"errors"
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/trace"
-	"github.com/org-harmony/harmony/src/core/util"
 	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,68 +33,101 @@ func TestMountFileServer(t *testing.T) {
 	r, _ := setupMock(t)
 	setupAssetsFileServer(t, r)
 
-	req, _ := http.NewRequest("GET", "/static/test.js", nil)
-	resp := executeRequest(req, r)
-	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.Contains(t, resp.Body.String(), "console.log('test');")
+	recorder := httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/static/test.js", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), "console.log('test');")
 
-	req, _ = http.NewRequest("GET", "/static/test.css", nil)
-	resp = executeRequest(req, r)
-	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.Contains(t, resp.Body.String(), "body { color: red; }")
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/static/test.css", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), "body { color: red; }")
 
-	req, _ = http.NewRequest("GET", "/static/not-found", nil)
-	resp = executeRequest(req, r)
-	assert.Equal(t, http.StatusNotFound, resp.Code)
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/static/not-found", nil))
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
 
-	req, _ = http.NewRequest("GET", "/static/test.js/", nil)
-	resp = executeRequest(req, r)
-	assert.Equal(t, http.StatusMovedPermanently, resp.Code)
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/static", nil))
+	assert.Equal(t, http.StatusMovedPermanently, recorder.Code)
 }
 
 func TestController(t *testing.T) {
 	app, ctx := setupMockCtxs(t)
 
-	c := NewController(app, ctx, func(io IO) error {
-		return io.Render("landing-page")
+	partial := NewController(app, ctx, func(io IO) error {
+		return io.Render("partial", "partial.go.html", nil)
 	})
-	e := NewController(app, ctx, func(io IO) error {
-		return io.Error(errors.New("test error"))
+	errorHandler := NewController(app, ctx, func(io IO) error {
+		return io.Error()
 	})
-	re := NewController(app, ctx, func(io IO) error {
+	redirect := NewController(app, ctx, func(io IO) error {
 		return io.Redirect("/", http.StatusFound)
 	})
-	verifyTemplate := NewController(app, ctx, func(io IO) error {
-		tmplter2 := util.Unwrap(io.TemplaterStore().Templater(LandingPageTemplateName))
-		lp2 := util.Unwrap(tmplter2.Base())
-		assert.Equal(t, tmplter2, tmplter)
-		assert.Equal(t, lp.Name(), lp2.Name()) // items are cloned so the names are the same
-		return nil
+	inlineError := NewController(app, ctx, func(io IO) error {
+		return io.InlineError()
+	})
+	htmxOnly := NewController(app, ctx, func(io IO) error {
+		assert.True(t, io.IsHTMX())
+		return io.Render("partial", "partial.go.html", nil)
+	})
+	renderJoined := NewController(app, ctx, func(io IO) error {
+		return io.RenderJoined("content-string", "printer", "partial.go.html", "printer.go.html")
 	})
 
 	router := ctx.Router
-	router.Get("/test", c.ServeHTTP)
-	router.Get("/error", e.ServeHTTP)
-	router.Get("/redirect", re.ServeHTTP)
-	router.Get("/verify-template", verifyTemplate.ServeHTTP)
+	router.Get("/test", partial.ServeHTTP)
+	router.Get("/error", errorHandler.ServeHTTP)
+	router.Get("/inline-error", inlineError.ServeHTTP)
+	router.Get("/redirect", redirect.ServeHTTP)
+	router.Get("/htmx-only", htmxOnly.ServeHTTP)
+	router.Get("/render-joined", renderJoined.ServeHTTP)
 
-	req, _ := http.NewRequest("GET", "/test", nil)
-	resp := executeRequest(req, router)
-	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.Contains(t, resp.Body.String(), "Hello from landing page")
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest("GET", "/test", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), "Hello partial-appendix")
 
-	req, _ = http.NewRequest("GET", "/error", nil)
-	resp = executeRequest(req, router)
-	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.Contains(t, resp.Body.String(), "test error")
+	recorder = httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/error", nil)
+	router.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), "before content; harmony.error.generic-reload; after")
+	assert.NotContains(t, recorder.Body.String(), "appendix")
 
-	req, _ = http.NewRequest("GET", "/redirect", nil)
-	resp = executeRequest(req, router)
-	assert.Equal(t, http.StatusFound, resp.Code)
+	recorder = httptest.NewRecorder()
+	req.Header.Set("HX-Request", "true")
+	router.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), "appendix")
 
-	req, _ = http.NewRequest("GET", "/verify-template", nil)
-	resp = executeRequest(req, router)
-	assert.Equal(t, http.StatusOK, resp.Code)
+	recorder = httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest("GET", "/inline-error", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), "harmony.error.generic-reload")
+	assert.NotContains(t, recorder.Body.String(), "before content;")
+	assert.NotContains(t, recorder.Body.String(), "after;")
+
+	recorder = httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest("GET", "/redirect", nil))
+	assert.Equal(t, http.StatusFound, recorder.Code)
+	assert.Equal(t, "/", recorder.Header().Get("Location"))
+
+	recorder = httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest("GET", "/not-found", nil))
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
+
+	recorder = httptest.NewRecorder()
+	req = httptest.NewRequest("GET", "/htmx-only", nil)
+	req.Header.Set("HX-Request", "true")
+	router.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusOK, recorder.Code)
+
+	recorder = httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest("GET", "/render-joined", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), "content-string")
+	assert.Contains(t, recorder.Body.String(), "partial-appendix")
 }
 
 func TestValuesIntoStruct(t *testing.T) {
@@ -146,7 +177,7 @@ func TestReadForm(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.PostForm = values
 
-	err := ReadForm(req, &ts, v)
+	err, _ := ReadForm(req, &ts, v)
 	assert.NoError(t, err)
 	assert.Equal(t, "John", ts.Name)
 	assert.Equal(t, 30, ts.Age)
@@ -160,11 +191,12 @@ func TestReadForm(t *testing.T) {
 	req, _ = http.NewRequest("GET", "/", nil)
 	req.PostForm = values
 
-	err = ReadForm(req, &ts, v)
-	assert.Error(t, err)
-	assert.ErrorContains(t, err, "required")
-	assert.ErrorContains(t, err, "Name")
-	assert.ErrorContains(t, err, "positive")
+	err, validationErrs := ReadForm(req, &ts, v)
+	assert.NoError(t, err)
+	assert.Error(t, validationErrs[0])
+	assert.ErrorContains(t, validationErrs[0], "required")
+	assert.ErrorContains(t, validationErrs[0], "Name")
+	assert.ErrorContains(t, validationErrs[1], "positive")
 	assert.Empty(t, ts.Name)
 	assert.Equal(t, -30, ts.Age)
 }
@@ -176,7 +208,7 @@ func TestReadFormPanicsForNonPointer(t *testing.T) {
 	req.PostForm = url.Values{"Name": {"John"}}
 
 	assert.PanicsWithError(t, ErrNotPointerToStruct.Error(), func() {
-		_ = ReadForm(req, ts, nil)
+		_, _ = ReadForm(req, ts, nil)
 	}, "ReadForm should panic when data is not a pointer to a struct")
 }
 
@@ -203,6 +235,8 @@ func setupMockCtxs(t *testing.T) (*hctx.AppCtx, *Ctx) {
 			Router:         r,
 			Config:         setupConfig(templatesDir, baseDir),
 			TemplaterStore: ts,
+			Navigation:     NewNavigation(),
+			Extensions:     NewTemplateDataExtensions(),
 		}
 }
 
@@ -236,20 +270,28 @@ func setupDirectories(t *testing.T) (string, string) {
 	err = os.Mkdir(baseDir, 0755)
 	require.NoError(t, err)
 
-	indexContent := "{{define \"index\"}}Hello from index{{end}}"
+	indexContent := "{{define \"index\"}}before content; {{block \"content\" .}}Hello from index{{end}}; after{{end}}"
 	err = os.WriteFile(filepath.Join(baseDir, "index.go.html"), []byte(indexContent), 0644)
 	require.NoError(t, err)
 
-	baseContent := "{{define \"base\"}}{{ template \"index\" . }}{{end}}"
+	baseContent := "{{define \"base\"}}{{ template \"index\" .}}{{end}}"
 	err = os.WriteFile(filepath.Join(baseDir, "base.go.html"), []byte(baseContent), 0644)
 	require.NoError(t, err)
 
-	landingPageContent := "{{define \"partial\"}}Hello from landing page{{end}}"
-	err = os.WriteFile(filepath.Join(templatesDir, "landing-page.go.html"), []byte(landingPageContent), 0644)
+	partialContent := "{{define \"partial\"}}{{block \"index\" .}}{{block \"content\" .}}Hello{{end}} partial-appendix{{end}}{{end}}"
+	err = os.WriteFile(filepath.Join(templatesDir, "partial.go.html"), []byte(partialContent), 0644)
 	require.NoError(t, err)
 
-	errorPageContent := "{{define \"error\"}}{{ .Err }}{{end}}"
+	emptyContent := "{{define \"index\"}}{{block \"content\" .}}empty{{end}}{{end}}"
+	err = os.WriteFile(filepath.Join(templatesDir, "empty.go.html"), []byte(emptyContent), 0644)
+	require.NoError(t, err)
+
+	errorPageContent := "{{define \"error\"}}{{template \"index\" .}}{{end}}{{define \"content\"}}{{.Data}}{{end}}"
 	err = os.WriteFile(filepath.Join(templatesDir, "error.go.html"), []byte(errorPageContent), 0644)
+	require.NoError(t, err)
+
+	printerPageContent := "{{define \"printer\"}}{{template \"index\" .}}{{end}}{{define \"content\"}}{{.Data}}{{end}}"
+	err = os.WriteFile(filepath.Join(templatesDir, "printer.go.html"), []byte(printerPageContent), 0644)
 	require.NoError(t, err)
 
 	return templatesDir, baseDir
@@ -289,18 +331,4 @@ func setupAssetsDirectory(t *testing.T) string {
 	require.NoError(t, err)
 
 	return assetsDir
-}
-
-// executeRequest executes the request and returns the response recorder.
-func executeRequest(req *http.Request, r Router) *httptest.ResponseRecorder {
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
-	return rr
-}
-
-// checkResponseCode checks the response code and fails the test if it is not the expected code.
-func checkResponseCode(t *testing.T, expected, actual int) {
-	if expected != actual {
-		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
-	}
 }
