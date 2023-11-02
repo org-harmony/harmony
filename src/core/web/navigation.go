@@ -118,6 +118,9 @@ func (n *Navigation) Build(io IO) ([]NavItem, error) {
 // It accepts exactly one parent as a parameter. The parent NavItem will be set to active if any of its children is active.
 // BuildNavigation is used by Navigation.Build to build the navigation bar.
 //
+// BuildNavigation will NOT sort the NavItems by their Position. This has to be done before calling BuildNavigation.
+// Automatically, the items are sorted when calling Navigation.Items or Navigation.Build as this calls Navigation.Items internally before calling BuildNavigation.
+//
 // BuildNavigation will call the Display function of each NavItem to determine if it should be displayed.
 // Also, NavItems with a non-empty Items slice will be recursively evaluated and the current item will be set to active if any of its children is active.
 // An Item will also be set to active if its URL matches the current URL.Path.
