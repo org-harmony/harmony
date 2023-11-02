@@ -220,7 +220,6 @@ func (io *HIO) RenderJoined(data any, name string, paths ...string) error {
 		return err
 	}
 
-	fmt.Printf("paths: %v, name: %s\n", paths, name)
 	t, err := templater.JoinedTemplate(name, paths...)
 	if err != nil {
 		return err
