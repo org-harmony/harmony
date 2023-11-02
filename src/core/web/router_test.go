@@ -3,6 +3,7 @@ package web
 import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -25,30 +26,26 @@ func TestBasicRouting(t *testing.T) {
 		w.Write([]byte("PATCH method"))
 	})
 
-	req, _ := http.NewRequest("GET", "/get", nil)
-	resp := executeRequest(req, r)
-	checkResponseCode(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "GET method", resp.Body.String())
+	recorder := httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/get", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "GET method", recorder.Body.String())
 
-	req, _ = http.NewRequest("POST", "/post", nil)
-	resp = executeRequest(req, r)
-	checkResponseCode(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "POST method", resp.Body.String())
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("POST", "/post", nil))
+	assert.Equal(t, "POST method", recorder.Body.String())
 
-	req, _ = http.NewRequest("PUT", "/put", nil)
-	resp = executeRequest(req, r)
-	checkResponseCode(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "PUT method", resp.Body.String())
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("PUT", "/put", nil))
+	assert.Equal(t, "PUT method", recorder.Body.String())
 
-	req, _ = http.NewRequest("DELETE", "/delete", nil)
-	resp = executeRequest(req, r)
-	checkResponseCode(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "DELETE method", resp.Body.String())
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("DELETE", "/delete", nil))
+	assert.Equal(t, "DELETE method", recorder.Body.String())
 
-	req, _ = http.NewRequest("PATCH", "/patch", nil)
-	resp = executeRequest(req, r)
-	checkResponseCode(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "PATCH method", resp.Body.String())
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("PATCH", "/patch", nil))
+	assert.Equal(t, "PATCH method", recorder.Body.String())
 }
 
 func TestMiddlewareApplication(t *testing.T) {
@@ -78,17 +75,18 @@ func TestMiddlewareApplication(t *testing.T) {
 	})
 
 	// Test global middleware
-	req, _ := http.NewRequest("GET", "/middleware", nil)
-	resp := executeRequest(req, r)
-	checkResponseCode(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "Applied", resp.Header().Get("X-Middleware"))
-	assert.Equal(t, "", resp.Header().Get("X-Inline-Middleware"))
+	recorder := httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/middleware", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "Applied", recorder.Header().Get("X-Middleware"))
+	assert.Equal(t, "", recorder.Header().Get("X-Inline-Middleware"))
 
 	// Test inline middleware
-	req, _ = http.NewRequest("GET", "/inline-middleware", nil)
-	resp = executeRequest(req, r)
-	checkResponseCode(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "InlineApplied", resp.Header().Get("X-Inline-Middleware"))
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/inline-middleware", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "Applied", recorder.Header().Get("X-Middleware"))
+	assert.Equal(t, "InlineApplied", recorder.Header().Get("X-Inline-Middleware"))
 }
 
 func TestSubRouter(t *testing.T) {
@@ -101,10 +99,10 @@ func TestSubRouter(t *testing.T) {
 
 	r.SubRouter("/sub", subRouter)
 
-	req, _ := http.NewRequest("GET", "/sub/subroute", nil)
-	resp := executeRequest(req, r)
-	checkResponseCode(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "SubRouter route", resp.Body.String())
+	recorder := httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/sub/subroute", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "SubRouter route", recorder.Body.String())
 }
 
 func TestNotFoundAndMethodNotAllowed(t *testing.T) {
@@ -123,13 +121,13 @@ func TestNotFoundAndMethodNotAllowed(t *testing.T) {
 		w.Write([]byte("Custom Method Not Allowed"))
 	})
 
-	req, _ := http.NewRequest("GET", "/nonexistent", nil)
-	resp := executeRequest(req, r)
-	checkResponseCode(t, http.StatusNotFound, resp.Code)
-	assert.Equal(t, "Custom Not Found", resp.Body.String())
+	recorder := httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("GET", "/nonexistent", nil))
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
+	assert.Equal(t, "Custom Not Found", recorder.Body.String())
 
-	req, _ = http.NewRequest("PATCH", "/only-get", nil)
-	resp = executeRequest(req, r)
-	checkResponseCode(t, http.StatusMethodNotAllowed, resp.Code)
-	assert.Equal(t, "Custom Method Not Allowed", resp.Body.String())
+	recorder = httptest.NewRecorder()
+	r.ServeHTTP(recorder, httptest.NewRequest("POST", "/only-get", nil))
+	assert.Equal(t, http.StatusMethodNotAllowed, recorder.Code)
+	assert.Equal(t, "Custom Method Not Allowed", recorder.Body.String())
 }
