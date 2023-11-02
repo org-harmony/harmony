@@ -25,7 +25,7 @@ func TestTemplaterTemplateRetrieval(t *testing.T) {
 	templater, err := ts.Templater(BaseTemplateName)
 	assert.NoError(t, err)
 
-	tmpl, err := templater.Template("landing-page", "landing-page.go.html")
+	tmpl, err := templater.Template("partial", "partial.go.html")
 	assert.NoError(t, err)
 	assert.NotNil(t, tmpl)
 
