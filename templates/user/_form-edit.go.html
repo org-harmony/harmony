@@ -1,8 +1,11 @@
 {{ define "user.edit.form" }}
     <form hx-post="/user/me" hx-trigger="submit" hx-swap="outerHTML">
         <div id="form-messages">
+            {{ range $success := .Data.Successes }}
+                <div class="alert alert-success">{{ t $success }}</div>
+            {{ end }}
             {{ range $violation := .Data.WildcardViolations }}
-                <div class="alert alert-danger">{{ $violation }}</div>
+                <div class="alert alert-danger">{{ t $violation }}</div>
             {{ end }}
         </div>
 
