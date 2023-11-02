@@ -13,36 +13,79 @@ import (
 const Pkg = "app.user"
 
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
+	registerNavigation(appCtx, webCtx)
+	registerTemplateDataExtensions(appCtx, webCtx)
+
 	router := webCtx.Router
 
 	authCfg := &auth.Cfg{}
 	util.Ok(config.C(authCfg, config.From("auth"), config.Validate(appCtx.Validator)))
 
-	router.With(user.Middleware(user.SessionStore(appCtx), user.AllowAnonymous)).
-		Get("/auth/login", loginController(appCtx, webCtx, authCfg).ServeHTTP)
-
+	router.Get("/auth/login", loginController(appCtx, webCtx, authCfg).ServeHTTP)
 	router.Get("/auth/logout", logoutController(appCtx, webCtx).ServeHTTP)
 
 	userRouter := router.With(user.Middleware(user.SessionStore(appCtx)))
-	userRouter.Get("/user/me", userController(appCtx, webCtx).ServeHTTP)
-	userRouter.Post("/user/me", userEditController(appCtx, webCtx).ServeHTTP)
+	userRouter.Get("/user/me", userProfileController(appCtx, webCtx).ServeHTTP)
+	userRouter.Post("/user/me", userProfileEditController(appCtx, webCtx).ServeHTTP)
 
 	if authCfg.EnableOAuth2 {
 		registerOAuth2Controller(appCtx, webCtx, authCfg)
 	}
 }
 
-func loginController(appCtx *hctx.AppCtx, webCtx *web.Ctx, providers *auth.Cfg) http.Handler {
-	loginTemplate := util.Unwrap(util.Unwrap(webCtx.TemplaterStore.Templater(web.LandingPageTemplateName)).
-		Template("auth.login", "user/auth/login.go.html"))
+func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
+	webCtx.Navigation.Add("user.edit", web.NavItem{
+		URL:  "/user/me",
+		Name: "harmony.menu.user",
+		Display: func(io web.IO) (bool, error) {
+			u, _ := user.CtxUser(io.Context())
+			return u != nil, nil
+		},
+		Position: 1000,
+	})
 
-	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+	webCtx.Navigation.Add("user.logout", web.NavItem{
+		Redirect: true,
+		URL:      "/auth/logout",
+		Name:     "harmony.menu.logout",
+		Display: func(io web.IO) (bool, error) {
+			u, _ := user.CtxUser(io.Context())
+			return u != nil, nil
+		},
+		Position: 1100,
+	})
+
+	webCtx.Navigation.Add("user.login", web.NavItem{
+		URL:  "/auth/login",
+		Name: "harmony.menu.login",
+		Display: func(io web.IO) (bool, error) {
+			u, _ := user.CtxUser(io.Context())
+			return u == nil, nil
+		},
+		Position: 1000,
+	})
+}
+
+func registerTemplateDataExtensions(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
+	webCtx.Extensions.Add("user", func(io web.IO, data *web.BaseTemplateData) error {
 		u, err := user.CtxUser(io.Context())
+		if err != nil {
+			return nil
+		}
+
+		data.Extra["User"] = u
+		return nil
+	})
+}
+
+func loginController(appCtx *hctx.AppCtx, webCtx *web.Ctx, authCfg *auth.Cfg) http.Handler {
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		_, err := user.CtxUser(io.Context())
 		if err == nil {
 			return io.Redirect("/user/me", http.StatusTemporaryRedirect)
 		}
 
-		return io.Render(loginTemplate, user.NewTemplateData[*auth.Cfg](u, providers))
+		return io.Render("auth.login", "user/auth/login.go.html", authCfg)
 	})
 }
 
@@ -65,43 +108,40 @@ func logoutController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	})
 }
 
-func userController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
-	templater := util.Unwrap(webCtx.TemplaterStore.Templater(web.LandingPageTemplateName))
-	userEditTemplate := util.Unwrap(templater.JoinedTemplate("user.edit", "user/edit.go.html", "user/_form-edit.go.html"))
-
+func userProfileController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		u := util.Unwrap(user.CtxUser(io.Context()))
 
-		return io.Render(userEditTemplate, user.NewTemplateData(u, web.NewFormTemplateData(u.ToUpdate())))
+		return io.RenderJoined(
+			web.NewFormData(u.ToUpdate()),
+			"user.edit",
+			"user/edit.go.html",
+			"user/_form-edit.go.html",
+		)
 	})
 }
 
-func userEditController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
-	templater := util.Unwrap(webCtx.TemplaterStore.Templater(web.EmptyTemplateName))
-	userEditTemplate := util.Unwrap(templater.Template("user.edit.form", "user/_form-edit.go.html"))
+func userProfileEditController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	userRepository := util.UnwrapType[user.Repository](appCtx.Repository(user.RepositoryName))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		context := io.Context()
 		u := util.Unwrap(user.CtxUser(context))
 		request := io.Request()
-		if err := request.ParseForm(); err != nil {
-			return io.Error()
+		toUpdate := u.ToUpdate()
+
+		err, validationErrs := web.ReadForm(request, toUpdate, appCtx.Validator)
+		if err != nil {
+			return io.InlineError(web.ErrInternal, err)
 		}
 
-		toUpdate := u.ToUpdate()
-		err := web.ReadForm(request, toUpdate, appCtx.Validator)
-		if err != nil {
-			// TODO map validation errors to form errors and create utility struct to display filtered above form (for * errors) and below each field (for field errors).
-			return io.Error()
+		if validationErrs != nil {
+			return io.Render("user.edit.form", "user/_form-edit.go.html", web.NewFormData(toUpdate, validationErrs...))
 		}
 
 		err = user.UpdateUser(context, u, toUpdate, userRepository)
-		if err != nil {
-			return io.Error() // make form violation error for *
-		}
 
-		return io.Render(userEditTemplate, web.NewFormTemplateData(u.ToUpdate()))
+		return io.Render("user.edit.form", "user/_form-edit.go.html", web.NewFormData(u.ToUpdate(), err))
 	})
 }
 

@@ -1,3 +1,13 @@
 {{ define "home" }}
-    {{ template "landing-page" . }}
+    {{ template "index" . }}
+{{ end }}
+
+{{ define "content" }}
+    <h1>{{ t "harmony.head.welcome" }}</h1>
+
+    {{ t "harmony.text.welcome" | safeHTML }}
+
+    <div class="d-grid">
+        <a href="/auth/login" hx-boost="true" hx-target="body" hx-swap="innerHTML" class="btn btn-primary">{{ t "user.auth.login.action" }}</a>
+    </div>
 {{ end }}

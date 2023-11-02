@@ -11,18 +11,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/org-harmony/harmony/src/core/persistence"
-	"github.com/org-harmony/harmony/src/core/web"
 	"time"
 )
 
 const RepositoryName = "Repository"
 const ContextKey = "harmony-app-user"
-
-type TemplateData[T any] struct {
-	User *User
-
-	*web.BaseTemplateData[T]
-}
 
 // User is the user entity.
 // The User is also part of the Session which is stored in the session store.
@@ -65,10 +58,6 @@ type Repository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*User, error)    // FindByID returns a user by id. Returns ErrNotFound if no user was found.
 	Create(ctx context.Context, user *ToCreate) (*User, error)    // Create creates a new user and returns it. Returns ErrInsert if the user could not be created.
 	Delete(ctx context.Context, id uuid.UUID) error               // Delete deletes a user by id. Returns ErrDelete if the user could not be deleted.
-}
-
-func NewTemplateData[T any](user *User, data T) *TemplateData[T] {
-	return &TemplateData[T]{User: user, BaseTemplateData: web.NewTemplateData(data)}
 }
 
 func NewUserRepository(db *pgxpool.Pool) Repository {

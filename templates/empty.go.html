@@ -1,0 +1,7 @@
+{{ define "empty" }}
+    {{ block "index" . }}
+        {{ block "content" . }}
+            {{ template "content-empty" . }}
+        {{ end }}
+    {{ end }}
+{{ end }}

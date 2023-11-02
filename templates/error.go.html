@@ -1,9 +1,9 @@
 {{ define "error" }}
-    {{ template "landing-page" . }}
+    {{ template "index" . }}
 {{ end }}
 
-{{ define "content-body" }}
-    <div class="alert alert-danger">
-        {{ t "harmony.error.prefix-generic" }} {{ t .Err }}
+{{ define "content" }}
+    <div class="alert alert-danger m-0">
+        {{ t .Data }}
     </div>
 {{ end }}

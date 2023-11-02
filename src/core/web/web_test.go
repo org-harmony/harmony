@@ -57,11 +57,8 @@ func TestMountFileServer(t *testing.T) {
 func TestController(t *testing.T) {
 	app, ctx := setupMockCtxs(t)
 
-	tmplter := util.Unwrap(ctx.TemplaterStore.Templater(LandingPageTemplateName))
-	lp := util.Unwrap(tmplter.Base())
-
 	c := NewController(app, ctx, func(io IO) error {
-		return io.Render(lp, nil)
+		return io.Render("landing-page")
 	})
 	e := NewController(app, ctx, func(io IO) error {
 		return io.Error(errors.New("test error"))
@@ -247,7 +244,7 @@ func setupDirectories(t *testing.T) (string, string) {
 	err = os.WriteFile(filepath.Join(baseDir, "base.go.html"), []byte(baseContent), 0644)
 	require.NoError(t, err)
 
-	landingPageContent := "{{define \"landing-page\"}}Hello from landing page{{end}}"
+	landingPageContent := "{{define \"partial\"}}Hello from landing page{{end}}"
 	err = os.WriteFile(filepath.Join(templatesDir, "landing-page.go.html"), []byte(landingPageContent), 0644)
 	require.NoError(t, err)
 

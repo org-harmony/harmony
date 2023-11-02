@@ -29,10 +29,15 @@
     "footer": {
       "visit": "Besuchen Sie <strong>HARMONY</strong> auf {{ .link }}."
     },
+    "menu": {
+      "home": "Startseite",
+      "user": "Profil",
+      "login": "Anmelden",
+      "logout": "Abmelden"
+    },
     "error": {
-      "generic": "Leider ist ein Fehler aufgetreten.",
-      "generic-reload": "Leider ist ein Fehler aufgetreten. Bitte laden Sie die Seite neu.",
-      "prefix-generic": "Leider ist ein Fehler aufgetreten:",
+      "generic": "Leider ist ein unerwarteter Fehler aufgetreten.",
+      "generic-reload": "Leider ist ein unerwarteter Fehler aufgetreten. Bitte laden Sie die Seite neu.",
       "validation": {
         "email": {
           "generic": "Bitte geben Sie eine gültige E-Mail-Adresse ein."

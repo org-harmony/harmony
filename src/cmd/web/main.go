@@ -18,14 +18,15 @@ import (
 // TODO add comments for at least each exported function/method/type to follow go convention, if the element would not need a comment, it should not be exported(/existing)
 
 func main() {
-	l := trace.NewLogger()
-	v := initValidator()
+	logger := trace.NewLogger()
+	validator := initValidator()
 
-	translatorProvider := initTrans(v, l)
-	webCtx, r := initWeb(v, translatorProvider)
-	p, db := initDB(v)
+	provider, db := initDB(validator)
 	defer db.Close()
-	appCtx := hctx.NewAppCtx(l, v, p)
+
+	appCtx := hctx.NewAppCtx(logger, validator, provider)
+	translatorProvider := initTrans(validator, logger)
+	webCtx, r := initWeb(appCtx, validator, translatorProvider)
 
 	homeWeb.RegisterController(appCtx, webCtx)
 	userWeb.RegisterController(appCtx, webCtx)
@@ -37,13 +38,13 @@ func initValidator() validation.V {
 	return validation.New()
 }
 
-func initWeb(v validation.V, tp trans.TranslatorProvider) (*web.Ctx, web.Router) {
+func initWeb(appCtx *hctx.AppCtx, v validation.V, tp trans.TranslatorProvider) (*web.Ctx, web.Router) {
 	webCfg := &web.Cfg{}
 	util.Ok(config.C(webCfg, config.From("web"), config.Validate(v)))
 	store := util.Unwrap(web.SetupTemplaterStore(webCfg.UI))
 
 	r := web.NewRouter()
-	registerMiddlewares(r, tp)
+	registerMiddlewares(appCtx, r, tp)
 
 	web.MountFileServer(r, webCfg.Server.AssetFsCfg)
 
@@ -81,11 +82,12 @@ func initTrans(v validation.V, logger trace.Logger) trans.TranslatorProvider {
 	return provider
 }
 
-func registerMiddlewares(r web.Router, translatorProvider trans.TranslatorProvider) {
+func registerMiddlewares(appCtx *hctx.AppCtx, r web.Router, translatorProvider trans.TranslatorProvider) {
 	r.Use(
 		web.Recoverer,
 		web.Heartbeat("/ping"),
 		web.CleanPath,
+		user.Middleware(user.SessionStore(appCtx), user.AllowAnonymous),
 		trans.Middleware(translatorProvider),
 	)
 }
