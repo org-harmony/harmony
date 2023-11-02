@@ -141,7 +141,11 @@ func userProfileEditController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handle
 
 		err = user.UpdateUser(context, u, toUpdate, userRepository)
 
-		return io.Render("user.edit.form", "user/_form-edit.go.html", web.NewFormData(u.ToUpdate(), nil, err))
+		return io.Render(
+			"user.edit.form",
+			"user/_form-edit.go.html",
+			web.NewFormData(u.ToUpdate(), []string{"user.settings.updated"}, err),
+		)
 	})
 }
 
