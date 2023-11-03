@@ -68,6 +68,8 @@ func (r *PGUserSessionRepository) Write(ctx context.Context, id uuid.UUID, sessi
 	return errors.Join(persistence.ErrInsert, err)
 }
 
+// Delete deletes a user session from the database by id. If the session does not exist it returns nil.
+// If the session could not be deleted it returns persistence.ErrDelete.
 func (r *PGUserSessionRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	err := persistence.PGDeleteSession(ctx, r.db, id)
 
