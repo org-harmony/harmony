@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/auth"
 	"github.com/org-harmony/harmony/src/core/config"
@@ -11,6 +12,9 @@ import (
 )
 
 const Pkg = "app.user"
+
+// ErrUpdateUser is returned when the user could not be updated. It is the error message for the user.edit.form template.
+var ErrUpdateUser = errors.New("user.settings.update-error")
 
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	registerNavigation(appCtx, webCtx)
@@ -110,10 +114,8 @@ func logoutController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 
 func userProfileController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		u := util.Unwrap(user.CtxUser(io.Context()))
-
 		return io.RenderJoined(
-			web.NewFormData(u.ToUpdate(), nil),
+			web.NewFormData(user.MustCtxUser(io.Context()).ToUpdate(), nil),
 			"user.edit",
 			"user/edit.go.html",
 			"user/_form-edit.go.html",
@@ -123,12 +125,12 @@ func userProfileController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 
 func userProfileEditController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	userRepository := util.UnwrapType[user.Repository](appCtx.Repository(user.RepositoryName))
+	sessionStore := user.SessionStore(appCtx)
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		context := io.Context()
-		u := util.Unwrap(user.CtxUser(context))
 		request := io.Request()
-		toUpdate := u.ToUpdate()
+		toUpdate := user.MustCtxUser(context).ToUpdate()
 
 		err, validationErrs := web.ReadForm(request, toUpdate, appCtx.Validator)
 		if err != nil {
@@ -136,17 +138,26 @@ func userProfileEditController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handle
 		}
 
 		if validationErrs != nil {
-			return io.Render("user.edit.form", "user/_form-edit.go.html", web.NewFormData(toUpdate, nil, validationErrs...))
+			return renderUserEditForm(io, web.NewFormData(toUpdate, nil, validationErrs...))
 		}
 
-		err = user.UpdateUser(context, u, toUpdate, userRepository)
+		session := util.Unwrap(user.SessionFromRequest(request, sessionStore))
+		updatedUser, err := user.UpdateUser(context, toUpdate, session, userRepository, sessionStore)
+		if err != nil {
+			appCtx.Error(Pkg, "error updating user", err)
+			return renderUserEditForm(io, web.NewFormData(toUpdate, nil, ErrUpdateUser))
+		}
 
-		return io.Render(
-			"user.edit.form",
-			"user/_form-edit.go.html",
-			web.NewFormData(u.ToUpdate(), []string{"user.settings.updated"}, err),
-		)
+		return renderUserEditForm(io, web.NewFormData(updatedUser.ToUpdate(), []string{"user.settings.updated"}, err))
 	})
+}
+
+func renderUserEditForm(io web.IO, data any) error {
+	return io.Render(
+		"user.edit.form",
+		"user/_form-edit.go.html",
+		data,
+	)
 }
 
 func registerOAuth2Controller(appCtx *hctx.AppCtx, webCtx *web.Ctx, authCfg *auth.Cfg) {
