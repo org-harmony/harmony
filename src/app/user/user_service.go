@@ -4,19 +4,17 @@ import (
 	"context"
 )
 
-func UpdateUser(ctx context.Context, user *User, toUpdate *ToUpdate, repo Repository) error {
-	// validate to update user
+func UpdateUser(ctx context.Context, toUpdate *ToUpdate, session *Session, repo Repository, sessionStore SessionRepository) (*User, error) {
+	update, err := repo.Update(ctx, toUpdate)
+	if err != nil {
+		return nil, err
+	}
 
-	user.Firstname = toUpdate.Firstname
-	user.Lastname = toUpdate.Lastname
+	session.Payload = *update // update the user in the session payload
+	err = sessionStore.Write(ctx, session.ID, session)
+	if err != nil {
+		return nil, err
+	}
 
-	// update user in db
-
-	// write update user into session
-
-	// write update user into context
-
-	// write update user into user
-
-	return nil
+	return update, nil
 }

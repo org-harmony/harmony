@@ -5,7 +5,7 @@
                 <div class="alert alert-success">{{ t $success }}</div>
             {{ end }}
             {{ range $violation := .Data.WildcardViolations }}
-                <div class="alert alert-danger">{{ t $violation }}</div>
+                <div class="alert alert-danger">{{ t $violation.Error }}</div>
             {{ end }}
         </div>
 

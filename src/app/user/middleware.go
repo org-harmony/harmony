@@ -133,6 +133,17 @@ func SessionIDFromRequest(r *http.Request) (uuid.UUID, error) {
 	return id, nil
 }
 
+// MustCtxUser returns the user from the context. It will panic if the user is not in the context.
+// It calls CtxUser internally. It is safe to call this function if the user is required to be logged in for the route.
+func MustCtxUser(ctx context.Context) *User {
+	u, err := CtxUser(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return u
+}
+
 // CtxUser returns the user from the context. It will return ErrNotInContext if the user is not in the context.
 // This is ideally paired with the user.Middleware which sets the user in the context with the key user.ContextKey.
 // CtxUser looks for the user.ContextKey in the context.

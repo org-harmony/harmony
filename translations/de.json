@@ -16,7 +16,8 @@
     },
     "settings": {
       "for": "Einstellungen für {{ .firstname }} {{ .lastname }}",
-      "updated": "Einstellungen aktualisiert."
+      "updated": "Einstellungen aktualisiert.",
+      "update-error": "Einstellungen konnten nicht aktualisiert werden."
     }
   },
   "harmony": {

@@ -98,6 +98,7 @@ func SessionStore(app *hctx.AppCtx) SessionRepository {
 }
 
 // NewUserSession creates a new user session with the given user that expires now + duration.
+// The id will be set to a zero uuid.UUID value.
 func NewUserSession(user *User, duration time.Duration) *Session {
 	return &Session{
 		Session: persistence.Session[User, SessionMeta]{
