@@ -85,6 +85,8 @@ func PGWriteSession[P any, M any](ctx context.Context, db *pgxpool.Pool, session
 	).Scan(&session.UpdatedAt)
 }
 
+// PGDeleteSession deletes a session from the database by the key (id). Returns an error transparently if the session could not be deleted.
+// If no session with the key exists, it will return nil.
 func PGDeleteSession(ctx context.Context, db *pgxpool.Pool, key uuid.UUID) error {
 	_, err := db.Exec(ctx, "DELETE FROM sessions WHERE id = $1", key)
 
