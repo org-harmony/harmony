@@ -18,3 +18,24 @@ CREATE TABLE sessions
     expires_at TIMESTAMPTZ  NOT NULL,
     updated_at TIMESTAMPTZ
 );
+
+CREATE TABLE template_sets
+(
+    id          UUID PRIMARY KEY,
+    name        VARCHAR(255) NOT NULL,
+    version     VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
+    updated_at  TIMESTAMPTZ
+);
+
+CREATE TABLE templates
+(
+    id             UUID PRIMARY KEY,
+    template_type  VARCHAR(255) NOT NULL,
+    template_set   UUID         NOT NULL REFERENCES template_sets (id) ON DELETE CASCADE,
+    name           VARCHAR(255) NOT NULL,
+    template       JSONB        NOT NULL,
+    created_at     TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
+    updated_at     TIMESTAMPTZ
+);
