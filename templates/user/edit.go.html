@@ -3,10 +3,5 @@
 {{ end }}
 
 {{ define "content" }}
-    <div class="card auth-login-providers">
-        <div class="card-header">{{ tf "user.settings.for" "firstname" .Extra.User.Firstname "lastname" .Extra.User.Lastname }}</div>
-        <div class="card-body">
-            {{ template "user.edit.form" . }}
-        </div>
-    </div>
+    {{ template "user.edit.form" . }}
 {{ end }}

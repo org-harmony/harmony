@@ -1,48 +1,60 @@
 {{ define "user.edit.form" }}
-    <form hx-post="/user/me" hx-trigger="submit" hx-disabled-elt=".user-edit-fieldset" hx-swap="outerHTML">
-        <fieldset class="user-edit-fieldset">
-            <div id="form-messages">
-                {{ range $success := .Data.Successes }}
-                    <div class="alert alert-success">{{ t $success }}</div>
-                {{ end }}
-                {{ range $violation := .Data.WildcardViolations }}
-                    <div class="alert alert-danger">{{ t $violation.Error }}</div>
-                {{ end }}
-            </div>
+    {{ $fn := .Data.Form.Firstname }}
+    {{ $ln := .Data.Form.Lastname }}
+    {{ if not .Data.Valid }}
+        {{ $fn = .Extra.User.Firstname }}
+        {{ $ln = .Extra.User.Lastname }}
+    {{ end }}
 
-            <div class="row">
-                <div class="col-6">
-                    <label for="firstname" class="form-label">{{ t "user.firstname" }}</label>
-                    <input
-                        id="firstname"
-                        type="text"
-                        class="form-control {{ if .Data.HasViolations "Firstname" }}is-invalid{{ end }}"
-                        name="Firstname"
-                        placeholder="{{ t "user.firstname" }}"
-                        value="{{ .Data.Form.Firstname }}"
-                    />
-                    {{ range $validation := .Data.ValidationErrors "Firstname" }}
-                        <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
-                    {{ end }}
-                </div>
-                <div class="col-6">
-                    <label for="lastname" class="form-label">{{ t "user.lastname" }}</label>
-                    <input
-                        id="lastname"
-                        type="text"
-                        class="form-control {{ if .Data.HasViolations "Lastname" }}is-invalid{{ end }}"
-                        name="Lastname"
-                        placeholder="{{ t "user.lastname" }}"
-                        value="{{ .Data.Form.Lastname }}"
-                    />
-                    {{ range $validation := .Data.ValidationErrors "Lastname" }}
-                        <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
-                    {{ end }}
-                </div>
-                <div class="col mt-2">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </div>
-            </div>
-        </fieldset>
-    </form>
+    <div class="card user-edit-form-card">
+        <div class="card-header">{{ tf "user.settings.for" "firstname" $fn "lastname" $ln }}</div>
+        <div class="card-body">
+            <form hx-post="/user/me" hx-trigger="submit" hx-disabled-elt=".user-edit-fieldset" hx-swap="outerHTML" hx-target="closest .user-edit-form-card">
+                <fieldset class="user-edit-fieldset">
+                    <div id="form-messages">
+                        {{ range $success := .Data.Successes }}
+                            <div class="alert alert-success">{{ t $success }}</div>
+                        {{ end }}
+                        {{ range $violation := .Data.WildcardViolations }}
+                            <div class="alert alert-danger">{{ t $violation.Error }}</div>
+                        {{ end }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="firstname" class="form-label">{{ t "user.firstname" }}</label>
+                            <input
+                                    id="firstname"
+                                    type="text"
+                                    class="form-control {{ if .Data.HasViolations "Firstname" }}is-invalid{{ end }}"
+                                    name="Firstname"
+                                    placeholder="{{ t "user.firstname" }}"
+                                    value="{{ .Data.Form.Firstname }}"
+                            />
+                            {{ range $validation := .Data.ValidationErrors "Firstname" }}
+                                <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
+                            {{ end }}
+                        </div>
+                        <div class="col-6">
+                            <label for="lastname" class="form-label">{{ t "user.lastname" }}</label>
+                            <input
+                                    id="lastname"
+                                    type="text"
+                                    class="form-control {{ if .Data.HasViolations "Lastname" }}is-invalid{{ end }}"
+                                    name="Lastname"
+                                    placeholder="{{ t "user.lastname" }}"
+                                    value="{{ .Data.Form.Lastname }}"
+                            />
+                            {{ range $validation := .Data.ValidationErrors "Lastname" }}
+                                <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
+                            {{ end }}
+                        </div>
+                        <div class="col mt-2">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
 {{ end }}
