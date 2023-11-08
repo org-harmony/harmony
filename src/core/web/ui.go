@@ -450,6 +450,11 @@ func (d *FormData[T]) HasViolations(field string) bool {
 	return len(d.Violations[field]) > 0
 }
 
+// Valid returns true if the FormData has no violations.
+func (d *FormData[T]) Valid() bool {
+	return len(d.Violations) < 1
+}
+
 // SetupTemplaterStore sets up a TemplaterStore with the base, partial and empty templates.
 func SetupTemplaterStore(ui *UICfg) (TemplaterStore, error) {
 	base, err := BaseTemplate(ui)
