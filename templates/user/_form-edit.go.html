@@ -26,6 +26,7 @@
                             <input
                                     id="firstname"
                                     type="text"
+                                    autocomplete="off"
                                     class="form-control {{ if .Data.HasViolations "Firstname" }}is-invalid{{ end }}"
                                     name="Firstname"
                                     placeholder="{{ t "user.firstname" }}"
@@ -40,6 +41,7 @@
                             <input
                                     id="lastname"
                                     type="text"
+                                    autocomplete="off"
                                     class="form-control {{ if .Data.HasViolations "Lastname" }}is-invalid{{ end }}"
                                     name="Lastname"
                                     placeholder="{{ t "user.lastname" }}"
