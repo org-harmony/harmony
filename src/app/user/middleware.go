@@ -4,15 +4,22 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/org-harmony/harmony/src/core/auth"
+	"github.com/org-harmony/harmony/src/core/hctx"
+	"github.com/org-harmony/harmony/src/core/trace"
 	"github.com/org-harmony/harmony/src/core/util"
 	"net/http"
 )
+
+const MiddlewarePkg = "user.middleware"
 
 // MiddlewareOptions define possible options for Middleware they should be set through MiddlewareOption.
 type MiddlewareOptions struct {
 	requireAuth        bool
 	notLoggedInHandler http.Handler
 	sessionStore       SessionRepository
+	userRepository     Repository
+	logger             trace.Logger
 }
 
 // ErrNotInContext is returned by the CtxUser function if the user is not in the context.
@@ -46,6 +53,22 @@ func NotLoggedInHandler(h func(w http.ResponseWriter, r *http.Request)) Middlewa
 	}
 }
 
+// AlwaysFetchUser sets the middleware to always fetch the user from the database.
+// This option ensures that the user in the context is always up-to-date,
+// but this comes at the cost of a database query per request from a seemingly logged-in user.
+func AlwaysFetchUser(repository Repository) MiddlewareOption {
+	return func(o *MiddlewareOptions) {
+		o.userRepository = repository
+	}
+}
+
+// WithLogger sets the middleware to use the passed in logger. The default logger will be created by trace.NewLogger.
+func WithLogger(logger trace.Logger) MiddlewareOption {
+	return func(o *MiddlewareOptions) {
+		o.logger = logger
+	}
+}
+
 // Middleware is the auth middleware that checks if a user is logged in and sets the user in the request context.
 // If the user is not logged in and the middleware requires it, the NotLoggedInHandler is called (defaults to RedirectToLogin).
 // Then it should be safe to use the CtxUser function without it returning an error.
@@ -74,6 +97,14 @@ func Middleware(sessionStore SessionRepository, opts ...MiddlewareOption) func(n
 				return
 			}
 
+			if m.userRepository != nil {
+				user, err = m.userRepository.FindByID(r.Context(), user.ID)
+				if err != nil {
+					m.handleUserNotFound(w, r, err)
+					return
+				}
+			}
+
 			withUser := context.WithValue(r.Context(), ContextKey, user)
 			r = r.WithContext(withUser)
 
@@ -82,6 +113,15 @@ func Middleware(sessionStore SessionRepository, opts ...MiddlewareOption) func(n
 
 		return http.HandlerFunc(f)
 	}
+}
+
+// LoggedInMiddleware is a convenience function that creates a middleware with the AlwaysFetchUser and WithLogger options.
+// It looks all the required dependencies up in the passed-in hctx.AppCtx. Extra options can be passed in.
+func LoggedInMiddleware(appCtx *hctx.AppCtx, opts ...MiddlewareOption) func(next http.Handler) http.Handler {
+	userRepository := util.UnwrapType[Repository](appCtx.Repository(RepositoryName))
+	opts = append(opts, AlwaysFetchUser(userRepository), WithLogger(appCtx.Logger))
+
+	return Middleware(SessionStore(appCtx), opts...)
 }
 
 // LoggedInUser reads the session id from the request, reads the user from the passed in session store and returns it.
@@ -161,5 +201,27 @@ func defaultUserMiddlewareOptions(sessionStore SessionRepository) *MiddlewareOpt
 		requireAuth:        true,
 		notLoggedInHandler: http.HandlerFunc(RedirectToLogin),
 		sessionStore:       sessionStore,
+		logger:             trace.NewLogger(),
 	}
+}
+
+func (m *MiddlewareOptions) handleUserNotFound(w http.ResponseWriter, r *http.Request, err error) {
+	m.logger.Error(MiddlewarePkg, "user not found but session exists", err)
+
+	sessionId, err := SessionIDFromRequest(r)
+	if err != nil {
+		m.logger.Error(MiddlewarePkg, "failed to get session from id after user was requested", err)
+		m.notLoggedInHandler.ServeHTTP(w, r)
+		return
+	}
+
+	err = m.sessionStore.Delete(r.Context(), sessionId)
+	if err != nil {
+		m.logger.Error(MiddlewarePkg, "failed to delete session after user was requested", err)
+		m.notLoggedInHandler.ServeHTTP(w, r)
+		return
+	}
+
+	auth.ClearSession(w, SessionCookieName)
+	m.notLoggedInHandler.ServeHTTP(w, r)
 }
