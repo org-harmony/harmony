@@ -87,7 +87,7 @@ func registerMiddlewares(appCtx *hctx.AppCtx, r web.Router, translatorProvider t
 		web.Recoverer,
 		web.Heartbeat("/ping"),
 		web.CleanPath,
-		user.Middleware(user.SessionStore(appCtx), user.AllowAnonymous),
+		user.LoggedInMiddleware(appCtx, user.AllowAnonymous),
 		trans.Middleware(translatorProvider),
 	)
 }

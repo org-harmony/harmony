@@ -28,7 +28,7 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	router.Get("/auth/login", loginController(appCtx, webCtx, authCfg).ServeHTTP)
 	router.Get("/auth/logout", logoutController(appCtx, webCtx).ServeHTTP)
 
-	userRouter := router.With(user.Middleware(user.SessionStore(appCtx)))
+	userRouter := router.With(user.LoggedInMiddleware(appCtx))
 	userRouter.Get("/user/me", userProfileController(appCtx, webCtx).ServeHTTP)
 	userRouter.Post("/user/me", userProfileEditController(appCtx, webCtx).ServeHTTP)
 
