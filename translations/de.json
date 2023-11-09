@@ -20,6 +20,15 @@
       "update-error": "Einstellungen konnten nicht aktualisiert werden."
     }
   },
+  "eiffel": {
+    "parser": {
+      "error": {
+        "invalid-template": "Das Template ist ungültig.",
+        "missing-rule": "Im Template {{ .template }} wird versucht eine Regel {{ .rule }} zu benutzen, die im Template nicht definiert wird.",
+        "missing-preprocessor": "Im Template {{ .template }} wird versucht ein Präprozessor {{ .preprocessor }} zu benutzen, der im EIFFEL Parser nicht bekannt ist."
+      }
+    }
+  },
   "harmony": {
     "head": {
       "welcome": "Willkommen bei HARMONY",
