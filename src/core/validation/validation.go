@@ -48,6 +48,10 @@ type Func func(any) error
 // ValidatorOption is a function that configures a Validator. It can be used to override the default validator Func map or struct tags.
 type ValidatorOption func(*Validator)
 
+type TransparentError interface {
+	UnwrapTransparent(Error) error
+}
+
 // V is a thread-safe validator that allows validating structs. It can be configured using ValidatorOption functions passed to New.
 // If no ValidatorOption functions are passed to New validation.defaultValidator will be used.
 // The Func functions on the validator will be used to validate the struct fields. If none are passed to New validation.DefaultValidators will be used.
@@ -109,6 +113,10 @@ func New(opts ...ValidatorOption) V {
 // ValidateStruct implements the ValidateStruct method of the V interface.
 // It performs validation on struct fields based on defined validation functions.
 // Refer to the documentation of the V interface for more detailed information.
+//
+// The returned validation error slice will contain errors of type Error as well as unwrapped TransparentError`s.
+// It can not be assumed that the returned error slice only contains Error`s.
+// However, it can be assumed that the returned error slice contains errors that occurred during validation and imply that the data is invalid.
 //
 // TODO break this function up into smaller functions
 func (v *Validator) ValidateStruct(s any, path ...string) (hardErr error, validationErrs []error) {
@@ -195,11 +203,19 @@ func (v *Validator) ValidateStruct(s any, path ...string) (hardErr error, valida
 				continue
 			}
 
-			if err := validatorFunc(valueOfField.Interface()); err != nil {
-				var validationErr error
-				validationErr = Error{Msg: err.Error(), Struct: typeOfS.Name(), Field: typeOfField.Name, Path: fieldPath}
-				errs = append(errs, validationErr)
+			err := validatorFunc(valueOfField.Interface())
+			if err == nil {
+				continue
 			}
+
+			var validationErr error
+			validationErr = Error{Msg: err.Error(), Struct: typeOfS.Name(), Field: typeOfField.Name, Path: fieldPath}
+
+			if terr, ok := err.(TransparentError); ok {
+				validationErr = terr.UnwrapTransparent(validationErr.(Error))
+			}
+
+			errs = append(errs, validationErr)
 		}
 	}
 
@@ -223,13 +239,32 @@ func (v *Validator) Lookup(name string) (Func, bool) {
 }
 
 // Validate validates a single value using the given validation funcs.
-// The returned error slice will contain all validation Error`s but the Struct and Path fields will be empty as no struct is involved.
-// This function is useful for validating single values, e.g. validating a string is an email.
-func Validate(field string, value any, funcs ...Func) []error {
+// The returned error slice will contain all validation Error`s as well as any other errors that occurred during validation.
+//
+// For validation Error`s the fields Field, Struct and Path will be set through the passed in values for fieldName and structName.
+// Passing in fieldName and structName is recommended for proper error message construction. However, depending on the use-case this is not necessary.
+//
+// If a Func returns a TransparentError the returned error will be unwrapped.
+// Due to unwrapping transparent errors the returned error slice may contain any error type.
+//
+// This function is especially useful for validating single values, e.g. validating a string is an email.
+func Validate(fieldName string, structName string, value any, funcs ...Func) []error {
 	var errs []error
 	for _, f := range funcs {
 		if err := f(value); err != nil {
-			errs = append(errs, Error{Msg: err.Error(), Field: field})
+			var validationErr error
+			validationErr = Error{
+				Msg:    err.Error(),
+				Field:  fieldName,
+				Struct: structName,
+				Path:   fmt.Sprintf("%s.%s(%s)", structName, fieldName, reflect.TypeOf(value).String()),
+			}
+
+			if terr, ok := err.(TransparentError); ok {
+				validationErr = terr.UnwrapTransparent(validationErr.(Error))
+			}
+
+			errs = append(errs, validationErr)
 		}
 	}
 

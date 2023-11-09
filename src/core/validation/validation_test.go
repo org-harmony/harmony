@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"reflect"
 	"strings"
 	"testing"
 )
+
+var ErrFooInvalid = errors.New("what the foo")
 
 type InnerStruct struct {
 	Description string `hvalidate:"notEmptyString, isY"`
@@ -46,6 +49,12 @@ type testStruct3 struct {
 	Road  string `foo:"notEmptyString"`
 }
 
+type TransparentlyInvalidStruct struct {
+	Foo string `hvalidate:"returnsTransparentError,notEmptyString"`
+}
+
+type TransparentError struct{}
+
 func TestValidator_ValidateStruct(t *testing.T) {
 	v := mockValidator()
 
@@ -75,6 +84,16 @@ func TestValidator_ValidateStruct(t *testing.T) {
 		assert.NoError(t, herr)
 		assert.Equal(t, test.expected, len(errs), "Unexpected number of validation errors on %d", k+1)
 	}
+}
+
+func TestValidator_ValidateStruct_TransparentError(t *testing.T) {
+	v := mockValidator()
+
+	err, errs := v.ValidateStruct(TransparentlyInvalidStruct{Foo: ""})
+	require.NoError(t, err)
+	require.Len(t, errs, 2)
+	assert.ErrorIs(t, errs[0], ErrFooInvalid)
+	assert.ErrorAs(t, errs[1], &validation.Error{})
 }
 
 func TestValidator_AddFunc(t *testing.T) {
@@ -111,9 +130,16 @@ func TestValidate(t *testing.T) {
 	}
 
 	for k, test := range tests {
-		err := validation.Validate("test", test.input, notEmptyString)
+		err := validation.Validate("test", "", test.input, notEmptyString)
 		assert.Equal(t, test.expected, len(err), "Unexpected number of validation errors on %d", k+1)
 	}
+}
+
+func TestValidate_TransparentError(t *testing.T) {
+	err := validation.Validate("test", "", "", returnsTransparentError, notEmptyString)
+	require.Len(t, err, 2)
+	assert.ErrorIs(t, err[0], ErrFooInvalid)
+	assert.ErrorAs(t, err[1], &validation.Error{})
 }
 
 func TestMultipleStructTags(t *testing.T) {
@@ -182,15 +208,28 @@ func TestErrorFormatting(t *testing.T) {
 	}
 }
 
+func (e *TransparentError) Error() string {
+	return ErrFooInvalid.Error()
+}
+
+func (e *TransparentError) UnwrapTransparent(err validation.Error) error {
+	return ErrFooInvalid
+}
+
 func mockValidator() validation.V {
 	validatorFuncs := map[string]validation.Func{
-		"notEmptyString": notEmptyString,
-		"positive":       positive,
-		"notNil":         notNil,
-		"isY":            isY,
+		"returnsTransparentError": returnsTransparentError,
+		"notEmptyString":          notEmptyString,
+		"positive":                positive,
+		"notNil":                  notNil,
+		"isY":                     isY,
 	}
 
 	return validation.New(validation.WithValidators(validatorFuncs))
+}
+
+func returnsTransparentError(value any) error {
+	return &TransparentError{}
 }
 
 func notEmptyString(value any) error {
