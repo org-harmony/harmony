@@ -60,7 +60,7 @@ type HTranslatorProvider struct {
 
 type HTranslatorOption func(*HTranslator)
 
-type TranslatableError interface {
+type Error interface {
 	Translate(Translator) string
 }
 
