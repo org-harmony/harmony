@@ -60,6 +60,10 @@ type HTranslatorProvider struct {
 
 type HTranslatorOption func(*HTranslator)
 
+type TranslatableError interface {
+	Translate(Translator) string
+}
+
 // Translator allows translating of strings to other languages.
 // It also contains a method to translate strings with arguments.
 // Translator is required to be thread-safe for read-only operations after initialization.
