@@ -25,6 +25,7 @@ CREATE TABLE template_sets
     name        VARCHAR(255) NOT NULL,
     version     VARCHAR(255) NOT NULL,
     description TEXT,
+    created_by  UUID         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
     updated_at  TIMESTAMPTZ
 );
@@ -32,10 +33,12 @@ CREATE TABLE template_sets
 CREATE TABLE templates
 (
     id             UUID PRIMARY KEY,
-    template_type  VARCHAR(255) NOT NULL,
     template_set   UUID         NOT NULL REFERENCES template_sets (id) ON DELETE CASCADE,
+    type           VARCHAR(255) NOT NULL,
     name           VARCHAR(255) NOT NULL,
-    template       JSONB        NOT NULL,
+    version        VARCHAR(255) NOT NULL,
+    json           JSONB        NOT NULL,
+    created_by     UUID         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
     updated_at     TIMESTAMPTZ
 );
