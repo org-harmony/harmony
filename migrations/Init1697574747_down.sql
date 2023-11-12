@@ -2,6 +2,6 @@ DROP TABLE IF EXISTS users;
 
 DROP TABLE IF EXISTS sessions;
 
-DROP TABLE IF EXISTS template_sets;
-
 DROP TABLE IF EXISTS templates;
+
+DROP TABLE IF EXISTS template_sets;
