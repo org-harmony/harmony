@@ -209,16 +209,16 @@ func (r *PGTemplateRepository) Create(ctx context.Context, toCreate *TemplateToC
 	}
 
 	tmplInfo := struct {
-		name    string
-		version string
+		Name    string `json:"name"`
+		Version string `json:"version"`
 	}{}
 	err := json.Unmarshal([]byte(toCreate.Json), &tmplInfo)
-	if err != nil || tmplInfo.name == "" || tmplInfo.version == "" {
+	if err != nil || tmplInfo.Name == "" || tmplInfo.Version == "" {
 		return nil, ErrTemplateJsonMissingInfo
 	}
 
-	newTemplate.Name = tmplInfo.name
-	newTemplate.Version = tmplInfo.version
+	newTemplate.Name = tmplInfo.Name
+	newTemplate.Version = tmplInfo.Version
 
 	_, err = r.db.Exec(
 		ctx,
