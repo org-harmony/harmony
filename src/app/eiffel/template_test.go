@@ -3,6 +3,7 @@ package eiffel
 import (
 	"context"
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/persistence"
@@ -148,6 +149,98 @@ func TestPGTemplateRepository(t *testing.T) {
 
 		_, err = templateRepo.FindByID(ctx, newTmpl.ID)
 		assert.ErrorIs(t, err, persistence.ErrNotFound)
+	})
+
+	t.Run("Invalid CreatedBy", func(t *testing.T) {
+		_, _, toCreate := fooToCreate()
+		toCreate.TemplateSet = tmplSet.ID
+		toCreate.CreatedBy = uuid.New()
+		_, err := templateRepo.Create(ctx, toCreate)
+		assert.ErrorIs(t, err, persistence.ErrInsert)
+	})
+
+	t.Run("Invalid TemplateSet", func(t *testing.T) {
+		_, _, toCreate := fooToCreate()
+		toCreate.TemplateSet = uuid.New()
+		toCreate.CreatedBy = u.ID
+		_, err := templateRepo.Create(ctx, toCreate)
+		assert.ErrorIs(t, err, persistence.ErrInsert)
+	})
+}
+
+func TestPGTemplateSetRepository(t *testing.T) {
+	registerAllCleanup(t)
+
+	u, tmplSet, _ := mockTemplate(t)
+
+	t.Run("FindById", func(t *testing.T) {
+		found, err := templateSetRepo.FindByID(ctx, tmplSet.ID)
+		require.NoError(t, err)
+		require.NotNil(t, tmplSet)
+		assert.Equal(t, tmplSetUnify(*tmplSet), tmplSetUnify(*found))
+	})
+
+	t.Run("Create TemplateSet", func(t *testing.T) {
+		tmplSetToCreate := &TemplateSetToCreate{
+			Name:        "Baz",
+			Description: "Baz Qux Foo Bar",
+			CreatedBy:   u.ID,
+		}
+
+		tmplSet, err := templateSetRepo.Create(ctx, tmplSetToCreate)
+		require.NoError(t, err)
+		require.NotNil(t, tmplSet)
+
+		assert.NotEmpty(t, tmplSet.ID)
+		assert.NotEmpty(t, tmplSet.CreatedAt)
+		assert.Nil(t, tmplSet.UpdatedAt) // should be nil because it's a new template set
+		assert.Equal(t, tmplSet.Name, "Baz")
+		assert.Equal(t, tmplSet.Description, "Baz Qux Foo Bar")
+		assert.Equal(t, tmplSet.CreatedBy, u.ID)
+	})
+
+	t.Run("Update TemplateSet", func(t *testing.T) {
+		_, toCreate, _ := fooToCreate()
+		toCreate.CreatedBy = u.ID
+		newTmplSet, err := templateSetRepo.Create(ctx, toCreate)
+		require.NoError(t, err)
+		require.NotNil(t, newTmplSet)
+		require.Nil(t, newTmplSet.UpdatedAt)
+
+		toUpdate := newTmplSet.ToUpdate()
+		toUpdate.Name = "Baz"
+		toUpdate.Description = "Baz Qux Foo Bar"
+
+		update, err := templateSetRepo.Update(ctx, toUpdate)
+		require.NoError(t, err)
+		require.NotNil(t, update)
+
+		assert.NotEmpty(t, update.UpdatedAt)
+		assert.Equal(t, update.Name, "Baz")
+		assert.Equal(t, update.Description, "Baz Qux Foo Bar")
+	})
+
+	t.Run("Delete TemplateSet", func(t *testing.T) {
+		_, toCreate, _ := fooToCreate()
+		toCreate.CreatedBy = u.ID
+		newTmplSet, err := templateSetRepo.Create(ctx, toCreate)
+		require.NoError(t, err)
+		require.NotNil(t, newTmplSet)
+
+		err = templateSetRepo.Delete(ctx, newTmplSet.ID)
+		require.NoError(t, err)
+
+		_, err = templateSetRepo.FindByID(ctx, newTmplSet.ID)
+		assert.ErrorIs(t, err, persistence.ErrNotFound)
+	})
+
+	t.Run("Invalid CreatedBy", func(t *testing.T) {
+		_, err := templateSetRepo.Create(ctx, &TemplateSetToCreate{
+			Name:        "Foo",
+			Description: "Foo Bar",
+			CreatedBy:   uuid.New(),
+		})
+		assert.ErrorIs(t, err, persistence.ErrInsert)
 	})
 }
 
