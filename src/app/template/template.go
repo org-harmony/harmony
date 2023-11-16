@@ -1,4 +1,4 @@
-package eiffel
+package template
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	// TemplateRepositoryName is the name of the template repository. It can be used to retrieve the repository from the persistence.RepositoryProvider.
-	TemplateRepositoryName = "TemplateRepository"
-	// TemplateSetRepositoryName is the name of the template set repository. It can be used to retrieve the repository from the persistence.RepositoryProvider.
-	TemplateSetRepositoryName = "TemplateSetRepository"
+	// RepositoryName is the name of the template repository. It can be used to retrieve the repository from the persistence.RepositoryProvider.
+	RepositoryName = "Repository"
+	// SetRepositoryName is the name of the template set repository. It can be used to retrieve the repository from the persistence.RepositoryProvider.
+	SetRepositoryName = "SetRepository"
 )
 
 // ErrTemplateJsonMissingInfo is returned if the template's JSON does not contain the necessary information (name and version).
@@ -35,32 +35,32 @@ type Template struct {
 	UpdatedAt   *time.Time
 }
 
-// TemplateToCreate is the template entity that is used to create a new template.
-type TemplateToCreate struct {
+// ToCreate is the template entity that is used to create a new template.
+type ToCreate struct {
 	TemplateSet uuid.UUID `hvalidate:"required"`
 	Type        string    `hvalidate:"required"`
 	Json        string    `hvalidate:"required"`
 	CreatedBy   uuid.UUID `hvalidate:"required"`
 }
 
-// TemplateToUpdate is the template entity that is used to update an existing template.
-type TemplateToUpdate struct {
+// ToUpdate is the template entity that is used to update an existing template.
+type ToUpdate struct {
 	ID          uuid.UUID `hvalidate:"required"`
 	TemplateSet uuid.UUID `hvalidate:"required"`
 	Type        string    `hvalidate:"required"`
 	Json        string    `hvalidate:"required"`
 }
 
-// TemplateNecessaryInfo is the necessary information about a template. It is used to create a new template.
+// NecessaryInfo is the necessary information about a template. It is used to create a new template.
 // The template's JSON has to contain this information. It is extracted from the JSON and saved in the database.
-type TemplateNecessaryInfo struct {
+type NecessaryInfo struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
 
-// TemplateSet is the template set entity. Each template belongs to a template set. Each template set can have multiple templates.
+// Set is the template set entity. Each template belongs to a template set. Each template set can have multiple templates.
 // It also contains the necessary information about the template.
-type TemplateSet struct {
+type Set struct {
 	ID          uuid.UUID
 	Name        string
 	Version     string
@@ -70,35 +70,35 @@ type TemplateSet struct {
 	UpdatedAt   *time.Time
 }
 
-// TemplateSetToCreate is the template set entity that is used to create a new template set.
-type TemplateSetToCreate struct {
+// SetToCreate is the template set entity that is used to create a new template set.
+type SetToCreate struct {
 	Name        string    `hvalidate:"required"`
 	Version     string    `hvalidate:"required"`
 	Description string    `hvalidate:"required"`
 	CreatedBy   uuid.UUID `hvalidate:"required"`
 }
 
-// TemplateSetToUpdate is the template set entity that is used to update an existing template set.
-type TemplateSetToUpdate struct {
+// SetToUpdate is the template set entity that is used to update an existing template set.
+type SetToUpdate struct {
 	ID          uuid.UUID `hvalidate:"required"`
 	Name        string    `hvalidate:"required"`
 	Version     string    `hvalidate:"required"`
 	Description string    `hvalidate:"required"`
 }
 
-// PGTemplateRepository is the template repository for PostgreSQL. It holds a reference to the database connection pool.
-type PGTemplateRepository struct {
+// PGRepository is the template repository for PostgreSQL. It holds a reference to the database connection pool.
+type PGRepository struct {
 	db *pgxpool.Pool
 }
 
-// PGTemplateSetRepository is the template set repository for PostgreSQL. It holds a reference to the database connection pool.
-type PGTemplateSetRepository struct {
+// PGSetRepository is the template set repository for PostgreSQL. It holds a reference to the database connection pool.
+type PGSetRepository struct {
 	db *pgxpool.Pool
 }
 
-// TemplateRepository is the template repository it contains the necessary methods to interact with the database.
-// TemplateRepository is safe for concurrent use by multiple goroutines.
-type TemplateRepository interface {
+// Repository is the template repository it contains the necessary methods to interact with the database.
+// Repository is safe for concurrent use by multiple goroutines.
+type Repository interface {
 	persistence.Repository
 
 	// FindByID finds a template by its id. It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
@@ -108,33 +108,33 @@ type TemplateRepository interface {
 	// Create creates a new template and returns it. It returns persistence.ErrInsert if the template could not be inserted.
 	// It also extracts the necessary information from the template's JSON and saves it in the database.
 	// If the JSON does not contain the necessary information, it returns ErrTemplateJsonMissingInfo.
-	Create(ctx context.Context, template *TemplateToCreate) (*Template, error)
+	Create(ctx context.Context, template *ToCreate) (*Template, error)
 	// Update updates an existing template and returns it. It returns persistence.ErrUpdate if the template could not be updated.
 	// It also extracts the necessary information from the template's JSON and saves it in the database.
 	// If the JSON does not contain the necessary information, it returns ErrTemplateJsonMissingInfo.
-	Update(ctx context.Context, template *TemplateToUpdate) (*Template, error)
+	Update(ctx context.Context, template *ToUpdate) (*Template, error)
 	// Delete deletes an existing template by its id. It returns persistence.ErrDelete if the template could not be deleted.
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-// TemplateSetRepository is the template set repository it contains the necessary methods to interact with the database.
-// TemplateSetRepository is safe for concurrent use by multiple goroutines.
-type TemplateSetRepository interface {
+// SetRepository is the template set repository it contains the necessary methods to interact with the database.
+// SetRepository is safe for concurrent use by multiple goroutines.
+type SetRepository interface {
 	persistence.Repository
 
 	// FindByID finds a template set by its id. It returns persistence.ErrNotFound if the template set could not be found and persistence.ErrReadRow for any other error.
-	FindByID(ctx context.Context, id uuid.UUID) (*TemplateSet, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*Set, error)
 	// Create creates a new template set and returns it. It returns persistence.ErrInsert if the template set could not be inserted.
-	Create(ctx context.Context, templateSet *TemplateSetToCreate) (*TemplateSet, error)
+	Create(ctx context.Context, templateSet *SetToCreate) (*Set, error)
 	// Update updates an existing template set and returns it. It returns persistence.ErrUpdate if the template set could not be updated.
-	Update(ctx context.Context, templateSet *TemplateSetToUpdate) (*TemplateSet, error)
+	Update(ctx context.Context, templateSet *SetToUpdate) (*Set, error)
 	// Delete deletes an existing template set by its id. It returns persistence.ErrDelete if the template set could not be deleted.
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-// ToUpdate returns a TemplateToUpdate from a Template.
-func (t *Template) ToUpdate() *TemplateToUpdate {
-	return &TemplateToUpdate{
+// ToUpdate returns a ToUpdate from a Template.
+func (t *Template) ToUpdate() *ToUpdate {
+	return &ToUpdate{
 		ID:          t.ID,
 		TemplateSet: t.TemplateSet,
 		Type:        t.Type,
@@ -145,8 +145,8 @@ func (t *Template) ToUpdate() *TemplateToUpdate {
 // NecessaryInfo returns the valid necessary information about a template from a Template.
 // It will return ErrTemplateJsonMissingInfo if the template's JSON does not contain the necessary information (name and version).
 // This method is used by Created and Update to extract the necessary information from the template's JSON.
-func (t *Template) NecessaryInfo() (*TemplateNecessaryInfo, error) {
-	info := &TemplateNecessaryInfo{}
+func (t *Template) NecessaryInfo() (*NecessaryInfo, error) {
+	info := &NecessaryInfo{}
 	err := json.Unmarshal([]byte(t.Json), info)
 
 	if info.Name == "" || info.Version == "" {
@@ -156,9 +156,9 @@ func (t *Template) NecessaryInfo() (*TemplateNecessaryInfo, error) {
 	return info, err
 }
 
-// ToUpdate returns a TemplateSetToUpdate from a TemplateSet.
-func (t *TemplateSet) ToUpdate() *TemplateSetToUpdate {
-	return &TemplateSetToUpdate{
+// ToUpdate returns a SetToUpdate from a Set.
+func (t *Set) ToUpdate() *SetToUpdate {
+	return &SetToUpdate{
 		ID:          t.ID,
 		Name:        t.Name,
 		Version:     t.Version,
@@ -166,28 +166,28 @@ func (t *TemplateSet) ToUpdate() *TemplateSetToUpdate {
 	}
 }
 
-// NewTemplateRepository constructs a new PGTemplateRepository with the passed in database connection pool.
-func NewTemplateRepository(db *pgxpool.Pool) TemplateRepository {
-	return &PGTemplateRepository{db: db}
+// NewRepository constructs a new PGRepository with the passed in database connection pool.
+func NewRepository(db *pgxpool.Pool) Repository {
+	return &PGRepository{db: db}
 }
 
-// NewTemplateSetRepository constructs a new PGTemplateSetRepository with the passed in database connection pool.
-func NewTemplateSetRepository(db *pgxpool.Pool) TemplateSetRepository {
-	return &PGTemplateSetRepository{db: db}
-}
-
-// RepositoryName returns the name of the repository. This name is used to identify the repository in the persistence.RepositoryProvider.
-func (r *PGTemplateRepository) RepositoryName() string {
-	return TemplateRepositoryName
+// NewSetRepository constructs a new PGSetRepository with the passed in database connection pool.
+func NewSetRepository(db *pgxpool.Pool) SetRepository {
+	return &PGSetRepository{db: db}
 }
 
 // RepositoryName returns the name of the repository. This name is used to identify the repository in the persistence.RepositoryProvider.
-func (r *PGTemplateSetRepository) RepositoryName() string {
-	return TemplateSetRepositoryName
+func (r *PGRepository) RepositoryName() string {
+	return RepositoryName
+}
+
+// RepositoryName returns the name of the repository. This name is used to identify the repository in the persistence.RepositoryProvider.
+func (r *PGSetRepository) RepositoryName() string {
+	return SetRepositoryName
 }
 
 // FindByID finds a template by its id. It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
-func (r *PGTemplateRepository) FindByID(ctx context.Context, id uuid.UUID) (*Template, error) {
+func (r *PGRepository) FindByID(ctx context.Context, id uuid.UUID) (*Template, error) {
 	t := &Template{}
 	err := r.db.QueryRow(ctx, "SELECT id, template_set, type, name, version, json, created_by, created_at, updated_at FROM templates WHERE id = $1", id).
 		Scan(&t.ID, &t.TemplateSet, &t.Type, &t.Name, &t.Version, &t.Json, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt)
@@ -200,7 +200,7 @@ func (r *PGTemplateRepository) FindByID(ctx context.Context, id uuid.UUID) (*Tem
 }
 
 // FindByTemplateSetID finds all templates by their template set id. It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
-func (r *PGTemplateRepository) FindByTemplateSetID(ctx context.Context, templateSetID uuid.UUID) ([]*Template, error) {
+func (r *PGRepository) FindByTemplateSetID(ctx context.Context, templateSetID uuid.UUID) ([]*Template, error) {
 	rows, err := r.db.Query(ctx, "SELECT id, template_set, type, name, version, json, created_by, created_at, updated_at FROM templates WHERE template_set = $1", templateSetID)
 	if err != nil {
 		return nil, persistence.PGReadErr(err)
@@ -223,7 +223,7 @@ func (r *PGTemplateRepository) FindByTemplateSetID(ctx context.Context, template
 // Create creates a new template and returns it. It returns persistence.ErrInsert if the template could not be inserted.
 // It also checks if the template's JSON contains the necessary information (name and version).
 // If the JSON does not contain the necessary information, it returns ErrTemplateJsonMissingInfo.
-func (r *PGTemplateRepository) Create(ctx context.Context, toCreate *TemplateToCreate) (*Template, error) {
+func (r *PGRepository) Create(ctx context.Context, toCreate *ToCreate) (*Template, error) {
 	newTemplate := &Template{
 		ID:          uuid.New(),
 		TemplateSet: toCreate.TemplateSet,
@@ -256,7 +256,7 @@ func (r *PGTemplateRepository) Create(ctx context.Context, toCreate *TemplateToC
 // Update updates an existing template and returns it. It returns persistence.ErrUpdate if the template could not be updated.
 // It also checks if the template's JSON contains the necessary information (name and version).
 // If the JSON does not contain the necessary information, it returns ErrTemplateJsonMissingInfo.
-func (r *PGTemplateRepository) Update(ctx context.Context, toUpdate *TemplateToUpdate) (*Template, error) {
+func (r *PGRepository) Update(ctx context.Context, toUpdate *ToUpdate) (*Template, error) {
 	template := &Template{
 		ID:   toUpdate.ID,
 		Json: toUpdate.Json,
@@ -293,7 +293,7 @@ func (r *PGTemplateRepository) Update(ctx context.Context, toUpdate *TemplateToU
 }
 
 // Delete deletes an existing template by its id. It returns persistence.ErrDelete if the template could not be deleted.
-func (r *PGTemplateRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *PGRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.Exec(ctx, "DELETE FROM templates WHERE id = $1", id)
 	if err != nil {
 		return errors.Join(persistence.ErrDelete, err)
@@ -303,8 +303,8 @@ func (r *PGTemplateRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // FindByID finds a template set by its id. It returns persistence.ErrNotFound if the template set could not be found and persistence.ErrReadRow for any other error.
-func (r *PGTemplateSetRepository) FindByID(ctx context.Context, id uuid.UUID) (*TemplateSet, error) {
-	t := &TemplateSet{}
+func (r *PGSetRepository) FindByID(ctx context.Context, id uuid.UUID) (*Set, error) {
+	t := &Set{}
 	err := r.db.QueryRow(ctx, "SELECT id, name, version, description, created_by, created_at, updated_at FROM template_sets WHERE id = $1", id).
 		Scan(&t.ID, &t.Name, &t.Version, &t.Description, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt)
 
@@ -316,8 +316,8 @@ func (r *PGTemplateSetRepository) FindByID(ctx context.Context, id uuid.UUID) (*
 }
 
 // Create creates a new template set and returns it. It returns persistence.ErrInsert if the template set could not be inserted.
-func (r *PGTemplateSetRepository) Create(ctx context.Context, toCreate *TemplateSetToCreate) (*TemplateSet, error) {
-	newTemplateSet := &TemplateSet{
+func (r *PGSetRepository) Create(ctx context.Context, toCreate *SetToCreate) (*Set, error) {
+	newTemplateSet := &Set{
 		ID:          uuid.New(),
 		Name:        toCreate.Name,
 		Version:     toCreate.Version,
@@ -344,8 +344,8 @@ func (r *PGTemplateSetRepository) Create(ctx context.Context, toCreate *Template
 }
 
 // Update updates an existing template set and returns it. It returns persistence.ErrUpdate if the template set could not be updated.
-func (r *PGTemplateSetRepository) Update(ctx context.Context, toUpdate *TemplateSetToUpdate) (*TemplateSet, error) {
-	templateSet := &TemplateSet{
+func (r *PGSetRepository) Update(ctx context.Context, toUpdate *SetToUpdate) (*Set, error) {
+	templateSet := &Set{
 		ID: toUpdate.ID,
 	}
 
@@ -373,7 +373,7 @@ func (r *PGTemplateSetRepository) Update(ctx context.Context, toUpdate *Template
 }
 
 // Delete deletes an existing template set by its id. It returns persistence.ErrDelete if the template set could not be deleted.
-func (r *PGTemplateSetRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *PGSetRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.Exec(ctx, "DELETE FROM template_sets WHERE id = $1", id)
 	if err != nil {
 		return errors.Join(persistence.ErrDelete, err)

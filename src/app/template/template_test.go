@@ -1,4 +1,4 @@
-package eiffel
+package template
 
 import (
 	"context"
@@ -16,8 +16,8 @@ import (
 
 func TestMain(m *testing.M) {
 	db = persistence.InitTestDB("./../../../")
-	templateRepo = NewTemplateRepository(db)
-	templateSetRepo = NewTemplateSetRepository(db)
+	templateRepo = NewRepository(db)
+	templateSetRepo = NewSetRepository(db)
 	userRepo = user.NewUserRepository(db)
 	ctx = context.Background()
 	result := m.Run()
@@ -27,21 +27,21 @@ func TestMain(m *testing.M) {
 
 var (
 	db              *pgxpool.Pool
-	templateRepo    TemplateRepository
-	templateSetRepo TemplateSetRepository
+	templateRepo    Repository
+	templateSetRepo SetRepository
 	userRepo        user.Repository
 	ctx             context.Context
 )
 
 func TestNewRepository(t *testing.T) {
-	repo1 := NewTemplateRepository(db)
+	repo1 := NewRepository(db)
 	require.NotNil(t, repo1)
 
-	repo2 := NewTemplateSetRepository(db)
+	repo2 := NewSetRepository(db)
 	require.NotNil(t, repo2)
 }
 
-func TestPGTemplateRepository(t *testing.T) {
+func TestPGRepository(t *testing.T) {
 	registerAllCleanup(t)
 
 	u, tmplSet, tmpl := mockTemplate(t)
@@ -55,7 +55,7 @@ func TestPGTemplateRepository(t *testing.T) {
 	})
 
 	t.Run("FindByTemplateSet", func(t *testing.T) {
-		tmplToCreate := &TemplateToCreate{
+		tmplToCreate := &ToCreate{
 			Type: "ebt",
 			Json: `{
 			"name": "Baz",
@@ -78,7 +78,7 @@ func TestPGTemplateRepository(t *testing.T) {
 	})
 
 	t.Run("Create Template", func(t *testing.T) {
-		tmplToCreate := &TemplateToCreate{
+		tmplToCreate := &ToCreate{
 			Type: "ebt",
 			Json: `{
 			"name": "Baz",
@@ -168,7 +168,7 @@ func TestPGTemplateRepository(t *testing.T) {
 	})
 }
 
-func TestPGTemplateSetRepository(t *testing.T) {
+func TestPGSetRepository(t *testing.T) {
 	registerAllCleanup(t)
 
 	u, tmplSet, _ := mockTemplate(t)
@@ -181,7 +181,7 @@ func TestPGTemplateSetRepository(t *testing.T) {
 	})
 
 	t.Run("Create TemplateSet", func(t *testing.T) {
-		tmplSetToCreate := &TemplateSetToCreate{
+		tmplSetToCreate := &SetToCreate{
 			Name:        "Baz",
 			Description: "Baz Qux Foo Bar",
 			CreatedBy:   u.ID,
@@ -235,7 +235,7 @@ func TestPGTemplateSetRepository(t *testing.T) {
 	})
 
 	t.Run("Invalid CreatedBy", func(t *testing.T) {
-		_, err := templateSetRepo.Create(ctx, &TemplateSetToCreate{
+		_, err := templateSetRepo.Create(ctx, &SetToCreate{
 			Name:        "Foo",
 			Description: "Foo Bar",
 			CreatedBy:   uuid.New(),
@@ -245,12 +245,12 @@ func TestPGTemplateSetRepository(t *testing.T) {
 }
 
 // mockTemplate will create a user, template set and template in the database and return them.
-func mockTemplate(t *testing.T) (*user.User, *TemplateSet, *Template) {
+func mockTemplate(t *testing.T) (*user.User, *Set, *Template) {
 	userToCreate, templateSetToCreate, templateToCreate := fooToCreate()
 	return createTemplate(t, userToCreate, templateSetToCreate, templateToCreate)
 }
 
-func createTemplate(t *testing.T, userToCreate *user.ToCreate, tmplSetToCreate *TemplateSetToCreate, tmplToCreate *TemplateToCreate) (*user.User, *TemplateSet, *Template) {
+func createTemplate(t *testing.T, userToCreate *user.ToCreate, tmplSetToCreate *SetToCreate, tmplToCreate *ToCreate) (*user.User, *Set, *Template) {
 	u, err := userRepo.Create(ctx, userToCreate)
 	require.NoError(t, err)
 
@@ -266,15 +266,15 @@ func createTemplate(t *testing.T, userToCreate *user.ToCreate, tmplSetToCreate *
 	return u, templateSet, template
 }
 
-func fooToCreate() (*user.ToCreate, *TemplateSetToCreate, *TemplateToCreate) {
+func fooToCreate() (*user.ToCreate, *SetToCreate, *ToCreate) {
 	return &user.ToCreate{
 			Email:     "foo@bar.com",
 			Firstname: "Foo",
 			Lastname:  "Bar",
-		}, &TemplateSetToCreate{
+		}, &SetToCreate{
 			Name:        "Foo",
 			Description: "Foo Bar",
-		}, &TemplateToCreate{
+		}, &ToCreate{
 			Type: "ebt",
 			Json: `{
 				"name": "Foo",
@@ -314,7 +314,7 @@ func unifiedJsonEqual(t *testing.T, expected string, actual string) {
 }
 
 // tmplSetUnify unifies the template set for comparison. It truncates the time to seconds as the database does not store milliseconds.
-func tmplSetUnify(tmplSet TemplateSet) TemplateSet {
+func tmplSetUnify(tmplSet Set) Set {
 	tmplSet.CreatedAt = tmplSet.CreatedAt.Truncate(time.Second)
 	if tmplSet.UpdatedAt != nil {
 		*tmplSet.UpdatedAt = tmplSet.UpdatedAt.Truncate(time.Second)
