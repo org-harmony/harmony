@@ -20,6 +20,38 @@
       "update-error": "Einstellungen konnten nicht aktualisiert werden."
     }
   },
+  "template": {
+    "set": {
+      "list": "Schablonensätze Übersicht",
+      "list.empty": "Es wurden noch keine Schablonensätze erstellt.",
+      "new": "Neuen Schablonensatz erstellen",
+      "name": "Name",
+      "version": "Version",
+      "description": "Beschreibung",
+      "action": {
+        "actions": "Aktionen",
+        "edit": "Bearbeiten",
+        "delete": "Löschen"
+      },
+      "delete": {
+        "title": "Sind Sie sicher, dass der Schablonensatz \"{{ .name }}\" gelöscht werden soll?",
+        "text": "Wenn Sie den Schablonensatz \"{{ .name }}\" löschen, werden alle beinhalteten Schablonen ebenfalls unwiderruflich aus dem System gelöscht.",
+        "confirm": "Trotzdem löschen",
+        "cancel": "Abbrechen und behalten",
+        "deleted": "Schablonensatz \"{{ .name }}\" und alle beinhalteten Schablonen gelöscht.",
+        "delete-error": "Schablonensatz \"{{ .name }}\" konnte nicht gelöscht werden."
+      },
+      "edit": {
+        "title": "Schablonensatz bearbeiten",
+        "name": "Name",
+        "version": "Version",
+        "description": "Beschreibung",
+        "confirm": "Speichern",
+        "cancel": "Abbrechen",
+        "updated": "Der Schablonensatz wurde aktualisiert."
+      }
+    }
+  },
   "eiffel": {
     "parser": {
       "error": {
@@ -42,6 +74,7 @@
     },
     "menu": {
       "home": "Startseite",
+      "template-sets": "Schablonen",
       "user": "Profil",
       "login": "Anmelden",
       "logout": "Abmelden"
@@ -57,8 +90,14 @@
           "generic": "Bitte füllen Sie dieses Feld aus.",
           "Firstname": "Bitte geben Sie Ihren Vornamen ein.",
           "Lastname": "Bitte geben Sie Ihren Nachnamen ein."
+        },
+        "semantic-version": {
+          "generic": "Bitte geben Sie eine gültige Versionsnummer ein."
         }
       }
+    },
+    "generic": {
+      "close": "Schließen"
     }
   }
 }

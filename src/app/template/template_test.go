@@ -180,6 +180,22 @@ func TestPGSetRepository(t *testing.T) {
 		assert.Equal(t, tmplSetUnify(*tmplSet), tmplSetUnify(*found))
 	})
 
+	t.Run("FindByCreatedBy", func(t *testing.T) {
+		tmplSetToCreate := &SetToCreate{
+			Name:        "Baz",
+			Description: "Baz Qux Foo Bar",
+			CreatedBy:   u.ID,
+		}
+
+		_, err := templateSetRepo.Create(ctx, tmplSetToCreate)
+		require.NoError(t, err)
+
+		found, err := templateSetRepo.FindByCreatedBy(ctx, u.ID)
+		require.NoError(t, err)
+
+		assert.Len(t, found, 2)
+	})
+
 	t.Run("Create TemplateSet", func(t *testing.T) {
 		tmplSetToCreate := &SetToCreate{
 			Name:        "Baz",

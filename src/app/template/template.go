@@ -73,17 +73,17 @@ type Set struct {
 // SetToCreate is the template set entity that is used to create a new template set.
 type SetToCreate struct {
 	Name        string    `hvalidate:"required"`
-	Version     string    `hvalidate:"required"`
-	Description string    `hvalidate:"required"`
+	Version     string    `hvalidate:"required,semVer"`
 	CreatedBy   uuid.UUID `hvalidate:"required"`
+	Description string
 }
 
 // SetToUpdate is the template set entity that is used to update an existing template set.
 type SetToUpdate struct {
 	ID          uuid.UUID `hvalidate:"required"`
 	Name        string    `hvalidate:"required"`
-	Version     string    `hvalidate:"required"`
-	Description string    `hvalidate:"required"`
+	Version     string    `hvalidate:"required,semVer"`
+	Description string
 }
 
 // PGRepository is the template repository for PostgreSQL. It holds a reference to the database connection pool.
@@ -124,6 +124,8 @@ type SetRepository interface {
 
 	// FindByID finds a template set by its id. It returns persistence.ErrNotFound if the template set could not be found and persistence.ErrReadRow for any other error.
 	FindByID(ctx context.Context, id uuid.UUID) (*Set, error)
+	// FindByCreatedBy finds all template sets for a user. It returns persistence.ErrNotFound if no template sets could be found and persistence.ErrReadRow for any other error.
+	FindByCreatedBy(ctx context.Context, userID uuid.UUID) ([]*Set, error)
 	// Create creates a new template set and returns it. It returns persistence.ErrInsert if the template set could not be inserted.
 	Create(ctx context.Context, templateSet *SetToCreate) (*Set, error)
 	// Update updates an existing template set and returns it. It returns persistence.ErrUpdate if the template set could not be updated.
@@ -313,6 +315,27 @@ func (r *PGSetRepository) FindByID(ctx context.Context, id uuid.UUID) (*Set, err
 	}
 
 	return t, nil
+}
+
+// FindByCreatedBy finds all template sets for a user. It returns persistence.ErrNotFound if no template sets could be found and persistence.ErrReadRow for any other error.
+func (r *PGSetRepository) FindByCreatedBy(ctx context.Context, userID uuid.UUID) ([]*Set, error) {
+	rows, err := r.db.Query(ctx, "SELECT id, name, version, description, created_by, created_at, updated_at FROM template_sets WHERE created_by = $1", userID)
+	if err != nil {
+		return nil, persistence.PGReadErr(err)
+	}
+
+	var templates []*Set
+	for rows.Next() {
+		t := &Set{}
+		err := rows.Scan(&t.ID, &t.Name, &t.Version, &t.Description, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt)
+		if err != nil {
+			return nil, persistence.PGReadErr(err)
+		}
+
+		templates = append(templates, t)
+	}
+
+	return templates, nil
 }
 
 // Create creates a new template set and returns it. It returns persistence.ErrInsert if the template set could not be inserted.

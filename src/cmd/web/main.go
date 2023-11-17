@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	homeWeb "github.com/org-harmony/harmony/src/app/home"
+	"github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/app/user"
 	userWeb "github.com/org-harmony/harmony/src/app/user/web"
 	"github.com/org-harmony/harmony/src/core/config"
@@ -30,6 +31,7 @@ func main() {
 
 	homeWeb.RegisterController(appCtx, webCtx)
 	userWeb.RegisterController(appCtx, webCtx)
+	template.RegisterController(appCtx, webCtx)
 
 	util.Ok(web.Serve(r, webCtx.Config.Server))
 }
@@ -69,6 +71,12 @@ func initRepositoryProvider(db *pgxpool.Pool) persistence.RepositoryProvider {
 	}))
 	util.Ok(p.RegisterRepository(func(db any) (persistence.Repository, error) {
 		return user.NewPGUserSessionRepository(db.(*pgxpool.Pool)), nil
+	}))
+	util.Ok(p.RegisterRepository(func(db any) (persistence.Repository, error) {
+		return template.NewRepository(db.(*pgxpool.Pool)), nil
+	}))
+	util.Ok(p.RegisterRepository(func(db any) (persistence.Repository, error) {
+		return template.NewSetRepository(db.(*pgxpool.Pool)), nil
 	}))
 
 	return p
