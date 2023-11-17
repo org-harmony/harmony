@@ -14,6 +14,7 @@ func DefaultValidators() map[string]Func {
 		"positive": Positive(),
 		"negative": Negative(),
 		"email":    Email(),
+		"semVer":   SemanticVersion(),
 	}
 }
 
@@ -119,6 +120,32 @@ func Email(msgs ...string) Func {
 		}
 
 		if !emailRegex.MatchString(email) {
+			return errors.New(msg)
+		}
+
+		return nil
+	}
+}
+
+func SemanticVersion(msgs ...string) Func {
+	msg := "harmony.error.validation.semantic-version"
+	if len(msgs) > 0 && msgs[0] != "" {
+		msg = msgs[0]
+	}
+
+	var semanticVersionRegex = regexp.MustCompile(`^(?:(\d+)\.)?(?:(\d+)\.)?(\d+)$`)
+
+	return func(value any) error {
+		version, ok := value.(string)
+		if !ok {
+			return errors.New(msg)
+		}
+
+		if version == "" {
+			return nil
+		}
+
+		if !semanticVersionRegex.MatchString(version) {
 			return errors.New(msg)
 		}
 
