@@ -132,3 +132,31 @@ func TestEmail(t *testing.T) {
 		}
 	}
 }
+
+func TestSemanticVersion(t *testing.T) {
+	validator := validation.SemanticVersion()
+
+	tests := []struct {
+		value any
+		valid bool
+	}{
+		{"1.0.0", true},
+		{"1.0", true},
+		{"1", true},
+		{"9.8.7", true},
+		{"0.0.0", true},
+		{"0.0.0-foo", false},
+		{"1.", false},
+		{"foo", false},
+		{"1.f.2", false},
+	}
+
+	for _, test := range tests {
+		err := validator(test.value)
+		if test.valid {
+			assert.NoError(t, err)
+		} else {
+			assert.Error(t, err)
+		}
+	}
+}
