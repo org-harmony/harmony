@@ -1,0 +1,67 @@
+{{ define "template.set.new.form" }}
+    <div class="card template-set-new-form-card">
+        <div class="card-header">{{ t "template.set.new" }}</div>
+        <div class="card-body">
+            <form method="post" action="/template-set/new">
+                <fieldset class="template-set-new-fieldset">
+                    <div id="form-messages">
+                        {{ range $success := .Data.Successes }}
+                            <div class="alert alert-success">{{ t $success }}</div>
+                        {{ end }}
+                        {{ range $violation := .Data.WildcardViolations }}
+                            <div class="alert alert-danger">{{ t $violation.Error }}</div>
+                        {{ end }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <label for="name" class="form-label">{{ t "template.set.name" }}</label>
+                            <input
+                                    id="name"
+                                    type="text"
+                                    autocomplete="off"
+                                    class="form-control {{ if .Data.HasViolations "Name" }}is-invalid{{ end }}"
+                                    name="Name"
+                                    placeholder="{{ t "template.set.name" }}"
+                                    value="{{ .Data.Form.Name }}"
+                            />
+                            {{ range $validation := .Data.ValidationErrors "Name" }}
+                                <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
+                            {{ end }}
+                        </div>
+                        <div class="col-6">
+                            <label for="version" class="form-label">{{ t "template.set.version" }}</label>
+                            <input
+                                    id="version"
+                                    type="text"
+                                    autocomplete="off"
+                                    class="form-control {{ if .Data.HasViolations "Version" }}is-invalid{{ end }}"
+                                    name="Version"
+                                    placeholder="{{ t "template.set.version" }}"
+                                    value="{{ .Data.Form.Version }}"
+                            />
+                            {{ range $validation := .Data.ValidationErrors "Version" }}
+                                <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
+                            {{ end }}
+                        </div>
+                        <div class="col-12">
+                            <label for="description" class="form-label">{{ t "template.set.description" }}</label>
+                            <textarea
+                                    id="description"
+                                    class="form-control {{ if .Data.HasViolations "Description" }}is-invalid{{ end }}"
+                                    name="Description"
+                                    placeholder="{{ t "template.set.description" }}"
+                            >{{ .Data.Form.Description }}</textarea>
+                            {{ range $validation := .Data.ValidationErrors "Description" }}
+                                <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
+                            {{ end }}
+                        </div>
+                        <div class="col mt-2">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+{{ end }}
