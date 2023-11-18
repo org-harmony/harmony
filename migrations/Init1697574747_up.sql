@@ -37,7 +37,7 @@ CREATE TABLE templates
     type           VARCHAR(255) NOT NULL,
     name           VARCHAR(255) NOT NULL,
     version        VARCHAR(255) NOT NULL,
-    json           JSONB        NOT NULL,
+    config         JSONB        NOT NULL,
     created_by     UUID         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
     updated_at     TIMESTAMPTZ

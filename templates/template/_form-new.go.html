@@ -1,0 +1,39 @@
+{{ define "template.new.form" }}
+    {{ printf "%+v" .Data }}
+    <div class="card template-new-form-card">
+        <div class="card-header">{{ t "template.new" }}</div>
+        <div class="card-body">
+            <form method="post" action="/template-set/{{ .Data.Form.TemplateSet.ID }}/new">
+                <fieldset class="template-new-fieldset">
+                    <div id="form-messages">
+                        {{ range $success := .Data.Successes }}
+                            <div class="alert alert-success">{{ t $success }}</div>
+                        {{ end }}
+                        {{ range $violation := .Data.WildcardViolations }}
+                            <div class="alert alert-danger">{{ t $violation.Error }}</div>
+                        {{ end }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <label for="config" class="form-label">{{ t "template.config" }}</label>
+                            <textarea
+                                    rows="10"
+                                    id="config"
+                                    class="form-control {{ if .Data.HasViolations "Config" }}is-invalid{{ end }}"
+                                    name="Config"
+                                    placeholder="{{ t "template.config" }}"
+                            >{{ .Data.Form.Template.Config }}</textarea>
+                            {{ range $validation := .Data.ValidationErrors "Config" }}
+                                <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
+                            {{ end }}
+                        </div>
+                        <div class="col mt-2">
+                            <button type="submit" class="btn btn-primary">{{ t "harmony.generic.create" }}</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+{{ end }}
