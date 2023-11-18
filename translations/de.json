@@ -25,9 +25,12 @@
       "list": "Schablonensätze Übersicht",
       "list.empty": "Es wurden noch keine Schablonensätze erstellt.",
       "new": "Neuen Schablonensatz erstellen",
+      "information": "Informationen",
       "name": "Name",
       "version": "Version",
       "description": "Beschreibung",
+      "createdAt": "Erstellt am",
+      "updatedAt": "Zuletzt aktualisiert am",
       "action": {
         "actions": "Aktionen",
         "edit": "Bearbeiten",
@@ -50,6 +53,17 @@
         "cancel": "Abbrechen",
         "updated": "Der Schablonensatz wurde aktualisiert."
       }
+    },
+    "list": "Schablonen Übersicht {{ .name }}",
+    "list.empty": "Es wurden noch keine Schablonen erstellt.",
+    "new": "Neue Schablone erstellen",
+    "name": "Name",
+    "version": "Version",
+    "config": "Konfiguration (JSON)",
+    "action": {
+      "actions": "Aktionen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen"
     }
   },
   "eiffel": {
@@ -97,7 +111,10 @@
       }
     },
     "generic": {
-      "close": "Schließen"
+      "close": "Schließen",
+      "refresh": "Aktualisieren",
+      "save": "Speichern",
+      "create": "Erstellen"
     }
   }
 }

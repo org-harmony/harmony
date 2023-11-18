@@ -1,0 +1,41 @@
+{{ define "template.list" }}
+    <div class="template-list">
+        <div class="template-set-list-header row mb-5">
+            <div class="col-7">
+                <h1>{{ tf "template.list" "name" .Data.TemplateSet.Name }}</h1>
+            </div>
+            <div class="col">
+                <a href="/template-set/{{ .Data.TemplateSet.ID }}/new" hx-boost="true" hx-target="body" class="btn btn-secondary">{{ "template.new" | t }}</a>
+            </div>
+            <div class="col">
+                <button hx-get="/template-set/{{ .Data.TemplateSet.ID }}/list" hx-target="body" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="template-list-set-information">
+        <div class="card">
+            <div class="card-header">{{ "template.set.information" | t }}</div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-4">{{ "template.set.name" | t }}</dt>
+                    <dd class="col-8">{{ .Data.TemplateSet.Name }}</dd>
+                    <dt class="col-4">{{ "template.set.version" | t }}</dt>
+                    <dd class="col-8">{{ .Data.TemplateSet.Version }}</dd>
+                    <dt class="col-4">{{ "template.set.description" | t }}</dt>
+                    <dd class="col-8">{{ .Data.TemplateSet.Description }}</dd>
+                    <dt class="col-4">{{ "template.set.createdAt" | t }}</dt>
+                    <dd class="col-8">{{ .Data.TemplateSet.CreatedAt.Format "02.01.2006" }}</dd>
+                    {{ if .Data.TemplateSet.UpdatedAt }}
+                        <dt class="col-sm-4">{{ "template.set.updatedAt" | t }}</dt>
+                        <dd class="col-sm-8">{{ .Data.TemplateSet.UpdatedAt.Format "02.01.2006" }}</dd>
+                    {{ end }}
+                </dl>
+            </div>
+        </div>
+    </div>
+{{ end }}

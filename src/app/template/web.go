@@ -12,6 +12,12 @@ import (
 	"net/http"
 )
 
+var (
+	ErrInvalidTemplateSetID = errors.New("invalid template set id")
+	ErrTemplateSetNotFound  = errors.New("template set not found")
+	ErrUserNotPermitted     = errors.New("user not permitted")
+)
+
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	registerNavigation(appCtx, webCtx)
 
@@ -23,6 +29,37 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	router.Get("/template-set/edit/{id}", templateSetEditFormController(appCtx, webCtx).ServeHTTP)
 	router.Put("/template-set/{id}", templateSetEditController(appCtx, webCtx).ServeHTTP)
 	router.Delete("/template-set/{id}", templateSetDeleteController(appCtx, webCtx).ServeHTTP)
+
+	router.Get("/template-set/{id}/list", templateListController(appCtx, webCtx).ServeHTTP)
+	router.Get("/template-set/{id}/new", templateNewController(appCtx, webCtx).ServeHTTP)
+	router.Post("/template-set/{id}/new", templateNewSaveController(appCtx, webCtx).ServeHTTP)
+}
+
+// SetFromParams returns a template set from the given request parameters. It might return an error if
+// the template set id is invalid (ErrInvalidTemplateSetID), the template set is not found (ErrTemplateSetNotFound)
+// or the user is not permitted to access the template set (ErrUserNotPermitted).
+// In the latter case, the template set is still returned and the caller can decide whether to handle the user
+// not being permitted to access this template set as an error or not.
+func SetFromParams(io web.IO, repo SetRepository, param string) (*Set, error) {
+	ctx := io.Context()
+	u := user.MustCtxUser(ctx)
+
+	templateSetID := web.URLParam(io.Request(), param)
+	templateSetUUID, err := uuid.Parse(templateSetID)
+	if templateSetID == "" || err != nil {
+		return nil, ErrInvalidTemplateSetID
+	}
+
+	templateSet, err := repo.FindByID(ctx, templateSetUUID)
+	if err != nil {
+		return nil, errors.Join(ErrTemplateSetNotFound, err)
+	}
+
+	if templateSet.CreatedBy != u.ID {
+		return templateSet, ErrUserNotPermitted
+	}
+
+	return templateSet, nil
 }
 
 func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
@@ -92,23 +129,9 @@ func templateSetEditFormController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Ha
 	templateSetRepository := util.UnwrapType[SetRepository](appCtx.Repository(SetRepositoryName))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		ctx := io.Context()
-		u := user.MustCtxUser(ctx)
-
-		templateSetID := web.URLParam(io.Request(), "id")
-		templateSetUUID, err := uuid.Parse(templateSetID)
-		if templateSetID == "" || err != nil {
-			return io.InlineError(web.ErrInternal, fmt.Errorf("template set id %s invalid (during edit page)", templateSetID), err)
-		}
-
-		templateSet, err := templateSetRepository.FindByID(ctx, templateSetUUID)
+		templateSet, err := SetFromParams(io, templateSetRepository, "id")
 		if err != nil {
 			return io.InlineError(web.ErrInternal, err)
-		}
-
-		if templateSet.CreatedBy != u.ID {
-			appCtx.Info("user %s tried to edit template set %s without permission", u.ID.String(), templateSetID)
-			return io.InlineError(web.ErrInternal, fmt.Errorf("template set %s not found", templateSetID))
 		}
 
 		return io.RenderJoined(
@@ -124,22 +147,10 @@ func templateSetEditController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handle
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		ctx := io.Context()
-		u := user.MustCtxUser(ctx)
 
-		templateSetID := web.URLParam(io.Request(), "id")
-		templateSetUUID, err := uuid.Parse(templateSetID)
-		if templateSetID == "" || err != nil {
-			return io.InlineError(web.ErrInternal, fmt.Errorf("template set id %s invalid (during edit)", templateSetID), err)
-		}
-
-		templateSet, err := templateSetRepository.FindByID(ctx, templateSetUUID)
+		templateSet, err := SetFromParams(io, templateSetRepository, "id")
 		if err != nil {
 			return io.InlineError(web.ErrInternal, err)
-		}
-
-		if templateSet.CreatedBy != u.ID {
-			appCtx.Info("user %s tried to edit template set %s without permission", u.ID.String(), templateSetID)
-			return io.InlineError(web.ErrInternal, fmt.Errorf("template set %s not found", templateSetID))
 		}
 
 		toUpdate := templateSet.ToUpdate()
@@ -168,23 +179,12 @@ func templateSetDeleteController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Hand
 		ctx := io.Context()
 		u := user.MustCtxUser(ctx)
 
-		templateSetID := web.URLParam(io.Request(), "id")
-		templateSetUUID, err := uuid.Parse(templateSetID)
-		if templateSetID == "" || err != nil {
-			return io.InlineError(web.ErrInternal, fmt.Errorf("template set id %s invalid (during deletion)", templateSetID), err)
-		}
-
-		templateSet, err := templateSetRepository.FindByID(ctx, templateSetUUID)
+		templateSet, err := SetFromParams(io, templateSetRepository, "id")
 		if err != nil {
 			return io.InlineError(web.ErrInternal, err)
 		}
 
-		if templateSet.CreatedBy != u.ID {
-			appCtx.Info("user %s tried to delete template set %s without permission", u.ID.String(), templateSetID)
-			return io.InlineError(web.ErrInternal, fmt.Errorf("template set %s not found", templateSetID))
-		}
-
-		err = templateSetRepository.Delete(ctx, templateSetUUID)
+		err = templateSetRepository.Delete(ctx, templateSet.ID)
 		if err != nil {
 			return io.InlineError(web.ErrInternal, err)
 		}
@@ -195,5 +195,101 @@ func templateSetDeleteController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Hand
 		}
 
 		return io.Render("template.set.list", "template/_list-set.go.html", templateSets)
+	})
+}
+
+func templateListController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateSetRepository := util.UnwrapType[SetRepository](appCtx.Repository(SetRepositoryName))
+	templateRepository := util.UnwrapType[Repository](appCtx.Repository(RepositoryName))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		ctx := io.Context()
+
+		templateSet, err := SetFromParams(io, templateSetRepository, "id")
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		templates, err := templateRepository.FindByTemplateSetID(ctx, templateSet.ID)
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		return io.RenderJoined(struct {
+			TemplateSet *Set
+			Templates   []*Template
+		}{
+			TemplateSet: templateSet,
+			Templates:   templates,
+		}, "template.list.page", "template/list-page.go.html", "template/_list.go.html")
+	})
+}
+
+func templateNewController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateSetRepository := util.UnwrapType[SetRepository](appCtx.Repository(SetRepositoryName))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		templateSet, err := SetFromParams(io, templateSetRepository, "id")
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		return io.RenderJoined(
+			web.NewFormData(struct {
+				TemplateSet *Set
+				Template    *ToCreate
+			}{
+				TemplateSet: templateSet,
+				Template:    &ToCreate{TemplateSet: templateSet.ID},
+			}, nil),
+			"template.new.page",
+			"template/new-page.go.html",
+			"template/_form-new.go.html",
+		)
+	})
+}
+
+func templateNewSaveController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateSetRepository := util.UnwrapType[SetRepository](appCtx.Repository(SetRepositoryName))
+	templateRepository := util.UnwrapType[Repository](appCtx.Repository(RepositoryName))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		ctx := io.Context()
+		u := user.MustCtxUser(ctx)
+
+		templateSet, err := SetFromParams(io, templateSetRepository, "id")
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		// todo add validation and transformation based on template type => e.g. EBT (EIFFEL Basic Template)
+
+		toCreate := &ToCreate{TemplateSet: templateSet.ID, CreatedBy: u.ID}
+		err, validationErrs := web.ReadForm(io.Request(), toCreate, appCtx.Validator)
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		if validationErrs != nil {
+			return io.RenderJoined(
+				web.NewFormData(struct {
+					TemplateSet *Set
+					Template    *ToCreate
+				}{
+					TemplateSet: templateSet,
+					Template:    toCreate,
+				}, nil, validationErrs...),
+				"template.new.page",
+				"template/new-page.go.html",
+				"template/_form-new.go.html",
+			)
+		}
+
+		_, err = templateRepository.Create(ctx, toCreate)
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		return io.Redirect(fmt.Sprintf("/template-set/%s/list", templateSet.ID), http.StatusFound)
 	})
 }

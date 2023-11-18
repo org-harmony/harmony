@@ -17,11 +17,11 @@ const (
 	SetRepositoryName = "SetRepository"
 )
 
-// ErrTemplateJsonMissingInfo is returned if the template's JSON does not contain the necessary information (name and version).
-var ErrTemplateJsonMissingInfo = errors.New("template json missing necessary information (check name and version)")
+// ErrTemplateConfigMissingInfo is returned if the template's config JSON does not contain the necessary information (name and version).
+var ErrTemplateConfigMissingInfo = errors.New("template's config json missing necessary information (check name and version)")
 
 // Template is the template entity that is saved in the database. It contains the template's metadata.
-// Each template belongs to a template set. Templates are versioned and the information about the template should always match the template's JSON.
+// Each template belongs to a template set. Templates are versioned and the information about the template should always match the template's config JSON.
 // Actually, Type, Name and Version are redundant, but they are used for easier querying.
 type Template struct {
 	ID          uuid.UUID
@@ -29,7 +29,7 @@ type Template struct {
 	Type        string
 	Name        string
 	Version     string
-	Json        string
+	Config      string
 	CreatedBy   uuid.UUID
 	CreatedAt   time.Time
 	UpdatedAt   *time.Time
@@ -39,7 +39,7 @@ type Template struct {
 type ToCreate struct {
 	TemplateSet uuid.UUID `hvalidate:"required"`
 	Type        string    `hvalidate:"required"`
-	Json        string    `hvalidate:"required"`
+	Config      string    `hvalidate:"required"`
 	CreatedBy   uuid.UUID `hvalidate:"required"`
 }
 
@@ -48,11 +48,11 @@ type ToUpdate struct {
 	ID          uuid.UUID `hvalidate:"required"`
 	TemplateSet uuid.UUID `hvalidate:"required"`
 	Type        string    `hvalidate:"required"`
-	Json        string    `hvalidate:"required"`
+	Config      string    `hvalidate:"required"`
 }
 
 // NecessaryInfo is the necessary information about a template. It is used to create a new template.
-// The template's JSON has to contain this information. It is extracted from the JSON and saved in the database.
+// The template's config JSON has to contain this information. It is extracted from the config JSON and saved in the database.
 type NecessaryInfo struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
@@ -106,12 +106,12 @@ type Repository interface {
 	// FindByTemplateSetID finds all templates by their template set id. It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
 	FindByTemplateSetID(ctx context.Context, templateSetID uuid.UUID) ([]*Template, error)
 	// Create creates a new template and returns it. It returns persistence.ErrInsert if the template could not be inserted.
-	// It also extracts the necessary information from the template's JSON and saves it in the database.
-	// If the JSON does not contain the necessary information, it returns ErrTemplateJsonMissingInfo.
+	// It also extracts the necessary information from the template's config JSON and saves it in the database.
+	// If the config JSON does not contain the necessary information, it returns ErrTemplateConfigMissingInfo.
 	Create(ctx context.Context, template *ToCreate) (*Template, error)
 	// Update updates an existing template and returns it. It returns persistence.ErrUpdate if the template could not be updated.
-	// It also extracts the necessary information from the template's JSON and saves it in the database.
-	// If the JSON does not contain the necessary information, it returns ErrTemplateJsonMissingInfo.
+	// It also extracts the necessary information from the template's config JSON and saves it in the database.
+	// If the config JSON does not contain the necessary information, it returns ErrTemplateConfigMissingInfo.
 	Update(ctx context.Context, template *ToUpdate) (*Template, error)
 	// Delete deletes an existing template by its id. It returns persistence.ErrDelete if the template could not be deleted.
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -140,19 +140,19 @@ func (t *Template) ToUpdate() *ToUpdate {
 		ID:          t.ID,
 		TemplateSet: t.TemplateSet,
 		Type:        t.Type,
-		Json:        t.Json,
+		Config:      t.Config,
 	}
 }
 
 // NecessaryInfo returns the valid necessary information about a template from a Template.
-// It will return ErrTemplateJsonMissingInfo if the template's JSON does not contain the necessary information (name and version).
-// This method is used by Created and Update to extract the necessary information from the template's JSON.
+// It will return ErrTemplateConfigMissingInfo if the template's config JSON does not contain the necessary information (name and version).
+// This method is used by Created and Update to extract the necessary information from the template's config JSON.
 func (t *Template) NecessaryInfo() (*NecessaryInfo, error) {
 	info := &NecessaryInfo{}
-	err := json.Unmarshal([]byte(t.Json), info)
+	err := json.Unmarshal([]byte(t.Config), info)
 
 	if info.Name == "" || info.Version == "" {
-		return nil, ErrTemplateJsonMissingInfo
+		return nil, ErrTemplateConfigMissingInfo
 	}
 
 	return info, err
@@ -191,8 +191,8 @@ func (r *PGSetRepository) RepositoryName() string {
 // FindByID finds a template by its id. It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
 func (r *PGRepository) FindByID(ctx context.Context, id uuid.UUID) (*Template, error) {
 	t := &Template{}
-	err := r.db.QueryRow(ctx, "SELECT id, template_set, type, name, version, json, created_by, created_at, updated_at FROM templates WHERE id = $1", id).
-		Scan(&t.ID, &t.TemplateSet, &t.Type, &t.Name, &t.Version, &t.Json, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt)
+	err := r.db.QueryRow(ctx, "SELECT id, template_set, type, name, version, config, created_by, created_at, updated_at FROM templates WHERE id = $1", id).
+		Scan(&t.ID, &t.TemplateSet, &t.Type, &t.Name, &t.Version, &t.Config, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt)
 
 	if err != nil {
 		return nil, persistence.PGReadErr(err)
@@ -203,7 +203,7 @@ func (r *PGRepository) FindByID(ctx context.Context, id uuid.UUID) (*Template, e
 
 // FindByTemplateSetID finds all templates by their template set id. It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
 func (r *PGRepository) FindByTemplateSetID(ctx context.Context, templateSetID uuid.UUID) ([]*Template, error) {
-	rows, err := r.db.Query(ctx, "SELECT id, template_set, type, name, version, json, created_by, created_at, updated_at FROM templates WHERE template_set = $1", templateSetID)
+	rows, err := r.db.Query(ctx, "SELECT id, template_set, type, name, version, config, created_by, created_at, updated_at FROM templates WHERE template_set = $1", templateSetID)
 	if err != nil {
 		return nil, persistence.PGReadErr(err)
 	}
@@ -211,7 +211,7 @@ func (r *PGRepository) FindByTemplateSetID(ctx context.Context, templateSetID uu
 	var templates []*Template
 	for rows.Next() {
 		t := &Template{}
-		err := rows.Scan(&t.ID, &t.TemplateSet, &t.Type, &t.Name, &t.Version, &t.Json, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt)
+		err := rows.Scan(&t.ID, &t.TemplateSet, &t.Type, &t.Name, &t.Version, &t.Config, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt)
 		if err != nil {
 			return nil, persistence.PGReadErr(err)
 		}
@@ -223,14 +223,14 @@ func (r *PGRepository) FindByTemplateSetID(ctx context.Context, templateSetID uu
 }
 
 // Create creates a new template and returns it. It returns persistence.ErrInsert if the template could not be inserted.
-// It also checks if the template's JSON contains the necessary information (name and version).
-// If the JSON does not contain the necessary information, it returns ErrTemplateJsonMissingInfo.
+// It also checks if the template's config JSON contains the necessary information (name and version).
+// If the config JSON does not contain the necessary information, it returns ErrTemplateConfigMissingInfo.
 func (r *PGRepository) Create(ctx context.Context, toCreate *ToCreate) (*Template, error) {
 	newTemplate := &Template{
 		ID:          uuid.New(),
 		TemplateSet: toCreate.TemplateSet,
 		Type:        toCreate.Type,
-		Json:        toCreate.Json,
+		Config:      toCreate.Config,
 		CreatedBy:   toCreate.CreatedBy,
 		CreatedAt:   time.Now(),
 	}
@@ -245,8 +245,8 @@ func (r *PGRepository) Create(ctx context.Context, toCreate *ToCreate) (*Templat
 
 	_, err = r.db.Exec(
 		ctx,
-		"INSERT INTO templates (id, template_set, name, version, type, json, created_by, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-		newTemplate.ID, newTemplate.TemplateSet, newTemplate.Name, newTemplate.Version, newTemplate.Type, newTemplate.Json, newTemplate.CreatedBy, newTemplate.CreatedAt,
+		"INSERT INTO templates (id, template_set, name, version, type, config, created_by, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		newTemplate.ID, newTemplate.TemplateSet, newTemplate.Name, newTemplate.Version, newTemplate.Type, newTemplate.Config, newTemplate.CreatedBy, newTemplate.CreatedAt,
 	)
 	if err != nil {
 		return nil, errors.Join(persistence.ErrInsert, err)
@@ -256,12 +256,12 @@ func (r *PGRepository) Create(ctx context.Context, toCreate *ToCreate) (*Templat
 }
 
 // Update updates an existing template and returns it. It returns persistence.ErrUpdate if the template could not be updated.
-// It also checks if the template's JSON contains the necessary information (name and version).
-// If the JSON does not contain the necessary information, it returns ErrTemplateJsonMissingInfo.
+// It also checks if the template's config JSON contains the necessary information (name and version).
+// If the config JSON does not contain the necessary information, it returns ErrTemplateConfigMissingInfo.
 func (r *PGRepository) Update(ctx context.Context, toUpdate *ToUpdate) (*Template, error) {
 	template := &Template{
-		ID:   toUpdate.ID,
-		Json: toUpdate.Json,
+		ID:     toUpdate.ID,
+		Config: toUpdate.Config,
 	}
 
 	tmplInfo, err := template.NecessaryInfo()
@@ -272,16 +272,16 @@ func (r *PGRepository) Update(ctx context.Context, toUpdate *ToUpdate) (*Templat
 	err = r.db.QueryRow(
 		ctx,
 		`UPDATE templates
-	 	SET template_set = $1, type = $2, name = $3, version = $4, json = $5, updated_at = NOW()
+	 	SET template_set = $1, type = $2, name = $3, version = $4, config = $5, updated_at = NOW()
 	 	WHERE id = $6
-	 	RETURNING template_set, type, name, version, json, created_by, created_at, updated_at`,
-		toUpdate.TemplateSet, toUpdate.Type, tmplInfo.Name, tmplInfo.Version, toUpdate.Json, toUpdate.ID,
+	 	RETURNING template_set, type, name, version, config, created_by, created_at, updated_at`,
+		toUpdate.TemplateSet, toUpdate.Type, tmplInfo.Name, tmplInfo.Version, toUpdate.Config, toUpdate.ID,
 	).Scan(
 		&template.TemplateSet,
 		&template.Type,
 		&template.Name,
 		&template.Version,
-		&template.Json,
+		&template.Config,
 		&template.CreatedBy,
 		&template.CreatedAt,
 		&template.UpdatedAt,

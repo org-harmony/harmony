@@ -8,7 +8,17 @@ import (
 
 const BasicTemplateName = "ebt"
 
-var ErrInvalidTemplate = errors.New("eiffel.parser.error.invalid-template")
+var (
+	ErrInvalidTemplate = errors.New("eiffel.parser.error.invalid-template")
+)
+
+type ParsingResult struct {
+	Template string
+	Variant  string
+	Errors   []error
+	Warnings []error
+	Notices  []error
+}
 
 type BasicParser struct {
 	Template      *BasicTemplate `hvalidate:"required,ruleReferences"`
@@ -57,6 +67,14 @@ type PreprocessorMissingError struct {
 }
 
 type BasicPreprocessor func(string) (string, error)
+
+func (p *BasicParser) Parse(input string, variant string) (string, error) {
+	/*v, ok := p.Template.Variants[variant]
+	if !ok {
+		return "", errors.New("eiffel.parser.error.variant-not-found")
+	}*/
+	return "", nil
+}
 
 func (p *BasicParser) Validate(v validation.V) []error {
 	v.AddFunc("ruleReferences", RuleReferencesValidator)

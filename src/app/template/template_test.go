@@ -50,14 +50,14 @@ func TestPGRepository(t *testing.T) {
 		found, err := templateRepo.FindByID(ctx, tmpl.ID)
 		require.NoError(t, err)
 		require.NotNil(t, tmpl)
-		unifiedJsonEqual(t, tmpl.Json, found.Json)
+		unifiedConfigEqual(t, tmpl.Config, found.Config)
 		assert.Equal(t, tmplUnify(*tmpl), tmplUnify(*found))
 	})
 
 	t.Run("FindByTemplateSet", func(t *testing.T) {
 		tmplToCreate := &ToCreate{
 			Type: "ebt",
-			Json: `{
+			Config: `{
 			"name": "Baz",
 			"version": "1.0.0",
 			"authors": ["Qux Bar"],
@@ -80,7 +80,7 @@ func TestPGRepository(t *testing.T) {
 	t.Run("Create Template", func(t *testing.T) {
 		tmplToCreate := &ToCreate{
 			Type: "ebt",
-			Json: `{
+			Config: `{
 			"name": "Baz",
 			"version": "1.0.0",
 			"authors": ["Qux Bar"],
@@ -103,7 +103,7 @@ func TestPGRepository(t *testing.T) {
 		assert.Equal(t, tmpl.Version, "1.0.0")
 		assert.Equal(t, tmpl.TemplateSet, tmplSet.ID)
 		assert.Equal(t, tmpl.CreatedBy, u.ID)
-		unifiedJsonEqual(t, tmplToCreate.Json, tmpl.Json)
+		unifiedConfigEqual(t, tmplToCreate.Config, tmpl.Config)
 	})
 
 	t.Run("Update Template", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestPGRepository(t *testing.T) {
 
 		toUpdate := newTmpl.ToUpdate()
 		toUpdate.Type = "foo"
-		toUpdate.Json = `{
+		toUpdate.Config = `{
 			"name": "Bizzo",
 			"version": "2.0.0",
 			"authors": ["Qux Bar"],
@@ -133,7 +133,7 @@ func TestPGRepository(t *testing.T) {
 		assert.Equal(t, update.Type, "foo")
 		assert.Equal(t, update.Name, "Bizzo")
 		assert.Equal(t, update.Version, "2.0.0")
-		unifiedJsonEqual(t, toUpdate.Json, update.Json)
+		unifiedConfigEqual(t, toUpdate.Config, update.Config)
 	})
 
 	t.Run("Delete Template", func(t *testing.T) {
@@ -292,7 +292,7 @@ func fooToCreate() (*user.ToCreate, *SetToCreate, *ToCreate) {
 			Description: "Foo Bar",
 		}, &ToCreate{
 			Type: "ebt",
-			Json: `{
+			Config: `{
 				"name": "Foo",
 				"version": "1.0.0",
 				"authors": ["Foo Bar"],
@@ -303,10 +303,10 @@ func fooToCreate() (*user.ToCreate, *SetToCreate, *ToCreate) {
 }
 
 // tmplUnify unifies the template for comparison.
-// It sets the json to "{}" as different whitespaces may lead to different json strings while the content is identical.
+// It sets the config json to "{}" as different whitespaces may lead to different json strings while the content is identical.
 // It truncates the time to seconds as the database does not store milliseconds.
 func tmplUnify(tmpl Template) Template {
-	tmpl.Json = "{}"
+	tmpl.Config = "{}"
 	tmpl.CreatedAt = tmpl.CreatedAt.Truncate(time.Second)
 	if tmpl.UpdatedAt != nil {
 		*tmpl.UpdatedAt = tmpl.UpdatedAt.Truncate(time.Second)
@@ -315,18 +315,18 @@ func tmplUnify(tmpl Template) Template {
 	return tmpl
 }
 
-// unifiedJsonEqual compares two json strings by unmarshalling them into a map[string]any.
-// Even with different whitespaces the json strings are considered equal if the content is equal.
-func unifiedJsonEqual(t *testing.T, expected string, actual string) {
-	expectedJson := make(map[string]any)
-	actualJson := make(map[string]any)
+// unifiedConfigEqual compares two config json strings by unmarshalling them into a map[string]any.
+// Even with different whitespaces the config json strings are considered equal if the content is equal.
+func unifiedConfigEqual(t *testing.T, expectedJson string, actualJson string) {
+	expectedConfig := make(map[string]any)
+	actualConfig := make(map[string]any)
 
-	err := json.Unmarshal([]byte(expected), &expectedJson)
+	err := json.Unmarshal([]byte(expectedJson), &expectedConfig)
 	require.NoError(t, err)
-	err = json.Unmarshal([]byte(actual), &actualJson)
+	err = json.Unmarshal([]byte(actualJson), &actualConfig)
 	require.NoError(t, err)
 
-	assert.Equal(t, expectedJson, actualJson)
+	assert.Equal(t, expectedConfig, actualConfig)
 }
 
 // tmplSetUnify unifies the template set for comparison. It truncates the time to seconds as the database does not store milliseconds.
