@@ -1,6 +1,7 @@
 package web
 
 import (
+	"github.com/org-harmony/harmony/src/core/event"
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/trace"
 	"github.com/org-harmony/harmony/src/core/validation"
@@ -56,7 +57,7 @@ func TestController(t *testing.T) {
 	app, ctx := setupMockCtxs(t)
 
 	partial := NewController(app, ctx, func(io IO) error {
-		return io.Render("partial", "partial.go.html", nil)
+		return io.Render(nil, "partial", "partial.go.html")
 	})
 	errorHandler := NewController(app, ctx, func(io IO) error {
 		return io.Error()
@@ -69,10 +70,10 @@ func TestController(t *testing.T) {
 	})
 	htmxOnly := NewController(app, ctx, func(io IO) error {
 		assert.True(t, io.IsHTMX())
-		return io.Render("partial", "partial.go.html", nil)
+		return io.Render(nil, "partial", "partial.go.html")
 	})
 	renderJoined := NewController(app, ctx, func(io IO) error {
-		return io.RenderJoined("content-string", "printer", "partial.go.html", "printer.go.html")
+		return io.Render("content-string", "printer", "partial.go.html", "printer.go.html")
 	})
 
 	router := ctx.Router
@@ -225,11 +226,13 @@ func TestValuesIntoStructNoPanicForNonPointer(t *testing.T) {
 func setupMockCtxs(t *testing.T) (*hctx.AppCtx, *Ctx) {
 	r, ts := setupMock(t)
 	templatesDir, baseDir := setupDirectories(t)
+	logger := trace.NewLogger()
 
 	return hctx.NewAppCtx(
-			trace.NewLogger(),
+			logger,
 			validation.New(),
 			nil,
+			event.NewManager(logger),
 		),
 		&Ctx{
 			Router:         r,

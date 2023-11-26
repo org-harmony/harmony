@@ -17,25 +17,33 @@ import (
 )
 
 const (
-	Pkg                  = "sys.trans"
+	// Pkg is the package name used for logging.
+	Pkg = "sys.trans"
+	// TranslatorContextKey is the key used to store the translator in the request context.
 	TranslatorContextKey = "translator"
-	LocaleSessionKey     = "harmony-app-locale"
+	// LocaleSessionKey is the key used to store the locale in the client's session cookie.
+	LocaleSessionKey = "harmony-app-locale"
 )
 
 var (
-	ErrLocaleNotFound     = errors.New("locale not found")
+	// ErrLocaleNotFound is returned when a locale is not found.
+	ErrLocaleNotFound = errors.New("locale not found")
+	// ErrTranslatorNotFound is returned when a translator is not found.
 	ErrTranslatorNotFound = errors.New("translator not found")
 )
 
+// Cfg is the trans package's configuration. It is used to load the translations from the translations directory.
+// Also, the supported (and default) locales are defined here.
 type Cfg struct {
 	Locales         map[string]*Locale `toml:"locales" hvalidate:"required"`
 	TranslationsDir string             `toml:"translations_dir" hvalidate:"required"` // TranslationsDir is the directory where the translation files are stored. E.g. /translations.
 }
 
+// Locale is a locale entity as defined in the configuration.
 type Locale struct {
 	Path    string `toml:"path" hvalidate:"required"` // Path of the locale. E.g. de/de-DE/en/en-US.
-	Name    string `toml:"name" hvalidate:"required"`
-	Default bool   `toml:"default"` // Default declares the locale as default.
+	Name    string `toml:"name" hvalidate:"required"` // Name of the locale. E.g. Deutsch/Deutsch (Deutschland)/English/English (United States).
+	Default bool   `toml:"default"`                   // Default declares the locale as default.
 }
 
 // HTranslator is a thread-safe translator using templates ({{.argName}}) for user-facing strings.
@@ -58,8 +66,10 @@ type HTranslatorProvider struct {
 	defaultTrans Translator
 }
 
+// HTranslatorOption is a functional option for the HTranslator.
 type HTranslatorOption func(*HTranslator)
 
+// Error is an interface for errors that can be translated.
 type Error interface {
 	Translate(Translator) string
 }
@@ -83,24 +93,29 @@ type TranslatorProvider interface {
 	Default() (Translator, error)                 // Default returns the default translator as a fallback.
 }
 
+// WithLogger sets the logger for the translator. This should be set to the default application logger.
+// The logger could potentially be used to log errors that occur during translation e.g. a missing translation.
 func WithLogger(logger trace.Logger) HTranslatorOption {
 	return func(t *HTranslator) {
 		t.logger = logger
 	}
 }
 
+// WithTranslations sets the translations for the translator. This should be set for each translator as it is otherwise useless.
 func WithTranslations(translations map[string]string) HTranslatorOption {
 	return func(t *HTranslator) {
 		t.translations = translations
 	}
 }
 
+// ForLocale sets the locale for the translator. This should be set for each translator.
 func ForLocale(locale *Locale) HTranslatorOption {
 	return func(t *HTranslator) {
 		t.locale = locale
 	}
 }
 
+// NewTranslator returns a new translator with the given options.
 func NewTranslator(opts ...HTranslatorOption) Translator {
 	translator := &HTranslator{
 		translations: make(map[string]string),
@@ -170,6 +185,7 @@ func (t *HTranslator) Tf(s string, args ...string) string {
 	return wr.String()
 }
 
+// Locale returns the locale the translator translates to.
 func (t *HTranslator) Locale() *Locale {
 	return t.locale
 }
@@ -257,6 +273,7 @@ func NewTranslatorProvider(lt ...Translator) TranslatorProvider {
 	return p
 }
 
+// Translator returns a translator for a locale.
 func (t *HTranslatorProvider) Translator(locale string) (Translator, error) {
 	if translator, ok := t.translators[locale]; ok {
 		return translator, nil
@@ -265,6 +282,7 @@ func (t *HTranslatorProvider) Translator(locale string) (Translator, error) {
 	return nil, ErrLocaleNotFound
 }
 
+// Default returns the default translator as a fallback.
 func (t *HTranslatorProvider) Default() (Translator, error) {
 	if t.defaultTrans == nil {
 		return nil, ErrLocaleNotFound
@@ -273,6 +291,7 @@ func (t *HTranslatorProvider) Default() (Translator, error) {
 	return t.defaultTrans, nil
 }
 
+// DefaultLocale returns the default locale.
 func (cfg *Cfg) DefaultLocale() (*Locale, error) {
 	for _, locale := range cfg.Locales {
 		if locale.Default {
@@ -283,6 +302,7 @@ func (cfg *Cfg) DefaultLocale() (*Locale, error) {
 	return nil, ErrLocaleNotFound
 }
 
+// Locale returns the locale with the given name.
 func (cfg *Cfg) Locale(name string) (*Locale, error) {
 	for _, locale := range cfg.Locales {
 		if locale.Name == name {

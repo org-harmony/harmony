@@ -1,0 +1,66 @@
+{{ define "template.form" }}
+    {{ $isEdit := .Data.Form.IsEditForm }}
+    {{ $action := printf "/template-set/%s/new" .Data.Form.Template.TemplateSet }}
+    {{ if $isEdit }}
+        {{ $action = printf "/template/%s" .Data.Form.Template.ID }}
+    {{ end }}
+
+    <div class="card template-form-card">
+        <div class="card-header">
+            {{ if $isEdit }}
+                {{ t "template.edit.title" }}
+            {{ else }}
+                {{ t "template.new.title" }}
+            {{ end }}
+        </div>
+        <div class="card-body">
+            <form
+                {{ if $isEdit }}
+                    hx-put="{{ $action }}"
+                    hx-swap="outerHTML"
+                    hx-disabled-elt=".template-form-fieldset"
+                    hx-target=".template-form-card"
+                {{ else }}
+                    method="post"
+                    action="{{ $action }}"
+                {{ end }}
+            >
+                <fieldset class="template-form-fieldset">
+                    <div id="form-messages">
+                        {{ range .Data.AllValidationErrors }}
+                            <div class="alert alert-danger">{{ t .FieldErrorKey }}</div>
+                        {{ end }}
+                        {{ range tErrs .Data.AllTranslatableErrors }}
+                            <div class="alert alert-danger">{{ . }}</div>
+                        {{ end }}
+                        {{ range .Data.Successes }}
+                            <div class="alert alert-success">{{ t . }}</div>
+                        {{ end }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <label for="config" class="form-label">{{ t "template.config" }}</label>
+                            <textarea
+                                    autocomplete="off"
+                                    rows="10"
+                                    id="config"
+                                    class="form-control {{ if .Data.FieldHasViolations "Config" }}is-invalid{{ end }}"
+                                    name="Config"
+                                    placeholder="{{ t "template.config" }}"
+                            >{{ .Data.Form.Template.Config }}</textarea>
+                        </div>
+                        <div class="col mt-2">
+                            <a href="/template-set/{{ .Data.Form.Template.TemplateSet }}/list" hx-boost="true" hx-target="body" role="button" type="submit" class="btn btn-secondary">{{ t "harmony.generic.close" }}</a>
+                            {{ if $isEdit }}
+                                <button type="submit" class="btn btn-primary">{{ t "harmony.generic.save" }}</button>
+                            {{ else }}
+                                <button type="submit" class="btn btn-primary">{{ t "harmony.generic.create" }}</button>
+                            {{ end }}
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+{{ end }}

@@ -5,7 +5,7 @@
                 <h1>{{ tf "template.list" "name" .Data.TemplateSet.Name }}</h1>
             </div>
             <div class="col">
-                <a href="/template-set/{{ .Data.TemplateSet.ID }}/new" hx-boost="true" hx-target="body" class="btn btn-secondary">{{ "template.new" | t }}</a>
+                <a href="/template-set/{{ .Data.TemplateSet.ID }}/new" hx-boost="true" hx-target="body" class="btn btn-secondary">{{ "template.new.button" | t }}</a>
             </div>
             <div class="col">
                 <button hx-get="/template-set/{{ .Data.TemplateSet.ID }}/list" hx-target="body" class="btn btn-secondary">
@@ -16,26 +16,100 @@
                 </button>
             </div>
         </div>
-    </div>
-    <div class="template-list-set-information">
-        <div class="card">
-            <div class="card-header">{{ "template.set.information" | t }}</div>
-            <div class="card-body">
-                <dl class="row">
-                    <dt class="col-4">{{ "template.set.name" | t }}</dt>
-                    <dd class="col-8">{{ .Data.TemplateSet.Name }}</dd>
-                    <dt class="col-4">{{ "template.set.version" | t }}</dt>
-                    <dd class="col-8">{{ .Data.TemplateSet.Version }}</dd>
-                    <dt class="col-4">{{ "template.set.description" | t }}</dt>
-                    <dd class="col-8">{{ .Data.TemplateSet.Description }}</dd>
-                    <dt class="col-4">{{ "template.set.createdAt" | t }}</dt>
-                    <dd class="col-8">{{ .Data.TemplateSet.CreatedAt.Format "02.01.2006" }}</dd>
-                    {{ if .Data.TemplateSet.UpdatedAt }}
+
+        <div class="template-list-set-information">
+            <div class="card">
+                <div class="card-header">{{ "template.set.information" | t }}</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-4">{{ "template.set.name" | t }}</dt>
+                        <dd class="col-8">{{ .Data.TemplateSet.Name }}</dd>
+                        <dt class="col-4">{{ "template.set.version" | t }}</dt>
+                        <dd class="col-8">{{ .Data.TemplateSet.Version }}</dd>
+                        <dt class="col-4">{{ "template.set.description" | t }}</dt>
+                        <dd class="col-8">
+                            {{ if .Data.TemplateSet.Description }}
+                                {{ .Data.TemplateSet.Description }}
+                            {{ else }}
+                                ---
+                            {{ end }}
+                        </dd>
+                        <dt class="col-4">{{ "template.set.createdAt" | t }}</dt>
+                        <dd class="col-8">{{ .Data.TemplateSet.CreatedAt.Format "02.01.2006" }}</dd>
                         <dt class="col-sm-4">{{ "template.set.updatedAt" | t }}</dt>
-                        <dd class="col-sm-8">{{ .Data.TemplateSet.UpdatedAt.Format "02.01.2006" }}</dd>
-                    {{ end }}
-                </dl>
+
+                        <dd class="col-sm-8">
+                            {{ if .Data.TemplateSet.UpdatedAt }}
+                                {{ .Data.TemplateSet.UpdatedAt.Format "02.01.2006" }}
+                            {{ else }}
+                                ---
+                            {{ end }}
+                        </dd>
+                    </dl>
+                </div>
             </div>
         </div>
+
+        <table class="table mt-3">
+            <thead>
+            <tr>
+                <th scope="col">{{ "template.set.name" | t }}</th>
+                <th scope="col">{{ "template.set.version" | t }}</th>
+                <th scope="col">{{ "template.set.type" | t }}</th>
+                <th scope="col">{{ "template.set.createdAt" | t }}</th>
+                <th scope="col">{{ "template.set.updatedAt" | t }}</th>
+                <th scope="col">{{ "template.set.action.actions" | t }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ if not .Data }}
+                <tr class="text-center">
+                    <td colspan="6">{{ "template.list.empty" | t }}</td>
+                </tr>
+            {{ end }}
+            {{ range .Data.Templates }}
+                <tr>
+                    <td>{{ .Name }}</td>
+                    <td>{{ .Version }}</td>
+                    <td>{{ .Type }}</td>
+                    <td>{{ .CreatedAt.Format "02.01.2006" }}</td>
+                    {{ if .UpdatedAt }}
+                        <td>{{ .UpdatedAt.Format "02.01.2006" }}</td>
+                    {{ else }}
+                        <td>---</td>
+                    {{ end }}
+                    <td>
+                        <a hx-boost="true" href="/template/{{ .ID }}/edit" hx-target="body" class="edit-icon mx-2 text-decoration-none" role="button">
+                            <img src="{{ asset "icons/edit.svg" }}" alt="{{ "template.set.action.edit" | t }}" title="{{ "template.set.action.edit" | t }}" />
+                        </a>
+
+                        {{/* delete button + modal */}}
+                        <span data-bs-toggle="modal" data-bs-target="#delete-modal-for-{{ .ID }}" class="delete-icon" role="button">
+                                <img src="{{ asset "icons/x.svg" }}" alt="{{ "template.action.delete" | t }}" title="{{ "template.action.delete" | t }}" />
+                            </span>
+                        <div class="modal fade" id="delete-modal-for-{{ .ID }}" tabindex="-1" role="dialog" aria-labelledby="delete-modal-for-{{ .ID }}-label" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="delete-modal-for-{{ .ID }}-label">{{ tf "template.delete.title" "name" .Name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ "template.delete.cancel" | t }}"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        {{ tf "template.delete.text" "name" .Name }}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ "template.delete.cancel" | t }}</button>
+                                        <button hx-delete="/template/{{ .ID }}" hx-target=".template-list" hx-swap="outerHTML" class="btn btn-danger" data-bs-dismiss="modal">
+                                            {{ "template.delete.confirm" | t }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
     </div>
 {{ end }}

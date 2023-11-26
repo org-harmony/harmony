@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// ErrSessionExpired is returned when a session has expired.
 var ErrSessionExpired = errors.New("session expired")
 
 // Session is a generic session entity with a payload and metainformation.

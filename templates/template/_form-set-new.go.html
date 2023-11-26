@@ -20,12 +20,12 @@
                                     id="name"
                                     type="text"
                                     autocomplete="off"
-                                    class="form-control {{ if .Data.HasViolations "Name" }}is-invalid{{ end }}"
+                                    class="form-control {{ if .Data.FieldHasViolations "Name" }}is-invalid{{ end }}"
                                     name="Name"
                                     placeholder="{{ t "template.set.name" }}"
                                     value="{{ .Data.Form.Name }}"
                             />
-                            {{ range $validation := .Data.ValidationErrors "Name" }}
+                            {{ range $validation := .Data.ValidationErrorsForField "Name" }}
                                 <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
                             {{ end }}
                         </div>
@@ -35,12 +35,12 @@
                                     id="version"
                                     type="text"
                                     autocomplete="off"
-                                    class="form-control {{ if .Data.HasViolations "Version" }}is-invalid{{ end }}"
+                                    class="form-control {{ if .Data.FieldHasViolations "Version" }}is-invalid{{ end }}"
                                     name="Version"
                                     placeholder="{{ t "template.set.version" }}"
                                     value="{{ .Data.Form.Version }}"
                             />
-                            {{ range $validation := .Data.ValidationErrors "Version" }}
+                            {{ range $validation := .Data.ValidationErrorsForField "Version" }}
                                 <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
                             {{ end }}
                         </div>
@@ -48,11 +48,11 @@
                             <label for="description" class="form-label">{{ t "template.set.description" }}</label>
                             <textarea
                                     id="description"
-                                    class="form-control {{ if .Data.HasViolations "Description" }}is-invalid{{ end }}"
+                                    class="form-control {{ if .Data.FieldHasViolations "Description" }}is-invalid{{ end }}"
                                     name="Description"
                                     placeholder="{{ t "template.set.description" }}"
                             >{{ .Data.Form.Description }}</textarea>
-                            {{ range $validation := .Data.ValidationErrors "Description" }}
+                            {{ range $validation := .Data.ValidationErrorsForField "Description" }}
                                 <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
                             {{ end }}
                         </div>

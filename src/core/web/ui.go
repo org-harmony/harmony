@@ -69,9 +69,9 @@ type BaseTemplateData struct {
 // FormData is the generic template data for forms. It contains any form object, a slice of success messages and a map of violations.
 // The key of the violations map is the field name and the value is a slice of errors.
 //
-// Using FormData.ValidationErrors all validation errors for a field can be retrieved as a slice of validation.Error.
+// Using FormData.ValidationErrorsForField all validation errors for a field can be retrieved as a slice of validation.Error.
 // Alternatively, FormData.ViolationsForField can be used to retrieve the violations for a specific field.
-// Also, FormData.HasViolations can be used to check if a field has any violations.
+// Also, FormData.FieldHasViolations can be used to check if a field has any violations.
 type FormData[T any] struct {
 	Form       T
 	Violations map[string][]error
@@ -424,14 +424,14 @@ func (d *FormData[T]) WildcardViolations() []error {
 }
 
 // ViolationsForField returns all violations for the passed in field. This could be any error but is most likely a validation.Error.
-// Use FormData.ValidationErrors to retrieve all validation errors for a field.
+// Use FormData.ValidationErrorsForField to retrieve all validation errors for a field.
 func (d *FormData[T]) ViolationsForField(field string) []error {
 	return d.Violations[field]
 }
 
-// ValidationErrors returns all validation errors for the passed in field.
+// ValidationErrorsForField returns all validation errors for the passed in field.
 // If the error is not a validation.Error it will be ignored.
-func (d *FormData[T]) ValidationErrors(field string) []validation.Error {
+func (d *FormData[T]) ValidationErrorsForField(field string) []validation.Error {
 	var errs []validation.Error
 	for _, err := range d.Violations[field] {
 		var v validation.Error
@@ -443,10 +443,51 @@ func (d *FormData[T]) ValidationErrors(field string) []validation.Error {
 	return errs
 }
 
-// HasViolations returns true if the passed in field has any violations.
-// Be careful when using HasViolations but only displaying the validation errors.
+// AllValidationErrors returns all validation errors for all fields.
+func (d *FormData[T]) AllValidationErrors() []validation.Error {
+	var errs []validation.Error
+	for _, fieldErrs := range d.Violations {
+		for _, err := range fieldErrs {
+			var v validation.Error
+			if errors.As(err, &v) {
+				errs = append(errs, v)
+			}
+		}
+	}
+
+	return errs
+}
+
+// AllTranslatableErrors returns all errors for all fields that can be read as trans.Error.
+// This is useful for translating errors before displaying them to the user.
+func (d *FormData[T]) AllTranslatableErrors() []trans.Error {
+	var errs []trans.Error
+	for _, fieldErrs := range d.Violations {
+		for _, err := range fieldErrs {
+			var t trans.Error
+			if errors.As(err, &t) {
+				errs = append(errs, t)
+			}
+		}
+	}
+
+	return errs
+}
+
+// AllViolations returns all errors for all fields. They can then be used to display all errors to the user.
+func (d *FormData[T]) AllViolations() []error {
+	var errs []error
+	for _, fieldErrs := range d.Violations {
+		errs = append(errs, fieldErrs...)
+	}
+
+	return errs
+}
+
+// FieldHasViolations returns true if the passed in field has any violations.
+// Be careful when using FieldHasViolations but only displaying the validation errors.
 // There might be other errors that are not validation errors.
-func (d *FormData[T]) HasViolations(field string) bool {
+func (d *FormData[T]) FieldHasViolations(field string) bool {
 	return len(d.Violations[field]) > 0
 }
 
@@ -523,6 +564,14 @@ func makeTemplateTranslatable(ctx context.Context, t *template.Template) error {
 		"tf": func(s string, args ...string) string {
 			return translator.Tf(s, args...)
 		},
+		"tErrs": func(errs []trans.Error) []string {
+			var s []string
+			for _, err := range errs {
+				s = append(s, err.Translate(translator))
+			}
+
+			return s
+		},
 	})
 
 	return nil
@@ -541,6 +590,14 @@ func templateFuncs(ui *UICfg) template.FuncMap {
 			return s
 		},
 		"tf": func(s string, args ...string) string {
+			return s
+		},
+		"tErrs": func(errs []error) []string {
+			var s []string
+			for _, err := range errs {
+				s = append(s, err.Error())
+			}
+
 			return s
 		},
 	}

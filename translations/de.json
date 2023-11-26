@@ -28,6 +28,7 @@
       "information": "Informationen",
       "name": "Name",
       "version": "Version",
+      "type": "Typ",
       "description": "Beschreibung",
       "createdAt": "Erstellt am",
       "updatedAt": "Zuletzt aktualisiert am",
@@ -40,9 +41,7 @@
         "title": "Sind Sie sicher, dass der Schablonensatz \"{{ .name }}\" gelöscht werden soll?",
         "text": "Wenn Sie den Schablonensatz \"{{ .name }}\" löschen, werden alle beinhalteten Schablonen ebenfalls unwiderruflich aus dem System gelöscht.",
         "confirm": "Trotzdem löschen",
-        "cancel": "Abbrechen und behalten",
-        "deleted": "Schablonensatz \"{{ .name }}\" und alle beinhalteten Schablonen gelöscht.",
-        "delete-error": "Schablonensatz \"{{ .name }}\" konnte nicht gelöscht werden."
+        "cancel": "Abbrechen und behalten"
       },
       "edit": {
         "title": "Schablonensatz bearbeiten",
@@ -56,7 +55,23 @@
     },
     "list": "Schablonen Übersicht {{ .name }}",
     "list.empty": "Es wurden noch keine Schablonen erstellt.",
-    "new": "Neue Schablone erstellen",
+    "new": {
+      "title": "Neue Schablone erstellen",
+      "button": "Neue Schablone erstellen",
+      "invalid-json": "Die JSON-Konfiguration ist ungültig. Überprüfen Sie die Syntax.",
+      "config-incomplete": "Die JSON-Konfiguration ist unvollständig. Bitte überprüfen Sie die Schablonen-Dokumentation.",
+      "did-not-validate": "Die Schablone konnte nicht validiert werden. Stellen Sie sicher, dass der Schablonen-Typ korrekt ist. Bitte überprüfen Sie die Schablonen-Dokumentation."
+    },
+    "delete": {
+      "title": "Sind Sie sicher, dass die Schablone \"{{ .name }}\" gelöscht werden soll?",
+      "text": "Wenn Sie die Schablone \"{{ .name }}\" löschen, wird diese unwiderruflich aus dem System entfernt.",
+      "confirm": "Trotzdem löschen",
+      "cancel": "Abbrechen und behalten"
+    },
+    "edit": {
+      "title": "Schablone bearbeiten",
+      "updated": "Die Schablone wurde aktualisiert."
+    },
     "name": "Name",
     "version": "Version",
     "config": "Konfiguration (JSON)",
@@ -69,9 +84,12 @@
   "eiffel": {
     "parser": {
       "error": {
-        "invalid-template": "Das Template ist ungültig.",
-        "missing-rule": "Im Template {{ .template }} wird versucht eine Regel {{ .rule }} zu benutzen, die im Template nicht definiert wird.",
-        "missing-preprocessor": "Im Template {{ .template }} wird versucht ein Präprozessor {{ .preprocessor }} zu benutzen, der im EIFFEL Parser nicht bekannt ist."
+        "invalid-template": "Die EIFFEL Schablone ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation.",
+        "missing-rule": "In der Variante {{ .variant }} der Schablone {{ .template }} wird versucht eine Regel {{ .rule }} zu benutzen, die nicht definiert wird.",
+        "invalid-variant": "Die Variante ist ungültig.",
+        "missing-rule-parser": "Der geforderte Parser für die Regel ist nicht verfügbar. Wahrscheinlich ist der Regel-Typ {{ .ruleType }} nicht korrekt. Bitte überprüfen Sie die Schablonen-Dokumentation.",
+        "missing-segment": "Eine Eingabe für die Regel {{ .name }} ({{ .technicalName }}) fehlt.",
+        "invalid-rule-value": "Der Wert \"value\" für die Regel {{ .rule }} vom Typ {{ .type }} ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation."
       }
     }
   },
@@ -102,11 +120,18 @@
         },
         "required": {
           "generic": "Bitte füllen Sie dieses Feld aus.",
-          "Firstname": "Bitte geben Sie Ihren Vornamen ein.",
-          "Lastname": "Bitte geben Sie Ihren Nachnamen ein."
+          "field": {
+            "ID": "Bitte geben Sie eine ID ein.",
+            "Name": "Bitte geben Sie einen Namen ein.",
+            "Version": "Bitte geben Sie eine Version ein.",
+            "Variants": "Bitte geben Sie eine Variante ein."
+          }
         },
         "semantic-version": {
-          "generic": "Bitte geben Sie eine gültige Versionsnummer ein."
+          "generic": "Bitte geben Sie eine gültige Versionsnummer ein.",
+          "field": {
+            "Version": "Bitte geben Sie eine gültige Versionsnummer ein."
+          }
         }
       }
     },

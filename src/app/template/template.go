@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/org-harmony/harmony/src/core/persistence"
+	"strings"
 	"time"
 )
 
@@ -15,10 +16,16 @@ const (
 	RepositoryName = "Repository"
 	// SetRepositoryName is the name of the template set repository. It can be used to retrieve the repository from the persistence.RepositoryProvider.
 	SetRepositoryName = "SetRepository"
+	// Pkg is the package name for logging.
+	Pkg = "template"
 )
 
-// ErrTemplateConfigMissingInfo is returned if the template's config JSON does not contain the necessary information (name and version).
-var ErrTemplateConfigMissingInfo = errors.New("template's config json missing necessary information (check name and version)")
+var (
+	// ErrInvalidTemplate is returned when a template is invalid. More errors are expected to further describe the problem.
+	ErrInvalidTemplate = errors.New("eiffel.parser.error.invalid-template")
+	// ErrTemplateConfigMissingInfo is returned if the template's config JSON does not contain the necessary information (name, version and type).
+	ErrTemplateConfigMissingInfo = errors.New("template's config json missing necessary information (check name, version and type)")
+)
 
 // Template is the template entity that is saved in the database. It contains the template's metadata.
 // Each template belongs to a template set. Templates are versioned and the information about the template should always match the template's config JSON.
@@ -119,6 +126,7 @@ type Repository interface {
 
 // SetRepository is the template set repository it contains the necessary methods to interact with the database.
 // SetRepository is safe for concurrent use by multiple goroutines.
+// TODO move SetRepository and Repository together to handle template concerns all in one repo.
 type SetRepository interface {
 	persistence.Repository
 
@@ -142,6 +150,24 @@ func (t *Template) ToUpdate() *ToUpdate {
 		Type:        t.Type,
 		Config:      t.Config,
 	}
+}
+
+// ToCreateFromConfig returns a ToCreate after extracting the information from the config JSON supplied.
+// The type will be converted to lowercase. It will return ErrTemplateConfigMissingInfo if the config JSON does not contain a type field.
+func ToCreateFromConfig(config string) (*ToCreate, error) {
+	t := struct {
+		Type string `json:"type"`
+	}{}
+	err := json.Unmarshal([]byte(config), &t)
+
+	if t.Type == "" || err != nil {
+		return nil, ErrTemplateConfigMissingInfo
+	}
+
+	return &ToCreate{
+		Type:   strings.ToLower(t.Type),
+		Config: config,
+	}, nil
 }
 
 // NecessaryInfo returns the valid necessary information about a template from a Template.
