@@ -57,7 +57,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 		em := NewManager(logger)
 
 		received := false
-		subscriberFunc := func(e Event, args *publishArgs) error {
+		subscriberFunc := func(e Event, args *PublishArgs) error {
 			if e.Payload().(*mockPayload).data != "test" {
 				t.Error("Received incorrect event payload data")
 			}
@@ -82,7 +82,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 		em := NewManager(logger)
 
 		var count int
-		subscriberFunc := func(e Event, args *publishArgs) error {
+		subscriberFunc := func(e Event, args *PublishArgs) error {
 			if e.Payload().(*mockPayload).data != "test" {
 				t.Error("Received incorrect event payload data")
 			}
@@ -107,7 +107,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 	t.Run("fire and forget", func(t *testing.T) {
 		em := NewManager(logger)
 
-		subscriberFunc := func(e Event, args *publishArgs) error {
+		subscriberFunc := func(e Event, args *PublishArgs) error {
 			return nil
 		}
 
@@ -120,7 +120,7 @@ func TestBasicEventSubscribing(t *testing.T) {
 	t.Run("channel closed after use", func(t *testing.T) {
 		em := NewManager(logger)
 
-		subscriberFunc := func(e Event, args *publishArgs) error {
+		subscriberFunc := func(e Event, args *PublishArgs) error {
 			return nil
 		}
 
@@ -150,7 +150,7 @@ func TestBasicPublishing(t *testing.T) {
 		// Subscribers that just append their priority to the order slice
 		for i := 1; i <= 5; i++ {
 			priority := i // capture range variable
-			em.Subscribe("test.event.priority", func(e Event, args *publishArgs) error {
+			em.Subscribe("test.event.priority", func(e Event, args *PublishArgs) error {
 				order = append(order, priority)
 				return nil
 			}, priority)
@@ -176,14 +176,14 @@ func TestBasicPublishing(t *testing.T) {
 		var received []int
 
 		// First subscriber stops propagation
-		em.Subscribe("test.event.stop", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.stop", func(e Event, args *PublishArgs) error {
 			received = append(received, 1)
 			args.StopPropagation = true
 			return nil
 		}, 1)
 
 		// This should not be invoked because of the stop
-		em.Subscribe("test.event.stop", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.stop", func(e Event, args *PublishArgs) error {
 			received = append(received, 2)
 			return nil
 		}, 2)
@@ -203,7 +203,7 @@ func TestBasicPublishing(t *testing.T) {
 		em := NewManager(logger)
 
 		// subscriber that modifies the payload
-		em.Subscribe("test.event.payload", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.payload", func(e Event, args *PublishArgs) error {
 			e.Payload().(*mockPayload).data = "modified"
 			return nil
 		}, DefaultEventPriority)
@@ -224,12 +224,12 @@ func TestBasicPublishing(t *testing.T) {
 
 		var received []int
 
-		em.Subscribe("test.event.multiple", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.multiple", func(e Event, args *PublishArgs) error {
 			received = append(received, 1)
 			return nil
 		}, DefaultEventPriority)
 
-		em.Subscribe("test.event.multiple", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.multiple", func(e Event, args *PublishArgs) error {
 			received = append(received, 2)
 			return nil
 		}, DefaultEventPriority)
@@ -252,7 +252,7 @@ func TestErrorHandling(t *testing.T) {
 	t.Run("single subscriber", func(t *testing.T) {
 		em := NewManager(logger)
 
-		em.Subscribe("test.event.error", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.error", func(e Event, args *PublishArgs) error {
 			return fmt.Errorf("test error")
 		}, DefaultEventPriority)
 
@@ -270,11 +270,11 @@ func TestErrorHandling(t *testing.T) {
 	t.Run("multiple subscribers", func(t *testing.T) {
 		em := NewManager(logger)
 
-		em.Subscribe("test.event.error", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.error", func(e Event, args *PublishArgs) error {
 			return fmt.Errorf("test error")
 		}, DefaultEventPriority)
 
-		em.Subscribe("test.event.error", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.error", func(e Event, args *PublishArgs) error {
 			return fmt.Errorf("test error")
 		}, DefaultEventPriority)
 
@@ -292,7 +292,7 @@ func TestErrorHandling(t *testing.T) {
 	t.Run("panic", func(t *testing.T) {
 		em := NewManager(logger)
 
-		em.Subscribe("test.event.panic", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			panic("test panic")
 		}, DefaultEventPriority)
 
@@ -310,15 +310,15 @@ func TestErrorHandling(t *testing.T) {
 	t.Run("panic and other error", func(t *testing.T) {
 		em := NewManager(logger)
 
-		em.Subscribe("test.event.panic", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			panic("test panic")
 		}, DefaultEventPriority)
 
-		em.Subscribe("test.event.panic", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			return fmt.Errorf("test error")
 		}, DefaultEventPriority)
 
-		em.Subscribe("test.event.panic", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			return nil
 		}, DefaultEventPriority)
 
@@ -338,11 +338,11 @@ func TestErrorHandling(t *testing.T) {
 
 		var received bool
 
-		em.Subscribe("test.event.panic", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			panic("test panic")
 		}, DefaultEventPriority)
 
-		em.Subscribe("test.event.panic", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.panic", func(e Event, args *PublishArgs) error {
 			received = true
 			return nil
 		}, DefaultEventPriority)
@@ -371,7 +371,7 @@ func TestConcurrentOperations(t *testing.T) {
 
 		var count int32
 
-		em.Subscribe("test.event.concurrent.publish", func(e Event, args *publishArgs) error {
+		em.Subscribe("test.event.concurrent.publish", func(e Event, args *PublishArgs) error {
 			atomic.AddInt32(&count, 1)
 			return nil
 		}, DefaultEventPriority)
@@ -409,7 +409,7 @@ func TestConcurrentOperations(t *testing.T) {
 			go func(num int) {
 				defer wg.Done()
 
-				em.Subscribe(fmt.Sprintf("test.event.concurrent.subscribe.%d", num), func(e Event, args *publishArgs) error {
+				em.Subscribe(fmt.Sprintf("test.event.concurrent.subscribe.%d", num), func(e Event, args *PublishArgs) error {
 					atomic.AddInt32(&count, 1)
 					return nil
 				}, DefaultEventPriority)
@@ -446,7 +446,7 @@ func TestConcurrentOperations(t *testing.T) {
 			go func() {
 				defer wg.Done()
 
-				em.Subscribe(fmt.Sprintf("test.event.concurrent.mixed.%d", c), func(e Event, args *publishArgs) error {
+				em.Subscribe(fmt.Sprintf("test.event.concurrent.mixed.%d", c), func(e Event, args *PublishArgs) error {
 					atomic.AddInt32(&subCount, 1)
 					return nil
 				}, DefaultEventPriority)

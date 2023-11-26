@@ -8,6 +8,8 @@ import (
 )
 
 var (
-	ErrSetEnv   = errors.New("failed to write to env")
+	// ErrSetEnv is returned when an environment variable could not be set.
+	ErrSetEnv = errors.New("failed to write to env")
+	// ErrReadFile is returned when a file could not be read. This error may wrap underlying errors.
 	ErrReadFile = errors.New("failed to read file")
 )

@@ -9,7 +9,7 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	registerNavigation(appCtx, webCtx)
 
 	webCtx.Router.Get("/", web.NewController(appCtx, webCtx, func(io web.IO) error {
-		return io.Render("home", "home.go.html", nil)
+		return io.Render(nil, "home", "home.go.html")
 	}).ServeHTTP)
 }
 

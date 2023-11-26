@@ -18,6 +18,7 @@ import (
 	"strings"
 )
 
+// Pkg is the package name used for logging.
 const Pkg = "sys.web"
 
 var (
@@ -98,13 +99,13 @@ type IO interface {
 	// Render renders a template with the passed in data and writes it to the http.ResponseWriter.
 	// Render has some convenience over RenderTemplate as it fetches the Templater from the TemplaterStore
 	// and then retrieves the specific template from the Templater by name and path.
+	// Multiple paths can be provided, and they will be joined together therefore allowing for reusing templates.
+	// Example:
+	//  	io.Render(formData, "edit.page", "edit-page.go.html", "edit-form.go.html").
 	//
 	// If the request is an HTMX request, Render renders the template from the partial Templater (PartialTemplateName).
 	// Otherwise, it will render the template from the base Templater (BaseTemplateName).
-	Render(name string, path string, data any) error
-	// RenderJoined renders a template with the passed in data and writes it to the http.ResponseWriter.
-	// RenderJoined is similar to Render, but it allows for supplying multiple templates to be joined together.
-	RenderJoined(data any, name string, paths ...string) error
+	Render(data any, name string, paths ...string) error
 	// Error renders an error page with the first passed in error as the user facing error message.
 	// All errors will be logged. At least one error should always be provided as this will be the user facing error message.
 	// Error handles HTMX requests by rendering the error template from the partial template.
@@ -197,24 +198,7 @@ func (io *HIO) Context() context.Context {
 // For more information on the behaviour of Render see the web.IO interface.
 // Render chooses the base Templater based on the request (HTMX or not) and uses RenderTemplate to render the template.
 // For an HTMX request, Render uses the partial Templater (PartialTemplateName).
-func (io *HIO) Render(name string, path string, data any) error {
-	templater, err := io.getBaseTemplater()
-	if err != nil {
-		return err
-	}
-
-	t, err := templater.Template(name, path)
-	if err != nil {
-		return err
-	}
-
-	return io.RenderTemplate(t, data)
-}
-
-// RenderJoined implements the web.IO interface on HIO by rendering a template by the given name and paths with the passed in data.
-// For more information on the behaviour of RenderJoined see the web.IO interface.
-// RenderJoined chooses the base Templater based on the request (HTMX or not) and uses RenderTemplate to render the template.
-func (io *HIO) RenderJoined(data any, name string, paths ...string) error {
+func (io *HIO) Render(data any, name string, paths ...string) error {
 	templater, err := io.getBaseTemplater()
 	if err != nil {
 		return err

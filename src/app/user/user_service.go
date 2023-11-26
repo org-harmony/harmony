@@ -4,6 +4,8 @@ import (
 	"context"
 )
 
+// UpdateUser updates the user in the database and the session.
+// It is a service function agnostic from the calling controller.
 func UpdateUser(ctx context.Context, toUpdate *ToUpdate, session *Session, repo Repository, sessionStore SessionRepository) (*User, error) {
 	update, err := repo.Update(ctx, toUpdate)
 	if err != nil {

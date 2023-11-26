@@ -8,6 +8,8 @@ import (
 	"sync"
 )
 
+// StructTag is the default struct tag used for validation.
+// Using this struct tag will allow the validator to validate struct fields in V.ValidateStruct.
 const StructTag = "hvalidate"
 
 var (
@@ -48,6 +50,10 @@ type Func func(any) error
 // ValidatorOption is a function that configures a Validator. It can be used to override the default validator Func map or struct tags.
 type ValidatorOption func(*Validator)
 
+// TransparentError is an error that can be unwrapped to get the underlying validation error.
+// Usually, an error returned by a validation Func will be converted to a validation.Error.
+// However, if the error implements TransparentError the error will be unwrapped and the underlying validation error will be returned.
+// This allows validation Funcs to return custom errors that can be used to seek more information about the error.
 type TransparentError interface {
 	UnwrapTransparent(Error) error
 }

@@ -45,7 +45,7 @@ type Manager interface {
 	// Subscribe subscribes to an event with the given event ID.
 	// The publish function is called when the event is published.
 	// The priority is used to determine the order in which subscribers are called.
-	Subscribe(eventID string, publish func(Event, *publishArgs) error, priority int)
+	Subscribe(eventID string, publish func(Event, *PublishArgs) error, priority int)
 	// Publish publishes an event and allows for errors to be returned through the done channel.
 	Publish(event Event, doneChan chan []error)
 }
@@ -55,7 +55,7 @@ type subscriber struct {
 	// eventID that the subscriber is subscribed to.
 	eventID string
 	// publish function that is called when the event is published.
-	publish func(Event, *publishArgs) error
+	publish func(Event, *PublishArgs) error
 	//priority is used to determine the order in which subscribers are called.
 	//
 	// A higher priority means that the subscriber is called earlier.
@@ -70,8 +70,8 @@ type pc struct {
 	dc chan []error
 }
 
-// publishArgs holds arguments that are passed to subscribers when an event is published.
-type publishArgs struct {
+// PublishArgs holds arguments that are passed to subscribers when an event is published.
+type PublishArgs struct {
 	// StopPropagation can be set to true to stop the propagation of an event.
 	// When set to true, the event manager will stop calling subscribers for the event.
 	// Stopping propagation will be logged.
@@ -109,7 +109,7 @@ func NewManager(l trace.Logger) *HManager {
 }
 
 // Subscribe subscribes to an event with the given event ID.
-func (em *HManager) Subscribe(eventID string, publish func(Event, *publishArgs) error, priority int) {
+func (em *HManager) Subscribe(eventID string, publish func(Event, *PublishArgs) error, priority int) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 
@@ -196,7 +196,7 @@ func handle(e chan pc, l trace.Logger) {
 		l.Debug(Pkg, "handling event", "eventID", pc.e.ID())
 
 		var errs []error
-		args := &publishArgs{}
+		args := &PublishArgs{}
 
 		// publish event to subscribers
 		for _, subscriber := range pc.s {
@@ -231,7 +231,7 @@ func handle(e chan pc, l trace.Logger) {
 
 // safePublish is a wrapper around the publish function of a subscriber.
 // It recovers from panics in the subscriber and returns an error if a panic occurred.
-func safePublish(s subscriber, e Event, args *publishArgs) (err error) {
+func safePublish(s subscriber, e Event, args *PublishArgs) (err error) {
 	// recover from panics in subscribers
 	// the named return value err is necessary to return the error from the deferred function,
 	// as the return value from the deferred function is discarded

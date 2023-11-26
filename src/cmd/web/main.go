@@ -2,11 +2,14 @@ package main
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/org-harmony/harmony/src/app/eiffel"
 	homeWeb "github.com/org-harmony/harmony/src/app/home"
 	"github.com/org-harmony/harmony/src/app/template"
+	templateWeb "github.com/org-harmony/harmony/src/app/template/web"
 	"github.com/org-harmony/harmony/src/app/user"
 	userWeb "github.com/org-harmony/harmony/src/app/user/web"
 	"github.com/org-harmony/harmony/src/core/config"
+	"github.com/org-harmony/harmony/src/core/event"
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/persistence"
 	"github.com/org-harmony/harmony/src/core/trace"
@@ -16,22 +19,24 @@ import (
 	"github.com/org-harmony/harmony/src/core/web"
 )
 
-// TODO add comments for at least each exported function/method/type to follow go convention, if the element would not need a comment, it should not be exported(/existing)
+// TODO add larger integration/e2e tests for the web layer. Each controller and they're functions should be tested.
 
 func main() {
 	logger := trace.NewLogger()
 	validator := initValidator()
+	eventManager := event.NewManager(logger)
 
 	provider, db := initDB(validator)
 	defer db.Close()
 
-	appCtx := hctx.NewAppCtx(logger, validator, provider)
+	appCtx := hctx.NewAppCtx(logger, validator, provider, eventManager)
 	translatorProvider := initTrans(validator, logger)
 	webCtx, r := initWeb(appCtx, validator, translatorProvider)
 
 	homeWeb.RegisterController(appCtx, webCtx)
 	userWeb.RegisterController(appCtx, webCtx)
-	template.RegisterController(appCtx, webCtx)
+	templateWeb.RegisterController(appCtx, webCtx)
+	eiffel.RegisterController(appCtx, webCtx)
 
 	util.Ok(web.Serve(r, webCtx.Config.Server))
 }

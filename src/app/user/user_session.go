@@ -22,20 +22,33 @@ type Session struct {
 	persistence.Session[User, SessionMeta]
 }
 
+// SessionMeta is the meta for a user session. Currently, no session meta is used.
+// This is reserved for future security related features such as auto-refresh (soft/hard expiry) and remember-me (refresh-token).
 type SessionMeta struct{}
 
+// PGUserSessionRepository is a PostgreSQL implementation of the SessionRepository interface for user sessions.
+// It implements the SessionRepository interface and by that the persistence.SessionRepository interface.
+// For more details see the SessionRepository interface.
 type PGUserSessionRepository struct {
 	db *pgxpool.Pool
 }
 
+// SessionRepository allows to interface with user sessions in the database. Concrete implementations provide the database access.
+// In general the SessionRepository inherits from the persistence.SessionRepository interface.
+// Thus, it is a persistence.SessionStore (persistence.KVStore + Insert method).
+// It allows to read, write and delete user sessions from the database.
+// Insert should usually be preferred over Write as it does not require the id to be passed.
+// Write can be used to insert new items but also to update existing ones (upsert).
 type SessionRepository interface {
 	persistence.SessionRepository[*Session]
 }
 
+// NewPGUserSessionRepository creates a new PGUserSessionRepository with the given database connection pool.
 func NewPGUserSessionRepository(db *pgxpool.Pool) SessionRepository {
 	return &PGUserSessionRepository{db: db}
 }
 
+// RepositoryName returns the name of the repository. It is used to register the repository in the application context.
 func (r *PGUserSessionRepository) RepositoryName() string {
 	return SessionRepositoryName
 }
@@ -80,6 +93,9 @@ func (r *PGUserSessionRepository) Delete(ctx context.Context, id uuid.UUID) erro
 	return errors.Join(persistence.ErrDelete, err)
 }
 
+// Insert inserts a new user session into the database. A new uuid.UUID will be generated and set on the session struct.
+// Therefore, Insert has a side effect on the session struct. Insert should be preferred over Write for new sessions.
+// If the session could not be inserted it returns persistence.ErrInsert.
 func (r *PGUserSessionRepository) Insert(ctx context.Context, session *Session) error {
 	id := uuid.New()
 	session.ID = id

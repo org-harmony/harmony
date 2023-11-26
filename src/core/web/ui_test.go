@@ -49,7 +49,7 @@ func TestFormDataWithValidationErrors(t *testing.T) {
 	assert.Nil(t, formData.WildcardViolations())
 
 	assert.Equal(t, validationErr, formData.ViolationsForField("Name")[0])
-	assert.Equal(t, validationErr.Error(), formData.ValidationErrors("Name")[0].Error())
+	assert.Equal(t, validationErr.Error(), formData.ValidationErrorsForField("Name")[0].Error())
 }
 
 func TestNewFormData(t *testing.T) {
@@ -115,9 +115,9 @@ func TestFormDataWithSuccessAndErrors(t *testing.T) {
 	assert.Contains(t, formData.Violations[WildcardViolation], genericErr)
 	assert.Len(t, formData.Violations["Name"], 1)
 	assert.Len(t, formData.WildcardViolations(), 1)
-	assert.Equal(t, validationErr, formData.ValidationErrors("Name")[0])
-	assert.True(t, formData.HasViolations("Name"))
-	assert.False(t, formData.HasViolations("NonExistentField"))
+	assert.Equal(t, validationErr, formData.ValidationErrorsForField("Name")[0])
+	assert.True(t, formData.FieldHasViolations("Name"))
+	assert.False(t, formData.FieldHasViolations("NonExistentField"))
 }
 
 func TestTemplateDataExtensionsLifecycle(t *testing.T) {

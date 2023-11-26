@@ -18,11 +18,17 @@ import (
 const Dir = "config"
 
 var (
-	ErrInvalidConfig          = errors.New("invalid config")
-	ErrParse                  = errors.New("failed to parse config")
+	// ErrInvalidConfig is returned if the parsed config struct is validated and identified as invalid.
+	ErrInvalidConfig = errors.New("invalid config")
+	// ErrParse is returned if the config file could not be parsed. Underlying errors may be wrapped.
+	ErrParse = errors.New("failed to parse config")
+	// ErrUnexpectedEnvOverwrite is returned if an unexpected error occurs while overwriting the config struct with env variables.
+	// This error may be wrapped and might occur if the reflection fails.
 	ErrUnexpectedEnvOverwrite = errors.New("unexpected error trying to overwrite config with env variables")
 )
 
+// Options contains the options for the config.C function.
+// Options should be set through Option funcs.
 type Options struct {
 	dir                 string
 	filename            string
@@ -31,6 +37,7 @@ type Options struct {
 	disableEnvOverwrite bool
 }
 
+// Option modifies Options and is used to set options for the config.C function.
 type Option func(*Options)
 
 // From sets the filename to read the config from.

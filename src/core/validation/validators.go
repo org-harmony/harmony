@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// DefaultValidators returns a map of default validators (validation.Func).
+// These validators can be used to validate values.
 func DefaultValidators() map[string]Func {
 	return map[string]Func{
 		"required": Required(),
@@ -18,6 +20,7 @@ func DefaultValidators() map[string]Func {
 	}
 }
 
+// Required validates that the value is not nil, empty or zero.
 func Required(msgs ...string) Func {
 	msg := "harmony.error.validation.required"
 	if len(msgs) > 0 && msgs[0] != "" {
@@ -47,6 +50,7 @@ func Required(msgs ...string) Func {
 	}
 }
 
+// NotNil validates that the value is not nil. It does not check for empty or zero values. Use Required for that.
 func NotNil(msgs ...string) Func {
 	msg := "harmony.error.validation.notNil"
 	if len(msgs) > 0 && msgs[0] != "" {
@@ -71,6 +75,7 @@ func NotNil(msgs ...string) Func {
 	}
 }
 
+// Positive validates that the value is positive. Non-integer values return a validation error.
 func Positive(msgs ...string) Func {
 	msg := "harmony.error.validation.positive"
 	if len(msgs) > 0 && msgs[0] != "" {
@@ -86,6 +91,7 @@ func Positive(msgs ...string) Func {
 	}
 }
 
+// Negative validates that the value is negative. Non-integer values return a validation error.
 func Negative(msgs ...string) Func {
 	msg := "harmony.error.validation.negative"
 	if len(msgs) > 0 && msgs[0] != "" {
@@ -101,6 +107,7 @@ func Negative(msgs ...string) Func {
 	}
 }
 
+// Email validates that the value is a valid email address. Empty values are ignored, non-string values return a validation error.
 func Email(msgs ...string) Func {
 	msg := "harmony.error.validation.email"
 	if len(msgs) > 0 && msgs[0] != "" {
@@ -127,6 +134,7 @@ func Email(msgs ...string) Func {
 	}
 }
 
+// SemanticVersion validates that the value is a semantic version. Empty values are ignored, non-string values return a validation error.
 func SemanticVersion(msgs ...string) Func {
 	msg := "harmony.error.validation.semantic-version"
 	if len(msgs) > 0 && msgs[0] != "" {

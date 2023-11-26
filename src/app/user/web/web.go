@@ -11,11 +11,21 @@ import (
 	"net/http"
 )
 
-const Pkg = "app.user"
+const Pkg = "app.user.web"
 
 // ErrUpdateUser is returned when the user could not be updated. It is the error message for the user.edit.form template.
 var ErrUpdateUser = errors.New("user.settings.update-error")
 
+// RegisterController registers the web controllers for the user module.
+// It registers the following routes:
+//   - GET /auth/login For displaying various OAuth2 login buttons.
+//   - GET /auth/logout For logging out the user.
+//   - GET /user/me For displaying the user profile.
+//   - POST /user/me For updating the user profile.
+//
+// If OAuth2 is enabled in the configuration, it also registers the following routes:
+//   - GET /auth/login/{provider} For redirecting the user to the OAuth2 provider with the necessary parameters.
+//   - GET /auth/login/{provider}/success For handling the OAuth2 callback and logging the user in.
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	registerNavigation(appCtx, webCtx)
 	registerTemplateDataExtensions(appCtx, webCtx)
@@ -89,7 +99,7 @@ func loginController(appCtx *hctx.AppCtx, webCtx *web.Ctx, authCfg *auth.Cfg) ht
 			return io.Redirect("/user/me", http.StatusTemporaryRedirect)
 		}
 
-		return io.Render("auth.login", "user/auth/login.go.html", authCfg)
+		return io.Render(authCfg, "auth.login", "user/auth/login.go.html")
 	})
 }
 
@@ -114,7 +124,7 @@ func logoutController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 
 func userProfileController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		return io.RenderJoined(
+		return io.Render(
 			web.NewFormData(user.MustCtxUser(io.Context()).ToUpdate(), nil),
 			"user.edit",
 			"user/edit.go.html",
@@ -153,11 +163,7 @@ func userProfileEditController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handle
 }
 
 func renderUserEditForm(io web.IO, data any) error {
-	return io.Render(
-		"user.edit.form",
-		"user/_form-edit.go.html",
-		data,
-	)
+	return io.Render(data, "user.edit.form", "user/_form-edit.go.html")
 }
 
 func registerOAuth2Controller(appCtx *hctx.AppCtx, webCtx *web.Ctx, authCfg *auth.Cfg) {
