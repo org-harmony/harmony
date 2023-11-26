@@ -21,6 +21,9 @@ const LogPkgKey = "module"
 //	logger.Info("sys.web", "template rendered", "template", "home.html")
 //
 //	INFO sys.web: template rendered | template=home.html
+//
+// TODO Add contextualized logger that can be instantiated With() some args upfront. This should be used in web.IO to always log important request information.
+// TODO Further nesting of contextualized With() loggers could generally help to improve log traceability.
 type HLogger struct {
 	slog *slog.Logger
 }

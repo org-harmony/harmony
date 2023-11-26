@@ -43,6 +43,7 @@ type Template struct {
 }
 
 // ToCreate is the template entity that is used to create a new template.
+// TODO Evaluate if ToCreate and ToUpdate should be merged into one struct. It is convenient to have them separated, but also complicates the code.
 type ToCreate struct {
 	TemplateSet uuid.UUID `hvalidate:"required"`
 	Type        string    `hvalidate:"required"`
