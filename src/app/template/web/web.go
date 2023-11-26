@@ -19,6 +19,12 @@ var (
 )
 
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
+	// TODO how can a lot of this be simplified? It's a lot of boilerplate code.
+	//  Especially templating and error handling. Also, the handling of HTMX request and partial page loads
+	//  does not really seem to be unified. As of right now, I am not fully satisfied with this.
+	//  Maybe it would be helpful to write a PoC focussing fully on the UI/UX first and then adapt the backend to it.
+	//  In this approach it could also be helpful to fully decouple all the rendering logic from the business logic.
+
 	registerNavigation(appCtx, webCtx)
 
 	router := webCtx.Router.With(user.LoggedInMiddleware(appCtx))
