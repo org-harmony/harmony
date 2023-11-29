@@ -1,0 +1,66 @@
+{{ define "eiffel.elicitation.page" }}
+    {{ template "index" . }}
+{{ end }}
+
+{{ block "content-container" . }}
+    <section class="section content-section mt-3">
+        <div class="content-container container content">
+            {{ template "content" . }}
+        </div>
+    </section>
+{{ end }}
+
+{{ define "content" }}
+    {{ template "eiffel.elicitation" . }}
+{{ end }}
+
+{{ define "eiffel.elicitation" }}
+    <div class="row">
+        <div class="col-8 eiffel-elicitation">
+            <div class="eiffel-elicitation-template">
+                <div class="eiffel-elicitation-template-search-wrapper bg-light rounded p-3 row w-100 m-auto border border-light-subtle">
+                    <div class="eiffel-elicitation-template-search col-3">
+                        <button
+                            hx-get="/eiffel/elicitation/templates/search/modal"
+                            hx-target="#eiffelTemplateSearch"
+                            data-bs-toggle="modal"
+                            data-bs-target="#eiffelTemplateSearch"
+                            class="btn w-100 h-100 p-0"
+                        >
+                            <img class="m-auto align-baseline w-25 d-block" src="{{ asset "icons/search.svg" }}" alt="{{ t "harmony.generic.search" }}">
+                            <span class="badge shadow rounded-pill text-bg-secondary mt-3">{{ t "eiffel.elicitation.template.search.shortcut" }}</span>
+                        </button>
+
+                        <div
+                            id="eiffelTemplateSearch"
+                            class="modal fade"
+                            tabindex="-1"
+                            aria-labelledby="eiffelTemplateSearchLabel">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="eiffel-elicitation-template-current col">
+                        Aktuelle Schablone <span class="eiffel-elicitation-template-current-name"><b>ESFA</b></span>
+                        <br/>
+                        <span class="eiffel-elicitation-template-current-description fst-italic">
+                            PARIS Schablone für funktionale Anforderungen. Die Schablone folgt...
+                        </span>
+                    </div>
+                    {{/*<div class="eiffel-elicitation-template-options col-1">
+                        <button class="btn p-0 w-100 h-100">
+                            <img class="align-baseline" src="{{ asset "icons/dots-vertical.svg" }}" alt="{{ t "harmony.generic.options" }}">
+                        </button>
+                    </div>*/}}
+                </div>
+
+                {{ template "eiffel.elicitation.template" . }}
+            </div>
+        </div>
+
+        <div class="col eiffel-requirements">
+            <p>Requirements here</p>
+        </div>
+    </div>
+{{ end }}

@@ -46,10 +46,10 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 }
 
 func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
-	webCtx.Navigation.Add("web", web.NavItem{
+	webCtx.Navigation.Add("template.set.list", web.NavItem{
 		URL:      "/template-set/list",
 		Name:     "harmony.menu.template-sets",
-		Position: 100,
+		Position: 150,
 	})
 }
 

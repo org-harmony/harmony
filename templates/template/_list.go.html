@@ -80,12 +80,12 @@
                     {{ end }}
                     <td>
                         <a hx-boost="true" href="/template/{{ .ID }}/edit" hx-target="body" class="edit-icon mx-2 text-decoration-none" role="button">
-                            <img src="{{ asset "icons/edit.svg" }}" alt="{{ "template.set.action.edit" | t }}" title="{{ "template.set.action.edit" | t }}" />
+                            <img src="{{ asset "icons/edit.svg" }}" alt="{{ "template.set.action.edit" | t }}" title="{{ "template.set.action.edit" | t }}" class="align-baseline" />
                         </a>
 
                         {{/* delete button + modal */}}
                         <span data-bs-toggle="modal" data-bs-target="#delete-modal-for-{{ .ID }}" class="delete-icon" role="button">
-                                <img src="{{ asset "icons/x.svg" }}" alt="{{ "template.action.delete" | t }}" title="{{ "template.action.delete" | t }}" />
+                                <img src="{{ asset "icons/x.svg" }}" alt="{{ "template.action.delete" | t }}" title="{{ "template.action.delete" | t }}" class="align-baseline" />
                             </span>
                         <div class="modal fade" id="delete-modal-for-{{ .ID }}" tabindex="-1" role="dialog" aria-labelledby="delete-modal-for-{{ .ID }}-label" aria-hidden="true">
                             <div class="modal-dialog" role="document">

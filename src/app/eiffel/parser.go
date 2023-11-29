@@ -72,6 +72,14 @@ type BasicRule struct {
 	// Optional means a rule is not required to be parsed without template.ParsingLogLevelError (parsing error).
 	// By that parsing an invalid requirement for an optional rule will not result in a parsing error.
 	Optional bool `json:"optional"`
+	// Size is the expected size of the rule's value. It is optional. Possible values are:
+	//  - "small" (default): The value is expected to be a short string. 1/4 of the input field width.
+	//  - "medium": The value is expected to be a medium-sized string. 2/4 of the input field width.
+	//  - "large": The value is expected to be a large string. 3/4 of the input field width.
+	//  - "full": The value is expected to be a very large string. 4/4 of the input field (this will be a textarea) width.
+	// For now this should not be overcomplicated.
+	// TODO add adaptive sizing => make more convenient for the user
+	Size string `json:"size"`
 	// Extra is an optional map of additional data that can be used by the rule parser.
 	Extra map[string]any `json:"extra"`
 }
