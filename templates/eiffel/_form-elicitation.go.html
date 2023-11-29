@@ -1,0 +1,15 @@
+{{ define "eiffel.elicitation.form" }}
+    <h4>{{ t "eiffel.elicitation.template.form.title" }}</h4>
+    <form
+            hx-post="/eiffel/elicitation/{id}"
+            hx-target="#eiffelElicitationForm"
+            hx-disabled-elt=".eiffel-elicitation-form-fieldset"
+            hx-swap="outerHTML"
+            hx-trigger="submit"
+            id="eiffelElicitationForm"
+    >
+        <fieldset class="eiffel-elicitation-form-fieldset">
+            <input name="test" placeholder="test" />
+        </fieldset>
+    </form>
+{{ end }}

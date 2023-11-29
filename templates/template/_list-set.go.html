@@ -38,7 +38,7 @@
                         <td>
                             {{/* edit button + modal */}}
                             <span hx-get="/template-set/edit/{{ .ID }}" hx-target="#edit-form-for-{{ .ID }}" hx-swap="outerHTML" data-bs-toggle="modal" data-bs-target="#edit-modal-for-{{ .ID }}" class="edit-icon mx-2" role="button">
-                                <img src="{{ asset "icons/edit.svg" }}" alt="{{ "template.set.action.edit" | t }}" title="{{ "template.set.action.edit" | t }}" />
+                                <img src="{{ asset "icons/edit.svg" }}" alt="{{ "template.set.action.edit" | t }}" title="{{ "template.set.action.edit" | t }}" class="align-baseline" />
                             </span>
                             <div class="modal fade" id="edit-modal-for-{{ .ID }}" tabindex="-1" role="dialog" aria-labelledby="edit-modal-for-{{ .ID }}-label" aria-hidden="true">
                                 <div class="modal-dialog" role="document">
@@ -62,7 +62,7 @@
 
                             {{/* delete button + modal */}}
                             <span data-bs-toggle="modal" data-bs-target="#delete-modal-for-{{ .ID }}" class="delete-icon" role="button">
-                                <img src="{{ asset "icons/x.svg" }}" alt="{{ "template.set.action.delete" | t }}" title="{{ "template.set.action.delete" | t }}" />
+                                <img src="{{ asset "icons/x.svg" }}" alt="{{ "template.set.action.delete" | t }}" title="{{ "template.set.action.delete" | t }}" class="align-baseline" />
                             </span>
                             <div class="modal fade" id="delete-modal-for-{{ .ID }}" tabindex="-1" role="dialog" aria-labelledby="delete-modal-for-{{ .ID }}-label" aria-hidden="true">
                                 <div class="modal-dialog" role="document">

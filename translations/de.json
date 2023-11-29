@@ -91,6 +91,24 @@
         "missing-segment": "Eine Eingabe für die Regel {{ .name }} ({{ .technicalName }}) fehlt.",
         "invalid-rule-value": "Der Wert \"value\" für die Regel {{ .rule }} vom Typ {{ .type }} ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation."
       }
+    },
+    "elicitation": {
+      "template": {
+        "search": {
+          "title": "Schablone suchen",
+          "shortcut": "Strg + F"
+        },
+        "variant": {
+          "left.shortcut": "<- + Strg",
+          "right.shortcut": "Strg + ->"
+        },
+        "form": {
+          "title": "Anforderung erfassen"
+        },
+        "construction": "Schablonenaufbau",
+        "example": "Beispielsatz",
+        "settings": "Einstellungen"
+      }
     }
   },
   "harmony": {
@@ -106,6 +124,7 @@
     },
     "menu": {
       "home": "Startseite",
+      "eiffel": "EIFFEL",
       "template-sets": "Schablonen",
       "user": "Profil",
       "login": "Anmelden",
@@ -139,7 +158,8 @@
       "close": "Schließen",
       "refresh": "Aktualisieren",
       "save": "Speichern",
-      "create": "Erstellen"
+      "create": "Erstellen",
+      "search": "Suchen"
     }
   }
 }
