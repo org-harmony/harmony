@@ -61,7 +61,7 @@ type BasicRule struct {
 	// Type is the type of the rule. It is used to determine the rules value and how to validate it.
 	// Check further documentation for all valid types that are supported by the EIFFEL basic template (EBT).
 	Type string `json:"type" hvalidate:"required"`
-	// Hint is an optional description to hint the user of the template into correct usage of the template according to the rule(s).
+	// Hint is an optional, short description to hint the user of the template into correct usage of the template according to the rule(s).
 	Hint string `json:"hint"`
 	// Explanation can optionally be defined to further explain the use/parsing of the rule to the user of the template.
 	Explanation string `json:"explanation"`
@@ -141,6 +141,8 @@ type RuleParser interface {
 	Parse(ctx context.Context, rule BasicRule, segment parser.ParsingSegment) ([]parser.ParsingLog, error)
 	// Validate validates that a rule, defined in a template, is valid. This could for example validate that the rule's value is of the correct data type.
 	Validate(v validation.V, rule BasicRule) []error
+	// DisplayType returns the display type of the rule. This is used to determine which input field or other UI element to render for the rule.
+	DisplayType(rule BasicRule) TemplateDisplayType
 }
 
 // EqualsRuleParser is a rule parser for the rule type 'equals'.
@@ -435,6 +437,11 @@ func (p EqualsRuleParser) Validate(v validation.V, rule BasicRule) []error {
 	return []error{RuleInvalidValueError{Rule: &rule}}
 }
 
+// DisplayType implements the RuleParser interface for the EqualsRuleParser. Equals rules are arbitrary strings displayed as text.
+func (p EqualsRuleParser) DisplayType(rule BasicRule) TemplateDisplayType {
+	return TemplateDisplayString
+}
+
 // Parse implements the RuleParser interface for the EqualsAnyRuleParser. It is used to parse rules of the type 'equalsAny'.
 // The equalsAny rule expects a slice of strings as value, converts each string to lowercase and compares it to the lowercase segment's value.
 // If any of the values are equal, no parsing error is reported.
@@ -472,6 +479,11 @@ func (p EqualsAnyRuleParser) Validate(v validation.V, rule BasicRule) []error {
 	return []error{RuleInvalidValueError{Rule: &rule}}
 }
 
+// DisplayType implements the RuleParser interface for the EqualsAnyRuleParser. EqualsAny rules are input fields with a single select datalist.
+func (p EqualsAnyRuleParser) DisplayType(rule BasicRule) TemplateDisplayType {
+	return TemplateDisplayInputTypeSingleSelect
+}
+
 // Parse implements the RuleParser interface for the PlaceholderRuleParser. It is used to parse rules of the type 'placeholder'.
 func (p PlaceholderRuleParser) Parse(ctx context.Context, rule BasicRule, segment parser.ParsingSegment) ([]parser.ParsingLog, error) {
 	return nil, nil
@@ -480,6 +492,23 @@ func (p PlaceholderRuleParser) Parse(ctx context.Context, rule BasicRule, segmen
 // Validate implements the RuleParser interface for the PlaceholderRuleParser. It is used to validate rules of the type 'placeholder'.
 func (p PlaceholderRuleParser) Validate(v validation.V, rule BasicRule) []error {
 	return nil
+}
+
+// DisplayType implements the RuleParser interface for the PlaceholderRuleParser. Placeholder rules are input fields with a text type.
+// The size of the input field is determined by the rule's size property. Large and full size will be rendered as a textarea.
+func (p PlaceholderRuleParser) DisplayType(rule BasicRule) TemplateDisplayType {
+	switch rule.Size {
+	case "small":
+		return TemplateDisplayInputTypeText
+	case "medium":
+		return TemplateDisplayInputTypeText
+	case "large":
+		return TemplateDisplayInputTypeTextarea
+	case "full":
+		return TemplateDisplayInputTypeTextarea
+	default:
+		return TemplateDisplayInputTypeText
+	}
 }
 
 // prepareSegments prepares segments by trimming whitespaces from the input string and indexing them.
