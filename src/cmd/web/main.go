@@ -20,6 +20,13 @@ import (
 )
 
 // TODO add larger integration/e2e tests for the web layer. Each controller and they're functions should be tested.
+// TODO add module management to automatically register controllers and subscribe to events
+// TODO add extensive use of events for module management and all major application parts
+// TODO add extensive debugging and tracing capabilities/tools/commands for events and modules to help with development
+// TODO add more tests for the web layer
+// TODO add utilities for easier testing of the web layer
+// TODO improve UI/UX/Design (styling, css, scss)
+// TODO add more loading indications, especially for loading body changes
 
 func main() {
 	logger := trace.NewLogger()
