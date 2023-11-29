@@ -85,22 +85,26 @@
     "parser": {
       "error": {
         "invalid-template": "Die EIFFEL Schablone ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation.",
-        "missing-rule": "In der Variante {{ .variant }} der Schablone {{ .template }} wird versucht eine Regel {{ .rule }} zu benutzen, die nicht definiert wird.",
+        "missing-rule": "In der Variante {{ .variant }} der Schablone {{ .template }} wird versucht eine Regel \"{{ .rule }}\" zu benutzen, die nicht definiert wird.",
         "invalid-variant": "Die Variante ist ungültig.",
-        "missing-rule-parser": "Der geforderte Parser für die Regel ist nicht verfügbar. Wahrscheinlich ist der Regel-Typ {{ .ruleType }} nicht korrekt. Bitte überprüfen Sie die Schablonen-Dokumentation.",
-        "missing-segment": "Eine Eingabe für die Regel {{ .name }} ({{ .technicalName }}) fehlt.",
-        "invalid-rule-value": "Der Wert \"value\" für die Regel {{ .rule }} vom Typ {{ .type }} ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation."
+        "missing-rule-parser": "Der geforderte Parser für die Regel ist nicht verfügbar. Wahrscheinlich ist der Regel-Typ \"{{ .type }}\" nicht korrekt. Bitte überprüfen Sie die Schablonen-Dokumentation.",
+        "missing-segment": "Eine Eingabe für die Regel \"{{ .name }}\" ({{ .technicalName }}) fehlt.",
+        "invalid-rule-value": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation."
       }
     },
     "elicitation": {
       "template": {
         "search": {
           "title": "Schablone suchen",
-          "shortcut": "Strg + F"
+          "shortcut": "Strg + F",
+          "call-to-action": "Es wurde noch keine Schablone ausgewählt. Bitte nutzen Sie die Suche, um eine Schablone zu finden.",
+          "not-found": "Keine Schablone gefunden."
         },
+        "not-found": "Die Schablone wurde nicht gefunden.",
         "variant": {
           "left.shortcut": "<- + Strg",
-          "right.shortcut": "Strg + ->"
+          "right.shortcut": "Strg + ->",
+          "not-found": "Die Variante wurde nicht gefunden."
         },
         "form": {
           "title": "Anforderung erfassen"
