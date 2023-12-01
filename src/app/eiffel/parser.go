@@ -3,6 +3,7 @@ package eiffel
 import (
 	"context"
 	"errors"
+	"fmt"
 	t "github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/app/template/parser"
 	"github.com/org-harmony/harmony/src/core/trans"
@@ -17,6 +18,10 @@ const BasicTemplateType = "ebt"
 var (
 	// ErrInvalidVariant is an error that is returned when trying to parse a requirement for an invalid variant.
 	ErrInvalidVariant = errors.New("eiffel.parser.error.invalid-variant")
+	// ErrNotASlice is an error that is returned when trying to cast an any value to a slice of strings but the value is not a slice.
+	ErrNotASlice = errors.New("eiffel.parser.error.not-a-slice")
+	// ErrNotAString is an error that is returned when trying to cast an any value to a string but the value is not a string.
+	ErrNotAString = errors.New("eiffel.parser.error.not-a-string")
 )
 
 // BasicTemplate is the basic EIFFEL template. It is parsable by implementing the template.ParsableTemplate interface.
@@ -43,9 +48,9 @@ type BasicTemplate struct {
 	// Description is the description of the template. It is optional.
 	Description string `json:"description"`
 	// Format can be used to optionally describe the format of the requirement specified by the template.
-	Format string `json:"format"`
+	Format string `json:"format"` // TODO remove this? Format is now defined in the variant.
 	// Example can be used to optionally provide an example of a requirement specified by the template.
-	Example string `json:"example"`
+	Example string `json:"example"` // TODO remove this? Example is now defined in the variant.
 	// Rules are the rules that can be used in variants to validate requirements.
 	Rules map[string]BasicRule `json:"rules"`
 	// Variants are the variants that can be used to validate requirements.
@@ -112,6 +117,9 @@ type RuleMissingError struct {
 // It returns the ErrInvalidRuleValue error on Error(). It may occur during template validation.
 type RuleInvalidValueError struct {
 	Rule *BasicRule
+	// Msg is the error message. It is optional and may be used to override the default error message.
+	// The error message is translated using the parameters: "rule" (rule's name) and "type" (rule's type).
+	Msg string
 }
 
 // MissingRuleParserError is an error that is returned when a rule type is not registered in the RuleParserProvider.
@@ -382,6 +390,10 @@ func (e RuleMissingError) Translate(t trans.Translator) string {
 
 // Error on RuleInvalidValueError returns the error code of the error.
 func (e RuleInvalidValueError) Error() string {
+	if e.Msg != "" {
+		return e.Msg
+	}
+
 	return "eiffel.parser.error.invalid-rule-value"
 }
 
@@ -446,9 +458,9 @@ func (p EqualsRuleParser) DisplayType(rule BasicRule) TemplateDisplayType {
 // The equalsAny rule expects a slice of strings as value, converts each string to lowercase and compares it to the lowercase segment's value.
 // If any of the values are equal, no parsing error is reported.
 func (p EqualsAnyRuleParser) Parse(ctx context.Context, rule BasicRule, segment parser.ParsingSegment) ([]parser.ParsingLog, error) {
-	rv, ok := rule.Value.([]string)
-	if !ok {
-		return nil, RuleInvalidValueError{Rule: &rule}
+	rv, err := toStringSlice(rule.Value)
+	if err != nil {
+		return nil, RuleInvalidValueError{Rule: &rule, Msg: err.Error()}
 	}
 
 	segmentValue := strings.ToLower(segment.Value)
@@ -471,12 +483,12 @@ func (p EqualsAnyRuleParser) Parse(ctx context.Context, rule BasicRule, segment 
 // Validate implements the RuleParser interface for the EqualsAnyRuleParser. It is used to validate rules of the type 'equalsAny'.
 // The equalsAny rule expects a slice of strings as value.
 func (p EqualsAnyRuleParser) Validate(v validation.V, rule BasicRule) []error {
-	_, ok := rule.Value.([]string)
-	if ok {
+	_, err := toStringSlice(rule.Value)
+	if err == nil {
 		return nil
 	}
 
-	return []error{RuleInvalidValueError{Rule: &rule}}
+	return []error{RuleInvalidValueError{Rule: &rule, Msg: err.Error()}}
 }
 
 // DisplayType implements the RuleParser interface for the EqualsAnyRuleParser. EqualsAny rules are input fields with a single select datalist.
@@ -520,4 +532,25 @@ func prepareSegments(segments []parser.ParsingSegment) map[string]parser.Parsing
 	}
 
 	return indexedSegments
+}
+
+// toStringSlice cast an any value to a slice of strings. If the value is not a slice of strings, an error is returned.
+// This is used by the equalsAny rule parser to cast the rule value to a slice of strings.
+// Important: The function does not convert the slice's elements to strings. It only casts the slice to a slice of strings.
+func toStringSlice(anyElem any) ([]string, error) {
+	anySlice, ok := anyElem.([]any)
+	if !ok {
+		fmt.Printf("anyElem: %v\n", anyElem)
+		return nil, ErrNotASlice
+	}
+
+	stringSlice := make([]string, len(anySlice))
+	for i, v := range anySlice {
+		stringSlice[i], ok = v.(string)
+		if !ok {
+			return nil, ErrNotAString
+		}
+	}
+
+	return stringSlice, nil
 }
