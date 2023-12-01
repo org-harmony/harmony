@@ -3,11 +3,13 @@ package eiffel
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/event"
 	"github.com/org-harmony/harmony/src/core/hctx"
+	"github.com/org-harmony/harmony/src/core/persistence"
 	"github.com/org-harmony/harmony/src/core/util"
 	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/org-harmony/harmony/src/core/web"
@@ -39,9 +41,25 @@ type TemplateDisplayType string
 // TemplateFormData is the data that is passed to the template rendering the elicitation form.
 type TemplateFormData struct {
 	Template *BasicTemplate
+	// Variant is the currently selected variant. This might be through a specified variant name parameter
+	// or as a default value because no variant was explicitly specified. However, Variant is expected to be filled.
+	Variant *BasicVariant
+	// VariantKey is the key through which the variant was selected. It is not the name of the variant.
+	// If the variant was auto-selected as default the key will still be filled.
+	VariantKey string
 	// DisplayTypes is a map of rule names to display types. The rule names are the keys of the BasicTemplate.Rules map.
 	// The display types are used to determine how the rule should be displayed in the UI.
 	DisplayTypes map[string]TemplateDisplayType
+	// TemplateID is the ID of the template that is currently being rendered.
+	TemplateID uuid.UUID
+	// CopyAfterParse is a flag indicating if the user wants to copy the parsed requirement to the clipboard.
+	CopyAfterParse bool
+}
+
+// SearchTemplateData contains templates to render as search results and a flag indicating if the query was too short.
+type SearchTemplateData struct {
+	Templates     []*template.Template
+	QueryTooShort bool
 }
 
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
@@ -53,8 +71,12 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	router := webCtx.Router.With(user.LoggedInMiddleware(appCtx))
 
 	router.Get("/eiffel", eiffelElicitationPage(appCtx, webCtx).ServeHTTP)
+	router.Get("/eiffel/{templateID}", eiffelElicitationPage(appCtx, webCtx).ServeHTTP)
+	router.Get("/eiffel/{templateID}/{variant}", eiffelElicitationPage(appCtx, webCtx).ServeHTTP)
 	router.Get("/eiffel/elicitation/templates/search/modal", searchModal(appCtx, webCtx).ServeHTTP)
-	router.Get("/eiffel/elicitation/{templateID}/{variant}", elicitationTemplate(appCtx, webCtx).ServeHTTP)
+	router.Post("/eiffel/elicitation/templates/search", searchTemplate(appCtx, webCtx).ServeHTTP)
+	router.Get("/eiffel/elicitation/{templateID}", elicitationTemplate(appCtx, webCtx, true).ServeHTTP)
+	router.Get("/eiffel/elicitation/{templateID}/{variant}", elicitationTemplate(appCtx, webCtx, false).ServeHTTP)
 	router.Post("/eiffel/elicitation/{templateID}/{variant}", parseRequirement(appCtx, webCtx).ServeHTTP)
 	router.Get("/eiffel/elicitation/output/file/form", outputFileForm(appCtx, webCtx).ServeHTTP)
 }
@@ -105,16 +127,38 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 }
 
 func eiffelElicitationPage(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		return io.Render(
-			web.NewFormData(TemplateFormData{}, nil),
-			"eiffel.elicitation.page",
-			"eiffel/elicitation-page.go.html",
-			"eiffel/elicitation-template.go.html",
-			"eiffel/_form-elicitation.go.html",
-			"eiffel/_form-output-file.go.html",
+		templateID := web.URLParam(io.Request(), "templateID")
+		variantKey := web.URLParam(io.Request(), "variant")
+		if templateID == "" {
+			return renderElicitationPage(io, TemplateFormData{}, nil, nil)
+		}
+
+		formData, err := TemplateFormFromRequest(
+			io.Context(),
+			templateID,
+			variantKey,
+			templateRepository,
+			RuleParsers(),
+			appCtx.Validator,
+			true,
 		)
+
+		return renderElicitationPage(io, formData, nil, []error{err})
 	})
+}
+
+func renderElicitationPage(io web.IO, data TemplateFormData, success []string, errs []error) error {
+	return io.Render(
+		web.NewFormData(data, success, errs...),
+		"eiffel.elicitation.page",
+		"eiffel/elicitation-page.go.html",
+		"eiffel/_elicitation-template.go.html",
+		"eiffel/_form-elicitation.go.html",
+		"eiffel/_form-output-file.go.html",
+	)
 }
 
 func searchModal(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
@@ -123,38 +167,66 @@ func searchModal(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	})
 }
 
-func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+func searchTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		request := io.Request()
+		err := request.ParseForm()
+		if err != nil {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		query := request.FormValue("search")
+		if len(query) < 3 {
+			return io.Render(
+				&SearchTemplateData{QueryTooShort: true},
+				"eiffel.template.search.result",
+				"eiffel/_template-search-result.go.html",
+			)
+		}
+
+		templates, err := templateRepository.FindByQueryForType(io.Context(), query, BasicTemplateType)
+		if err != nil && !errors.Is(err, persistence.ErrNotFound) {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		return io.Render(
+			&SearchTemplateData{Templates: templates},
+			"eiffel.template.search.result",
+			"eiffel/_template-search-result.go.html",
+		)
+	})
+}
+
+func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVariant bool) http.Handler {
 	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		templateID := web.URLParam(io.Request(), "templateID")
 		variant := web.URLParam(io.Request(), "variant")
 
-		templateUUID, err := uuid.Parse(templateID)
-		if err != nil {
-			return io.InlineError(ErrTemplateNotFound, err)
-		}
+		io.Response().Header().Set("HX-Push-URL", fmt.Sprintf("/eiffel/%s", templateID))
 
-		tmpl, err := templateRepository.FindByID(io.Context(), templateUUID)
-		if err != nil {
-			return io.InlineError(ErrTemplateNotFound, err)
-		}
-
-		bt, err := TemplateIntoBasicTemplate(tmpl, appCtx.Validator, RuleParsers())
+		formData, err := TemplateFormFromRequest(
+			io.Context(),
+			templateID,
+			variant,
+			templateRepository,
+			RuleParsers(),
+			appCtx.Validator,
+			defaultFirstVariant,
+		)
 		if err != nil {
 			return io.InlineError(err)
 		}
 
-		if _, ok := bt.Variants[variant]; !ok {
-			return io.InlineError(ErrTemplateVariantNotFound)
-		}
-
-		displayTypes := TemplateDisplayTypes(bt, RuleParsers())
+		io.Response().Header().Set("HX-Push-URL", fmt.Sprintf("/eiffel/%s/%s", templateID, formData.VariantKey))
 
 		return io.Render(
-			web.NewFormData(TemplateFormData{Template: bt, DisplayTypes: displayTypes}, nil),
+			web.NewFormData(formData, nil),
 			"eiffel.elicitation.template",
-			"eiffel/elicitation-template.go.html",
+			"eiffel/_elicitation-template.go.html",
 			"eiffel/_form-elicitation.go.html",
 		)
 	})

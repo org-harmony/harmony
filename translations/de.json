@@ -22,6 +22,7 @@
   },
   "template": {
     "set": {
+      "title": "Schablonensatz",
       "list": "Schablonensätze Übersicht",
       "list.empty": "Es wurden noch keine Schablonensätze erstellt.",
       "new": "Neuen Schablonensatz erstellen",
@@ -53,6 +54,7 @@
         "updated": "Der Schablonensatz wurde aktualisiert."
       }
     },
+    "title": "Schablone",
     "list": "Schablonen Übersicht {{ .name }}",
     "list.empty": "Es wurden noch keine Schablonen erstellt.",
     "new": {
@@ -89,7 +91,9 @@
         "invalid-variant": "Die Variante ist ungültig.",
         "missing-rule-parser": "Der geforderte Parser für die Regel ist nicht verfügbar. Wahrscheinlich ist der Regel-Typ \"{{ .type }}\" nicht korrekt. Bitte überprüfen Sie die Schablonen-Dokumentation.",
         "missing-segment": "Eine Eingabe für die Regel \"{{ .name }}\" ({{ .technicalName }}) fehlt.",
-        "invalid-rule-value": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation."
+        "invalid-rule-value": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation.",
+        "not-a-slice": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" ist keine Liste. Bitte überprüfen Sie die Schablonen-Dokumentation.",
+        "not-a-string": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" sollte aus einer Zeichenkette oder einer Liste an Zeichenketten bestehen, jedoch wurde ein anderer Typ gefunden. Bitte überprüfen Sie die Schablonen-Dokumentation."
       }
     },
     "elicitation": {
@@ -97,21 +101,29 @@
         "search": {
           "title": "Schablone suchen",
           "shortcut": "Strg + F",
+          "select": "Auswählen",
+          "placeholder": "Schablonen durchsuchen - Namen hier eingeben...",
+          "start": "Suchen Sie im Eingabefeld nach einer Schablone und wählen Sie diese für die Erfassung aus.",
           "call-to-action": "Es wurde noch keine Schablone ausgewählt. Bitte nutzen Sie die Suche, um eine Schablone zu finden.",
-          "not-found": "Keine Schablone gefunden."
+          "not-found": "Keine Schablonen gefunden.",
+          "query-too-short": "Geben Sie mindestens 3 Zeichen ein, um die Suche zu starten."
         },
         "not-found": "Die Schablone wurde nicht gefunden.",
         "variant": {
           "left.shortcut": "<- + Strg",
           "right.shortcut": "Strg + ->",
-          "not-found": "Die Variante wurde nicht gefunden."
+          "not-found": "Die Variante wurde nicht gefunden.",
+          "description": "Variantenbeschreibung"
         },
         "form": {
           "title": "Anforderung erfassen"
         },
         "construction": "Schablonenaufbau",
         "example": "Beispielsatz",
-        "settings": "Einstellungen"
+        "description.title": "Beschreibung",
+        "description": "Schablonenbeschreibung",
+        "settings": "Einstellungen",
+        "copy-after-parse": "Anforderung nach erfolgreicher Prüfung kopieren"
       }
     }
   },

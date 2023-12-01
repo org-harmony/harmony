@@ -1,0 +1,27 @@
+{{ define "eiffel.template.search.result" }}
+    {{ if .Data.Templates }}
+        {{ range .Data.Templates }}
+            <tr>
+                <td>{{ .Name }}</td>
+                <td>{{ .Version }}</td>
+                <td>{{ .TemplateSetElem.Name }}</td>
+                <td>
+                    <button hx-get="/eiffel/elicitation/{{ .ID }}"
+                        hx-target="#eiffelElicitationTemplate"
+                        data-bs-dismiss="modal"
+                        class="btn btn-primary btn-sm">
+                        {{ t "eiffel.elicitation.template.search.select" }}
+                    </button>
+                </td>
+            </tr>
+        {{ end }}
+    {{ else if .Data.QueryTooShort }}
+        <tr>
+            <td colspan="4" class="text-center">{{ t "eiffel.elicitation.template.search.query-too-short" }}</td>
+        </tr>
+    {{ else }}
+        <tr>
+            <td colspan="4" class="text-center">{{ t "eiffel.elicitation.template.search.not-found" }}</td>
+        </tr>
+    {{ end }}
+{{ end }}

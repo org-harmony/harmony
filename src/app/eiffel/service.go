@@ -1,7 +1,9 @@
 package eiffel
 
 import (
+	"context"
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/core/validation"
 )
@@ -43,4 +45,58 @@ func TemplateIntoBasicTemplate(t *template.Template, validator validation.V, rul
 	}
 
 	return ebt, nil
+}
+
+// TemplateFormFromRequest parses the template and variant from the passed in templateID and variantKey and returns a
+// TemplateFormData struct. If the template or variant could not be found, an error is returned.
+// However, using the defaultFirstVariant flag, the first variant will be used if no variant was specified and no
+// error will be returned. TemplateFormFromRequest will also parse and validate the template.
+//
+// Returned errors from TemplateFormFromRequest are safe to display to the user.
+func TemplateFormFromRequest(
+	ctx context.Context,
+	templateID string,
+	variantKey string,
+	templateRepository template.Repository,
+	ruleParsers *RuleParserProvider,
+	validator validation.V,
+	defaultFirstVariant bool,
+) (TemplateFormData, error) {
+	templateUUID, err := uuid.Parse(templateID)
+	if err != nil {
+		return TemplateFormData{}, ErrTemplateNotFound
+	}
+
+	tmpl, err := templateRepository.FindByID(ctx, templateUUID)
+	if err != nil {
+		return TemplateFormData{}, ErrTemplateNotFound
+	}
+
+	bt, err := TemplateIntoBasicTemplate(tmpl, validator, ruleParsers)
+	if err != nil {
+		return TemplateFormData{}, err
+	}
+
+	variant, ok := bt.Variants[variantKey]
+	if !ok && !defaultFirstVariant {
+		return TemplateFormData{}, ErrTemplateVariantNotFound
+	}
+
+	if !ok {
+		for n, v := range bt.Variants {
+			variant = v
+			variantKey = n
+			break
+		}
+	}
+
+	displayTypes := TemplateDisplayTypes(bt, RuleParsers())
+
+	return TemplateFormData{
+		Template:     bt,
+		Variant:      &variant,
+		VariantKey:   variantKey,
+		DisplayTypes: displayTypes,
+		TemplateID:   templateUUID,
+	}, nil
 }

@@ -31,15 +31,16 @@ var (
 // Each template belongs to a template set. Templates are versioned and the information about the template should always match the template's config JSON.
 // Actually, Type, Name and Version are redundant, but they are used for easier querying.
 type Template struct {
-	ID          uuid.UUID
-	TemplateSet uuid.UUID
-	Type        string
-	Name        string
-	Version     string
-	Config      string
-	CreatedBy   uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   *time.Time
+	ID              uuid.UUID
+	TemplateSet     uuid.UUID
+	Type            string
+	Name            string
+	Version         string
+	Config          string
+	CreatedBy       uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       *time.Time
+	TemplateSetElem *Set
 }
 
 // ToCreate is the template entity that is used to create a new template.
@@ -109,6 +110,11 @@ type PGSetRepository struct {
 type Repository interface {
 	persistence.Repository
 
+	// FindByQueryForType finds all templates by a query for a specified template type.
+	// The query will be searched for in the template's name, version and in the template set's name.
+	// It will join the template.Set onto template.Template and read it into Set.TemplateSetElem.
+	// It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
+	FindByQueryForType(ctx context.Context, query string, templateType string) ([]*Template, error)
 	// FindByID finds a template by its id. It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
 	FindByID(ctx context.Context, id uuid.UUID) (*Template, error)
 	// FindByTemplateSetID finds all templates by their template set id. It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
@@ -213,6 +219,40 @@ func (r *PGRepository) RepositoryName() string {
 // RepositoryName returns the name of the repository. This name is used to identify the repository in the persistence.RepositoryProvider.
 func (r *PGSetRepository) RepositoryName() string {
 	return SetRepositoryName
+}
+
+// FindByQueryForType finds all templates by a query for a specified template type.
+// It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
+func (r *PGRepository) FindByQueryForType(ctx context.Context, query string, templateType string) ([]*Template, error) {
+	rows, err := r.db.Query(
+		ctx,
+		`SELECT 
+templates.id, templates.template_set, templates.type, templates.name, templates.version, templates.config, templates.created_by, templates.created_at, templates.updated_at,
+template_sets.name, template_sets.version, template_sets.description, template_sets.created_by, template_sets.created_at, template_sets.updated_at
+FROM templates LEFT JOIN template_sets ON templates.template_set = template_sets.id
+WHERE templates.name ILIKE $1 OR templates.version ILIKE $1 OR template_sets.name ILIKE $1 AND templates.type = $2`,
+		"%"+query+"%",
+		templateType,
+	)
+	if err != nil {
+		return nil, persistence.PGReadErr(err)
+	}
+
+	var templates []*Template
+	for rows.Next() {
+		t := &Template{TemplateSetElem: &Set{}}
+		err := rows.Scan(
+			&t.ID, &t.TemplateSet, &t.Type, &t.Name, &t.Version, &t.Config, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt,
+			&t.TemplateSetElem.Name, &t.TemplateSetElem.Version, &t.TemplateSetElem.Description, &t.TemplateSetElem.CreatedBy, &t.TemplateSetElem.CreatedAt, &t.TemplateSetElem.UpdatedAt,
+		)
+		if err != nil {
+			return nil, persistence.PGReadErr(err)
+		}
+
+		templates = append(templates, t)
+	}
+
+	return templates, nil
 }
 
 // FindByID finds a template by its id. It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
