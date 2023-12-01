@@ -68,7 +68,7 @@ func basicTemplate() *BasicTemplate {
 				Name:        "State Verb Rule",
 				Type:        "equalsAny",
 				Explanation: "One of the state verbs must be matched in the input string",
-				Value: []any{
+				Value: []any{ // this should not be []string{}, but []any{} because the parsed json is []interface{}
 					"was",
 					"will",
 					"is",
