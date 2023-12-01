@@ -68,7 +68,7 @@ func basicTemplate() *BasicTemplate {
 				Name:        "State Verb Rule",
 				Type:        "equalsAny",
 				Explanation: "One of the state verbs must be matched in the input string",
-				Value: []string{
+				Value: []any{
 					"was",
 					"will",
 					"is",
