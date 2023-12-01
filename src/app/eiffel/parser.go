@@ -3,7 +3,6 @@ package eiffel
 import (
 	"context"
 	"errors"
-	"fmt"
 	t "github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/app/template/parser"
 	"github.com/org-harmony/harmony/src/core/trans"
@@ -540,7 +539,6 @@ func prepareSegments(segments []parser.ParsingSegment) map[string]parser.Parsing
 func toStringSlice(anyElem any) ([]string, error) {
 	anySlice, ok := anyElem.([]any)
 	if !ok {
-		fmt.Printf("anyElem: %v\n", anyElem)
 		return nil, ErrNotASlice
 	}
 
