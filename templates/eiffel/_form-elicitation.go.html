@@ -6,9 +6,7 @@
 
     {{/*
     TODO save copy to clipboard setting to user session
-    TODO JS for better UX => automatically active input etc.
-    TODO add copy to clipboard
-    TODO shortcuts hinzufügen
+    TODO add copy to clipboard button
     */}}
 
     <h4>{{ t "eiffel.elicitation.form.title" }}</h4>
@@ -20,6 +18,7 @@
             <div class="row">
                 {{/* TODO beautify this code and improve readability - good templating is hard :/ */}}
 
+                {{ $first := true }}
                 {{ range $i, $ruleName := .Data.Form.Variant.Rules }}
                     {{ $rule := index $rules . }}
                     {{ $displayType := index $displayTypes $ruleName }}
@@ -69,24 +68,18 @@
                                     {{ end }}
 
                                     <input type="text"
-                                       id="eiffelFormInput-{{ $ruleName }}"
-                                       class="form-control {{ if $violations }}is-invalid{{ end }}"
-                                       name="{{ $inputName }}"
-                                       placeholder="{{ $displayName}}"
-                                       aria-label="{{ $displayName }}"
-                                       aria-description="{{ $rule.Hint }}"
-                                       {{ if eq $displayType "text" }}
-                                           disabled
-                                           value="{{ $rule.Value }}"
-                                       {{ else if $parsingResult }}
-                                           value="{{ index $segments $ruleName }}"
-                                       {{ end }}
-                                       {{ if eq $displayType "input-single-select" }}
-                                           list="eiffelFormInput-{{ $ruleName }}-datalist"
-                                       {{ end }}
-                                       {{ if not $rule.Optional }}
-                                           required
-                                       {{ end }}
+                                        id="eiffelFormInput-{{ $ruleName }}"
+                                        class="form-control {{ if $violations }}is-invalid{{ end }}"
+                                        name="{{ $inputName }}"
+                                        placeholder="{{ $displayName}}"
+                                        aria-label="{{ $displayName }}"
+                                        aria-description="{{ $rule.Hint }}"
+                                        {{ if eq $displayType "text" }}
+                                            disabled value="{{ $rule.Value }}"
+                                        {{ else if $parsingResult }}value="{{ index $segments $ruleName }}"{{ end }}
+                                        {{ if eq $displayType "input-single-select" }}list="eiffelFormInput-{{ $ruleName }}-datalist"{{ end }}
+                                        {{ if not $rule.Optional }}required{{ end }}
+                                        {{ if $first }}autofocus{{ end }}
                                     />
 
                                     {{ if $violations }}
@@ -109,9 +102,8 @@
                                         placeholder="{{ $displayName }}"
                                         aria-label="{{ $displayName }}"
                                         aria-description="{{ $rule.Hint }}"
-                                        {{ if not $rule.Optional }}
-                                            required
-                                        {{ end }}
+                                        {{ if not $rule.Optional }}required{{ end }}
+                                        {{ if $first }}autofocus{{ end }}
                                         rows="1">{{ if not $parsingResult }}{{ $rule.Value }}{{ else }}{{ index $segments $ruleName }}{{ end }}</textarea>
 
                                     {{ if $violations }}
@@ -172,6 +164,7 @@
                             </div>
                         </div>
                     </div>
+                    {{ $first = false}}
                 {{ end }}
                 <div class="col-12">
                     <button type="submit" class="btn btn-primary w-100">{{ t "eiffel.elicitation.form.submit" }}</button>
@@ -210,6 +203,19 @@
                     {{ range .Data.Form.ParsingResult.Notices }}
                         <div class="col-12">
                             <div class="alert alert-info" role="alert">{{ tryTranslate . }}</div>
+                        </div>
+                    {{ end }}
+
+                    {{ if .Data.Form.ParsingResult.Requirement }}
+                        <div class="col-12 input-group mb-3">
+                            <button type="button" class="input-group-text eiffel-elicitation-form-copy-and-clear">
+                                {{ t "eiffel.elicitation.form.copy-and-clear" | safeHTML }}
+                            </button>
+                            <textarea class="form-control eiffel-elicitation-form-requirement"
+                                aria-label="{{ t "eiffel.elicitation.form.copy-and-clear" }}"
+                                disabled rows="3">
+                                {{- .Data.Form.ParsingResult.Requirement -}}
+                            </textarea>
                         </div>
                     {{ end }}
                 {{ end }}
