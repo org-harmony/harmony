@@ -269,7 +269,7 @@ func parseRequirement(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handle
 		templateID := web.URLParam(request, "templateID")
 		variant := web.URLParam(request, "variant")
 		outputDir := BuildDirPath(cfg.Output.BaseDir, request.FormValue("elicitationOutputDir"))
-		outputFile := BuildFilename(request.FormValue("elicitationOutputFile"))
+		outputFileRaw := request.FormValue("elicitationOutputFile")
 
 		formData, err := TemplateFormFromRequest(
 			ctx,
@@ -283,6 +283,11 @@ func parseRequirement(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handle
 		if err != nil {
 			return io.InlineError(err)
 		}
+
+		if outputFileRaw == "" {
+			outputFileRaw = formData.Template.Name
+		}
+		outputFile := BuildFilename(outputFileRaw)
 
 		segmentMap, err := SegmentMapFromRequest(request, len(formData.Variant.Rules))
 		if err != nil {
@@ -391,7 +396,7 @@ func outputFileSearch(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handle
 
 		query := request.FormValue("output-file")
 		dir := request.FormValue("output-dir")
-		files, err := FileSearch(cfg.Output.BaseDir, dir, query)
+		files, err := FileSearch(BuildDirPath(cfg.Output.BaseDir, dir), query)
 		if err != nil {
 			return io.InlineError(web.ErrInternal, err)
 		}

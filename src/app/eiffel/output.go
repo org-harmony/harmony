@@ -76,17 +76,13 @@ func DirSearch(baseDir string, query string) ([]string, error) {
 	return dirs, nil
 }
 
-// FileSearch searches the base directory + a specified sub-path for .csv-files containing the query string in their name.
+// FileSearch searches a specified subdirectory for .csv-files containing the query string in their name.
 // Only files with the .csv-extension are considered. The search is case-insensitive. Returns a slice of matching files.
-func FileSearch(baseDir string, subPath string, query string) ([]string, error) {
+func FileSearch(dirPath string, query string) ([]string, error) {
 	var files []string
 	queryLower := strings.ToLower(query)
 
-	if subPath != "" {
-		subPath = filepath.Clean(subPath)
-	}
-
-	err := filepath.WalkDir(filepath.Join(baseDir, subPath), func(path string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir(dirPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -109,7 +105,7 @@ func FileSearch(baseDir string, subPath string, query string) ([]string, error) 
 		return nil
 	})
 
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) { // ignore "file/dir does not exist" errors - the search might be submitted before the file/dir is created
 		return nil, err
 	}
 
