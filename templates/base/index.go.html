@@ -9,6 +9,10 @@
                     <meta http-equiv="X-UA-Compatible" content="ie=edge">
                 {{ end }}
 
+                {{ block "favicon" . }}
+                    <link rel="icon" href="{{ asset "img/harmony-logo.jpg" }}">
+                {{ end }}
+
                 {{ block "title-container" . }}
                     <title>{{ block "title" . }}{{ t "harmony.head.welcome" }}{{ end }} - {{ t "harmony.head.title.suffix" }}</title>
                 {{ end }}
@@ -20,6 +24,8 @@
                 {{ block "scripts" . }}
                     <script defer src="{{ asset "js/htmx.min.js" }}"></script>
                     <script defer src="{{ asset "js/bootstrap.min.js" }}"></script>
+                    {{/* TODO build plugin system and js plugins */}}
+                    <script defer src="{{ asset "js/eiffel.js" }}"></script>
                 {{ end }}
             {{ end }}
         </head>

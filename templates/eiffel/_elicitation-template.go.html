@@ -8,12 +8,26 @@
         <div class="eiffel-elicitation-template-variant mt-3 bg-light rounded p-3 w-100 m-auto border border-light-subtle">
             <div class="row">
                 <div class="col">
+                    {{ $current := false }}
+                    {{ $prevOrNext := "prev" }}
                     {{ range $key, $variant := .Data.Form.Template.Variants }}
+                        {{ $class := printf "eiffel-template-variant-%s" $prevOrNext }}
+
+                        {{ if eq $variantKey $key }}
+                            {{ $current = true }}
+                            {{ $class = "eiffel-template-variant-current" }}
+                        {{ end }}
+
                         <button hx-get="/eiffel/elicitation/{{ $templateID }}/{{ $key }}"
                             hx-target="#eiffelElicitationTemplate"
-                            class="btn {{ if eq $variantKey $key }}btn-outline-primary{{ else }}btn-outline-secondary{{ end }}">
+                            class="btn {{ $class }} {{ if eq $variantKey $key }}btn-outline-primary{{ else }}btn-outline-secondary{{ end }}">
                             {{ $variant.Name }}
                         </button>
+
+                        {{ if $current }}
+                            {{ $prevOrNext = "next" }}
+                            {{ $current = false }}
+                        {{ end }}
                     {{ end }}
                 </div>
             </div>
