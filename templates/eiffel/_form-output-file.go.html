@@ -1,3 +1,69 @@
 {{ define "eiffel.elicitation.output-file.form" }}
-    output file: requirements here
+    <div class="alert alert-info" role="alert">
+        {{ t "eiffel.elicitation.output.file.info" }}
+    </div>
+
+    {{ if .Data }}
+        <input form="eiffelElicitationForm" type="hidden" name="elicitationOutputDir" value="{{ .Data.Form.OutputDir }}"/>
+        <input form="eiffelElicitationForm" type="hidden" name="elicitationOutputFile" value="{{ .Data.Form.OutputFile }}"/>
+    {{ end }}
+
+    <div class="eiffel-elicitation-output-file">
+        <form hx-post="/eiffel/elicitation/output/search" hx-trigger="submit"
+              hx-target=".eiffel-requirements" hx-disabled-elt=".eiffel-elicitation-output-file-fieldset"
+              id="eiffelOutputForm">
+            <fieldset class="eiffel-elicitation-output-file-fieldset">
+                {{ if .Data }}
+                    {{ range .Data.Successes }}
+                        <div class="alert alert-success" role="alert">{{ tryTranslate . }}</div>
+                    {{ end }}
+
+                    {{ range .Data.AllViolations }}
+                        <div class="alert alert-danger">{{ tryTranslate . }}</div>
+                    {{ end }}
+                {{ end }}
+
+                <div class="form-floating">
+                    <input id="eiffelOutputDir"
+                       hx-post="/eiffel/elicitation/output/dir/search"
+                       hx-trigger="input changed delay:300ms, search"
+                       hx-target="#eiffelOutputDirList"
+                       hx-disabled-elt="#eiffelOutputDir"
+                       {{ if .Data }}value="{{ .Data.Form.OutputDir }}"{{ end }}
+                       autocomplete="off"
+                       list="eiffelOutputDirList" placeholder="{{ t "eiffel.elicitation.output.directory" }}"
+                       type="text" name="output-dir" class="form-control" aria-describedby="eiffelOutputDirHelp">
+                    <label for="eiffelOutputDir">{{ t "eiffel.elicitation.output.directory" }}</label>
+                    <div id="eiffelOutputDirHelp" class="form-text">
+                        {{ t "eiffel.elicitation.output.directory.help" }}
+                    </div>
+
+                    <datalist id="eiffelOutputDirList">
+                    </datalist>
+                </div>
+
+                <div class="form-floating">
+                    <input id="eiffelOutputFile" required
+                       hx-post="/eiffel/elicitation/output/file/search"
+                       hx-include="#eiffelOutputDir"
+                       hx-trigger="input changed delay:300ms, search"
+                       hx-target="#eiffelOutputFileList"
+                       hx-disabled-elt="#eiffelOutputFile"
+                       {{ if .Data }}value="{{ .Data.Form.OutputFile }}"{{ end }}
+                       autocomplete="off"
+                       list="eiffelOutputFileList" placeholder="{{ t "eiffel.elicitation.output.file" }}"
+                       type="text" name="output-file" class="form-control mt-2" aria-describedby="eiffelOutputFileHelp">
+                    <label for="eiffelOutputFile">{{ t "eiffel.elicitation.output.file" }}</label>
+                    <div id="eiffelOutputFileHelp" class="form-text">
+                        {{ t "eiffel.elicitation.output.file.help" }}
+                    </div>
+
+                    <datalist id="eiffelOutputFileList">
+                    </datalist>
+                </div>
+
+                <input type="submit" class="btn btn-primary mt-3 w-100" value="{{ t "eiffel.elicitation.output.file.save" }}"/>
+            </fieldset>
+        </form>
+    </div>
 {{ end }}

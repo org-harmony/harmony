@@ -23,6 +23,9 @@ go.work
 var/
 tmp/
 
+# HARMONY specific
 config/**/*.local.toml
+files/**/*
+!files/.gitkeep
 
 .idea

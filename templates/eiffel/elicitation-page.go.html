@@ -2,14 +2,6 @@
     {{ template "index" . }}
 {{ end }}
 
-{{ block "content-container" . }}
-    <section class="section content-section mt-3">
-        <div class="content-container container content">
-            {{ template "content" . }}
-        </div>
-    </section>
-{{ end }}
-
 {{ define "content" }}
     {{ template "eiffel.elicitation" . }}
 {{ end }}
@@ -62,7 +54,7 @@
         </div>
 
         <div class="col eiffel-requirements">
-            <p>Requirements here</p>
+            {{ template "eiffel.elicitation.output-file.form" .Data.Form.OutputFormData }}
         </div>
     </div>
 {{ end }}

@@ -9,13 +9,11 @@
             <div class="row">
                 <div class="col">
                     {{ range $key, $variant := .Data.Form.Template.Variants }}
-                        <input id="eiffelVariant-{{ $key }}"
-                               hx-get="/eiffel/elicitation/{{ $templateID }}/{{ $key }}"
-                               hx-target="#eiffelElicitationTemplate"
-                               type="radio" name="options-base"
-                               {{ if eq $variantKey $key }}checked{{ end }}
-                               autocomplete="off" class="btn-check"/>
-                        <label class="btn" for="eiffelVariant-{{ $key }}">{{ $variant.Name }}</label>
+                        <button hx-get="/eiffel/elicitation/{{ $templateID }}/{{ $key }}"
+                            hx-target="#eiffelElicitationTemplate"
+                            class="btn {{ if eq $variantKey $key }}btn-outline-primary{{ else }}btn-outline-secondary{{ end }}">
+                            {{ $variant.Name }}
+                        </button>
                     {{ end }}
                 </div>
             </div>
@@ -103,10 +101,10 @@
                 <div id="collapseSettings" class="accordion-collapse collapse" aria-labelledby="headingSettings" data-bs-parent="#eiffelTemplateInfoAccordion">
                     <div class="accordion-body">
                         <div class="form-check">
-                            <input form="eiffelElicitationForm" class="form-check-input" type="checkbox"
-                               name="copyAfterParse" id="copyAfterParse"
+                            <input form="eiffelElicitationForm" class="form-check-input" role="button"
+                               type="checkbox" name="copyAfterParse" id="copyAfterParse"
                                {{ if .Data.Form.CopyAfterParse }}checked{{ end }}/>
-                            <label class="form-check-label" for="copyAfterParse">
+                            <label class="form-check-label" for="copyAfterParse" role="button">
                                 {{ t "eiffel.elicitation.template.copy-after-parse" }}
                             </label>
                         </div>
@@ -114,19 +112,6 @@
                 </div>
             </div>
         </div>
-
-        {{/*
-        Hier muss von Anfang eine Variante als selektiert reingegeben werden. Bei initialem Laden einfach die 1. Variante nehmen.
-        Ebenfalls beim Suchen und Auswählen der Schablone. (Gleichzusetzen mit Neuladen der Seite.)
-        Beim Nachladen/Verändern der Variante wird hier die gewählte Variante übergeben und vorausgewählt.
-
-        Klicken der Variante wechselt damit die Variante und erzeugt einen HTMX Request, der die Variante wechselt.
-        Damit wird auch die URL für das Formular verändert, diese enthält Schablone und Variante.
-
-        Beim Abschicken und Validieren des Forms (Parsing) muss die Variante übergeben werden und im Gegenzug wird lediglich das Formular
-        zurückgegeben. Die aktuell ausgewählte Schablone und Variante sollten mit übergeben werden (über die URL).
-        Die ausgewählte Datei sollte über einen Input außerhalb des Formulars übergeben werden. (Hier kann das Input-Attribut "form" verwendet werden.)
-        */}}
 
         <div class="eiffel-elicitation-template-variant-form mt-3 w-100">
             {{ template "eiffel.elicitation.form" . }}

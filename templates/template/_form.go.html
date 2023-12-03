@@ -30,8 +30,8 @@
                         {{ range .Data.AllValidationErrors }}
                             <div class="alert alert-danger">{{ t .FieldErrorKey }}</div>
                         {{ end }}
-                        {{ range tErrs .Data.AllTranslatableErrors }}
-                            <div class="alert alert-danger">{{ . }}</div>
+                        {{ range .Data.AllViolations }}
+                            <div class="alert alert-danger">{{ tryTranslate . }}</div>
                         {{ end }}
                         {{ range .Data.Successes }}
                             <div class="alert alert-success">{{ t . }}</div>
