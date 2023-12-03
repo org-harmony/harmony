@@ -17,13 +17,14 @@ async function initEiffel() {
 }
 
 function registerShortcuts() {
-    const searchBtn = document.querySelector('.eiffel-elicitation-template-search button');
-    if (!searchBtn) console.error('could not find template search button for elicitation');
-
     // alt + f to open search modal - strg + f would collide with the browser search, people tend to hate when you override that :)
     document.addEventListener('keydown', function (event) {
         if (event.key === 'f' && event.altKey) {
             event.preventDefault();
+
+            const searchBtn = document.querySelector('.eiffel-elicitation-template-search button');
+            if (!searchBtn) return;
+
             searchBtn.click(); // showing the search modal directly will not trigger the hx-get on the button
         }
     });
@@ -166,7 +167,9 @@ function copyRequirementToClipboard() {
     const requirement = document.getElementsByClassName('eiffel-elicitation-form-requirement')[0];
     if (!requirement) return;
 
-    return navigator.clipboard.writeText(requirement.value)
+    return navigator.clipboard.writeText(requirement.value).catch(() => {
+        alert('Unfortunately, your browser blocked copying the requirement to the clipboard. Please click somewhere on the page and try again then or try to copy manually. Using automatic copy + clear should work fine. Sorry for the inconvenience!')
+    })
 }
 
 function clearElicitationForm() {
