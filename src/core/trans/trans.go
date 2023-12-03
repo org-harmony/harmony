@@ -69,8 +69,8 @@ type HTranslatorProvider struct {
 // HTranslatorOption is a functional option for the HTranslator.
 type HTranslatorOption func(*HTranslator)
 
-// Error is an interface for errors that can be translated.
-type Error interface {
+// Translatable is an interface for errors that can be translated.
+type Translatable interface {
 	Translate(Translator) string
 }
 
@@ -138,6 +138,10 @@ func NewTranslator(opts ...HTranslatorOption) Translator {
 
 // T translates a string.
 func (t *HTranslator) T(s string) string {
+	if t == nil {
+		return s
+	}
+
 	transS, ok := t.translations[s]
 	if !ok {
 		return s
@@ -153,6 +157,10 @@ func (t *HTranslator) T(s string) string {
 //
 // This parsing of args is done by the ArgsAsMap function.
 func (t *HTranslator) Tf(s string, args ...string) string {
+	if t == nil {
+		return s
+	}
+
 	var err error
 	s = t.T(s)
 	hash := md5.New()
@@ -187,6 +195,10 @@ func (t *HTranslator) Tf(s string, args ...string) string {
 
 // Locale returns the locale the translator translates to.
 func (t *HTranslator) Locale() *Locale {
+	if t == nil {
+		return nil
+	}
+
 	return t.locale
 }
 

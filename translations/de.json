@@ -94,9 +94,39 @@
         "invalid-rule-value": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" ist ungültig. Bitte überprüfen Sie die Schablonen-Dokumentation.",
         "not-a-slice": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" ist keine Liste. Bitte überprüfen Sie die Schablonen-Dokumentation.",
         "not-a-string": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" sollte aus einer Zeichenkette oder einer Liste an Zeichenketten bestehen, jedoch wurde ein anderer Typ gefunden. Bitte überprüfen Sie die Schablonen-Dokumentation."
-      }
+      },
+      "equals.error": "Erwarteter Wert: {{ .expected }}.",
+      "equals-any.error": "Erwarteter Wert: {{ .expected }}."
     },
     "elicitation": {
+      "call-to-action": "Anforderungen mit EIFFEL erfassen",
+      "parse": {
+        "flawless-success": "Die Anforderung ist fehlerfrei.",
+        "success": "Die Anforderung ist gültig, jedoch wurden potentielle Probleme gefunden."
+      },
+      "form": {
+        "title": "Anforderung erfassen",
+        "submit": "Anforderung prüfen",
+        "parsing-error": "Die Anforderung entspricht nicht der Schablone.",
+        "rule-description": "{{ .rule }}",
+        "rule-description.optional-flag": "(Optional)",
+        "hint": "Hinweis",
+        "explanation": "Erklärung",
+        "no-further-info": "Es wurden keine weiteren Informationen für diese Regel hinterlegt.",
+        "value": "Erwartet",
+        "value-single-select": "Ein Wert aus"
+      },
+      "output": {
+        "file": "Ausgabedatei",
+        "file.success": "Ausgabedatei für Erfassung festgelegt.",
+        "file.save": "Ausgabedatei für Erfassung speichern",
+        "file.help": "Die Ausgabedatei wird automatisch erstellt, wenn sie nicht existiert. Anforderungen werden angehängt. Die \".csv\"-Dateierweiterung wird automatisch hinzugefügt.",
+        "directory": "Ausgabeverzeichnis",
+        "directory.help": "Unterverzeichnisse sollten durch \"\/\" getrennt werden. Nicht existierende Verzeichnisse werden automatisch erstellt.",
+        "file.info": "Legen Sie eine Ausgabedatei fest, in die Anforderungen nach der Prüfung automatisch geschrieben werden. Somit gehen keine Anforderungen verloren.",
+        "file.path-invalid": "Der Pfad ist ungültig. Bitte überprüfen Sie den Pfad und versuchen Sie es erneut.",
+        "file.create-failed": "Die Datei konnte nicht erstellt werden. Bitte überprüfen Sie den Pfad und die Dateiberechtigungen und versuchen Sie es erneut."
+      },
       "template": {
         "search": {
           "title": "Schablone suchen",
@@ -114,9 +144,6 @@
           "right.shortcut": "Strg + ->",
           "not-found": "Die Variante wurde nicht gefunden.",
           "description": "Variantenbeschreibung"
-        },
-        "form": {
-          "title": "Anforderung erfassen"
         },
         "construction": "Schablonenaufbau",
         "example": "Beispielsatz",

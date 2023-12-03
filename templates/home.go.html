@@ -3,11 +3,21 @@
 {{ end }}
 
 {{ define "content" }}
-    <h1>{{ t "harmony.head.welcome" }}</h1>
+    <div class="content-inner col-7 m-auto">
+        <h1>{{ t "harmony.head.welcome" }}</h1>
 
-    {{ t "harmony.text.welcome" | safeHTML }}
+        {{ t "harmony.text.welcome" | safeHTML }}
 
-    <div class="d-grid">
-        <a href="/auth/login" hx-boost="true" hx-target="body" hx-swap="innerHTML" class="btn btn-primary">{{ t "user.auth.login.action" }}</a>
+        <div class="d-grid">
+            {{ if not (index .Extra "User") }}
+                <a href="/auth/login" hx-boost="true" hx-target="body" hx-swap="innerHTML" class="btn btn-primary">
+                    {{ t "user.auth.login.action" }}
+                </a>
+            {{ else }}
+                <a href="/eiffel" hx-boost="true" hx-target="body" hx-swap="innerHTML" class="btn btn-primary">
+                    {{ t "eiffel.elicitation.call-to-action" }}
+                </a>
+            {{ end }}
+        </div>
     </div>
 {{ end }}

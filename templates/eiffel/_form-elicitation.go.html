@@ -1,15 +1,219 @@
 {{ define "eiffel.elicitation.form" }}
-    <h4>{{ t "eiffel.elicitation.template.form.title" }}</h4>
-    <form
-            hx-post="/eiffel/elicitation/{id}"
-            hx-target="#eiffelElicitationForm"
-            hx-disabled-elt=".eiffel-elicitation-form-fieldset"
-            hx-swap="outerHTML"
-            hx-trigger="submit"
-            id="eiffelElicitationForm"
-    >
+    {{ $rules := .Data.Form.Template.Rules }}
+    {{ $displayTypes := .Data.Form.DisplayTypes }}
+    {{ $parsingResult := .Data.Form.ParsingResult }}
+    {{ $segments := .Data.Form.SegmentMap }}
+
+    {{/*
+    TODO save copy to clipboard setting to user session
+    TODO JS for better UX => automatically active input etc.
+    TODO add copy to clipboard
+    TODO shortcuts hinzufügen
+    */}}
+
+    <h4>{{ t "eiffel.elicitation.form.title" }}</h4>
+    <form hx-post="/eiffel/elicitation/{{ .Data.Form.TemplateID }}/{{ .Data.Form.VariantKey }}"
+        hx-target=".eiffel-elicitation-template-variant-form"
+        hx-disabled-elt=".eiffel-elicitation-form-fieldset"
+        id="eiffelElicitationForm">
         <fieldset class="eiffel-elicitation-form-fieldset">
-            <input name="test" placeholder="test" />
+            <div class="row">
+                {{/* TODO beautify this code and improve readability - good templating is hard :/ */}}
+
+                {{ range $i, $ruleName := .Data.Form.Variant.Rules }}
+                    {{ $rule := index $rules . }}
+                    {{ $displayType := index $displayTypes $ruleName }}
+                    {{ $col := "col-6" }}
+
+                    {{ if eq $rule.Size "small" }}
+                        {{ $col = "col-3" }}
+                    {{ else if eq $rule.Size "medium" }}
+                        {{ $col = "col-6" }}
+                    {{ else if eq $rule.Size "large" }}
+                        {{ $col = "col-9" }}
+                    {{ else if eq $rule.Size "full" }}
+                        {{ $col = "col-12" }}
+                    {{ end }}
+
+                    {{ $violations := "" }}
+                    {{ if $parsingResult }}
+                        {{ $violations = $parsingResult.ViolationsForRule $ruleName }}
+                    {{ end }}
+
+                    {{ $displayName := $rule.Name }}
+                    {{ if not $rule.Optional }}
+                        {{ $displayName = printf "%s %s" $displayName "*" }}
+                    {{ end }}
+
+                    {{ $inputName := printf "segment-%s" $ruleName }}
+
+                    <div class="{{ $col }}">
+                        {{ if or (eq $displayType "input-text")
+                        (eq $displayType "text")
+                        (eq $displayType "input-single-select") }}
+                            <div class="mb-3">
+                                <div class="input-group {{ if $violations }}has-validation{{ end }}">
+                                    <span data-bs-target="#eiffelRule-{{ $ruleName }}-info" class="input-group-text" role="button" data-bs-toggle="modal">i</span>
+
+                                    {{/* this has to be before the input, otherwise the border radius on the group will not match */}}
+                                    {{ if eq $displayType "input-single-select"}}
+                                        <datalist id="eiffelFormInput-{{ $ruleName }}-datalist">
+                                            {{ range $i, $option := $rule.Value }}
+                                                <option value="{{ $option }}"></option>
+                                            {{ end }}
+                                        </datalist>
+                                    {{ end }}
+
+                                    {{ if eq $displayType "text" }}
+                                        <input type="hidden" name="{{ $inputName }}" value="{{ $rule.Value }}" />
+                                    {{ end }}
+
+                                    <input type="text"
+                                       id="eiffelFormInput-{{ $ruleName }}"
+                                       class="form-control {{ if $violations }}is-invalid{{ end }}"
+                                       name="{{ $inputName }}"
+                                       placeholder="{{ $displayName}}"
+                                       aria-label="{{ $displayName }}"
+                                       aria-description="{{ $rule.Hint }}"
+                                       {{ if eq $displayType "text" }}
+                                           disabled
+                                           value="{{ $rule.Value }}"
+                                       {{ else if $parsingResult }}
+                                           value="{{ index $segments $ruleName }}"
+                                       {{ end }}
+                                       {{ if eq $displayType "input-single-select" }}
+                                           list="eiffelFormInput-{{ $ruleName }}-datalist"
+                                       {{ end }}
+                                       {{ if not $rule.Optional }}
+                                           required
+                                       {{ end }}
+                                    />
+
+                                    {{ if $violations }}
+                                        <div id="eiffelFormInput-{{ $ruleName }}-error" class="invalid-feedback">
+                                            {{ range $i, $violation := $violations }}
+                                                {{ tryTranslate $violation }}
+                                            {{ end }}
+                                        </div>
+                                    {{ end }}
+                                </div>
+                            </div>
+                        {{ else if eq $displayType "input-textarea" }}
+                            <div class="mb-3">
+                                <div class="input-group {{ if $violations }}has-validation{{ end }}">
+                                    <span data-bs-target="#eiffelRule-{{ $ruleName }}-info" class="input-group-text" role="button" data-bs-toggle="modal">i</span>
+
+                                    <textarea id="eiffelFormInput-{{ $ruleName }}"
+                                        class="form-control {{ if $violations }}is-invalid{{ end }}"
+                                        name="{{ $inputName }}"
+                                        placeholder="{{ $displayName }}"
+                                        aria-label="{{ $displayName }}"
+                                        aria-description="{{ $rule.Hint }}"
+                                        {{ if not $rule.Optional }}
+                                            required
+                                        {{ end }}
+                                        rows="1">{{ if not $parsingResult }}{{ $rule.Value }}{{ else }}{{ index $segments $ruleName }}{{ end }}</textarea>
+
+                                    {{ if $violations }}
+                                        <div id="eiffelFormInput-{{ $ruleName }}-error" class="invalid-feedback">
+                                            {{ range $i, $violation := $violations }}
+                                                {{ tryTranslate $violation }}
+                                            {{ end }}
+                                        </div>
+                                    {{ end }}
+                                </div>
+                            </div>
+                        {{ end }}
+
+                        <div class="modal fade" id="eiffelRule-{{ $ruleName }}-info"
+                             tabindex="-1" aria-labelledby="eiffelRule-{{ $ruleName }}-info-label"
+                             aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="eiffelRule-{{ $ruleName }}-info-label">
+                                            {{ tf "eiffel.elicitation.form.rule-description" "rule" $rule.Name }}
+                                            {{ if $rule.Optional }}{{ t "eiffel.elicitation.form.rule-description.optional-flag" }}{{ end }}
+                                        </h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <dl>
+                                            {{ if eq $displayType "text" }}
+                                                <dt>{{ t "eiffel.elicitation.form.value" }}</dt>
+                                                <dd>"{{ $rule.Value }}"</dd>
+                                            {{ end }}
+                                            {{ if eq $displayType "input-single-select" }}
+                                                <dt>{{ t "eiffel.elicitation.form.value-single-select" }}</dt>
+                                                <dd>
+                                                    {{ $valueLength := len $rule.Value }}
+                                                    {{ range $i, $val := $rule.Value }}
+                                                        "{{ $val }}"{{ if lt (add $i 1) $valueLength }}, {{ end }}
+                                                    {{ end }}
+                                                </dd>
+                                            {{ end }}
+                                            {{ if $rule.Hint }}
+                                                <dt>{{ t "eiffel.elicitation.form.hint" }}</dt>
+                                                <dd>{{ $rule.Hint }}</dd>
+                                            {{ end }}
+                                            {{ if $rule.Explanation }}
+                                                <dt>{{ t "eiffel.elicitation.form.explanation" }}</dt>
+                                                <dd>{{ $rule.Explanation }}</dd>
+                                            {{ end }}
+                                            {{ if and (not $rule.Hint) (not $rule.Explanation) }}
+                                                <dd>{{ t "eiffel.elicitation.form.no-further-info" }}</dd>
+                                            {{ end }}
+                                        </dl>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t "harmony.generic.close" }}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {{ end }}
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary w-100">{{ t "eiffel.elicitation.form.submit" }}</button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                {{ range .Data.Successes }}
+                    <div class="col-12">
+                        <div class="alert alert-success" role="alert">{{ t . }}</div>
+                    </div>
+                {{ end }}
+                {{ range .Data.AllViolations }}
+                    <div class="col-12">
+                        <div class="alert alert-danger" role="alert">{{ tryTranslate . }}</div>
+                    </div>
+                {{ end }}
+                {{ range .Data.AllValidationErrors }}
+                    <div class="col-12">
+                        <div class="alert alert-danger" role="alert">{{ t .FieldErrorKey }}</div>
+                    </div>
+                {{ end }}
+
+                {{ if .Data.Form.ParsingResult }}
+                    {{ if not .Data.Form.ParsingResult.Ok }}
+                        <div class="col-12">
+                            <div class="alert alert-danger" role="alert">{{ t "eiffel.elicitation.form.parsing-error" }}</div>
+                        </div>
+                    {{ end }}
+
+                    {{ range .Data.Form.ParsingResult.Warnings }}
+                        <div class="col-12">
+                            <div class="alert alert-warning" role="alert">{{ tryTranslate . }}</div>
+                        </div>
+                    {{ end }}
+
+                    {{ range .Data.Form.ParsingResult.Notices }}
+                        <div class="col-12">
+                            <div class="alert alert-info" role="alert">{{ tryTranslate . }}</div>
+                        </div>
+                    {{ end }}
+                {{ end }}
+            </div>
         </fieldset>
     </form>
 {{ end }}

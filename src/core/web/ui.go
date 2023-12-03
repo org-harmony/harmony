@@ -444,6 +444,7 @@ func (d *FormData[T]) ValidationErrorsForField(field string) []validation.Error 
 }
 
 // AllValidationErrors returns all validation errors for all fields.
+// If you want to display all errors to the user use AllViolations instead.
 func (d *FormData[T]) AllValidationErrors() []validation.Error {
 	var errs []validation.Error
 	for _, fieldErrs := range d.Violations {
@@ -458,27 +459,20 @@ func (d *FormData[T]) AllValidationErrors() []validation.Error {
 	return errs
 }
 
-// AllTranslatableErrors returns all errors for all fields that can be read as trans.Error.
-// This is useful for translating errors before displaying them to the user.
-func (d *FormData[T]) AllTranslatableErrors() []trans.Error {
-	var errs []trans.Error
-	for _, fieldErrs := range d.Violations {
-		for _, err := range fieldErrs {
-			var t trans.Error
-			if errors.As(err, &t) {
-				errs = append(errs, t)
-			}
-		}
-	}
-
-	return errs
-}
-
 // AllViolations returns all errors for all fields. They can then be used to display all errors to the user.
+//
+// Important: AllViolations does *not* return any validation errors. Use AllValidationErrors for that.
+// ValidationErrors are filtered out because they are usually displayed to the user in a different way than other errors.
 func (d *FormData[T]) AllViolations() []error {
 	var errs []error
 	for _, fieldErrs := range d.Violations {
-		errs = append(errs, fieldErrs...)
+		for _, err := range fieldErrs {
+			if errors.Is(err, &validation.Error{}) {
+				continue
+			}
+
+			errs = append(errs, err)
+		}
 	}
 
 	return errs
@@ -564,13 +558,16 @@ func makeTemplateTranslatable(ctx context.Context, t *template.Template) error {
 		"tf": func(s string, args ...string) string {
 			return translator.Tf(s, args...)
 		},
-		"tErrs": func(errs []trans.Error) []string {
-			var s []string
-			for _, err := range errs {
-				s = append(s, err.Translate(translator))
+		"tryTranslate": func(t any) string {
+			if s, ok := t.(string); ok {
+				return translator.T(s)
 			}
 
-			return s
+			if t, ok := t.(trans.Translatable); ok {
+				return t.Translate(translator)
+			}
+
+			return fmt.Sprintf("%s", t)
 		},
 	})
 
@@ -580,6 +577,9 @@ func makeTemplateTranslatable(ctx context.Context, t *template.Template) error {
 // templateFuncs returns a template.FuncMap containing basic template functions.
 func templateFuncs(ui *UICfg) template.FuncMap {
 	return template.FuncMap{
+		"add": func(a, b int) int {
+			return a + b
+		},
 		"asset": func(filename string) string {
 			return filepath.Join(ui.AssetsUri, filename)
 		},
@@ -592,13 +592,12 @@ func templateFuncs(ui *UICfg) template.FuncMap {
 		"tf": func(s string, args ...string) string {
 			return s
 		},
-		"tErrs": func(errs []error) []string {
-			var s []string
-			for _, err := range errs {
-				s = append(s, err.Error())
+		"tryTranslate": func(t any) string {
+			if s, ok := t.(string); ok {
+				return s
 			}
 
-			return s
+			return fmt.Sprintf("%s", t)
 		},
 	}
 }

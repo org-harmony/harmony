@@ -27,6 +27,7 @@ import (
 // TODO add utilities for easier testing of the web layer
 // TODO improve UI/UX/Design (styling, css, scss)
 // TODO add more loading indications, especially for loading body changes
+// TODO improve user logged out handling during requests/responses and general site interaction/navigation
 
 func main() {
 	logger := trace.NewLogger()

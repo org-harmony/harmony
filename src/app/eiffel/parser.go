@@ -181,8 +181,7 @@ func RuleParsers() *RuleParserProvider {
 // Parse implements the template.ParsableTemplate interface for the BasicTemplate. It is used to parse requirements in the form of segments.
 // Each segment is a part of the requirement that is to be parsed. For the EIFFEL basic template (EBT), each segment is an input from auto-generated
 // input field based on the rules defined in the template. Therefore, each segment will be validated by the corresponding rule.
-//
-// This function might panic if the template is not valid. Therefore, it is recommended to validate the template before parsing requirements.
+// It is recommended to validate the template before parsing requirements.
 //
 // The parsing process is as follows:
 //  1. Prepare segments by trimming whitespaces from the input string and indexing them.
@@ -200,10 +199,12 @@ func RuleParsers() *RuleParserProvider {
 // Also, it is possible that a parsed rule contains warnings those are not downgraded and the parsing result will not be flawless.
 func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvider, variantName string, segments ...parser.ParsingSegment) (parser.ParsingResult, error) {
 	result := parser.ParsingResult{
-		TemplateID:   bt.ID,
-		TemplateType: BasicTemplateType,
-		TemplateName: bt.Name,
-		VariantName:  variantName,
+		TemplateID:      bt.ID,
+		TemplateType:    BasicTemplateType,
+		TemplateVersion: bt.Version,
+		TemplateName:    bt.Name,
+		VariantName:     variantName,
+		Requirement:     "",
 	}
 
 	indexedSegments := prepareSegments(segments)
@@ -211,6 +212,7 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 	if !ok {
 		return result, ErrInvalidVariant
 	}
+	result.VariantName = variant.Name
 
 	for _, ruleName := range variant.Rules {
 		rule, ok := bt.Rules[ruleName]
@@ -219,9 +221,9 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 		}
 
 		segment, ok := indexedSegments[ruleName]
-		if !ok && !rule.Optional {
+		if (!ok || segment.Value == "") && !rule.Optional {
 			result.Errors = append(result.Errors, parser.ParsingLog{
-				Segment: nil,
+				Segment: &parser.ParsingSegment{Name: ruleName},
 				Level:   parser.ParsingLogLevelError,
 				Message: "eiffel.parser.error.missing-segment",
 				TranslationArgs: []string{
@@ -234,7 +236,7 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 			continue
 		}
 
-		if !ok {
+		if !ok || segment.Value == "" {
 			continue // rule is optional and segment is missing -> ignore
 		}
 
@@ -247,6 +249,19 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 		if err != nil {
 			return result, err
 		}
+
+		be := " "
+		af := ""
+		before, bOk := rule.Extra["before"]
+		after, aOk := rule.Extra["after"]
+		if bStr, ok := before.(string); ok && bOk {
+			be = bStr
+		}
+		if aStr, ok := after.(string); ok && aOk {
+			af = aStr
+		}
+
+		result.Requirement += be + strings.TrimSpace(segment.Value) + af
 
 		for _, log := range parsingLogs {
 			switch log.Level {
@@ -265,6 +280,8 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 			}
 		}
 	}
+
+	result.Requirement = strings.TrimSpace(result.Requirement)
 
 	return result, nil
 }

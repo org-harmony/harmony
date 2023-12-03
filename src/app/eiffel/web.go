@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/org-harmony/harmony/src/app/template"
+	"github.com/org-harmony/harmony/src/app/template/parser"
 	"github.com/org-harmony/harmony/src/app/user"
+	"github.com/org-harmony/harmony/src/core/config"
 	"github.com/org-harmony/harmony/src/core/event"
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/persistence"
@@ -14,6 +16,7 @@ import (
 	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/org-harmony/harmony/src/core/web"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
@@ -33,6 +36,10 @@ var (
 	ErrTemplateNotFound = errors.New("eiffel.elicitation.template.not-found")
 	// ErrTemplateVariantNotFound will be displayed to the user if the template variant could not be found.
 	ErrTemplateVariantNotFound = errors.New("eiffel.elicitation.template.variant.not-found")
+	// ErrInvalidFilepath will be displayed to the user if the filepath is invalid.
+	ErrInvalidFilepath = errors.New("eiffel.elicitation.output.file.path-invalid")
+	// ErrCouldNotCreateFile will be displayed to the user if the file could not be created.
+	ErrCouldNotCreateFile = errors.New("eiffel.elicitation.output.file.create-failed")
 )
 
 // TemplateDisplayType specifies how a rule should be displayed in the UI.
@@ -54,6 +61,13 @@ type TemplateFormData struct {
 	TemplateID uuid.UUID
 	// CopyAfterParse is a flag indicating if the user wants to copy the parsed requirement to the clipboard.
 	CopyAfterParse bool
+	// ParsingResult is the result of the parsing process. This can be empty if no parsing was done yet.
+	ParsingResult *parser.ParsingResult
+	// SegmentMap is a map of rule names to their corresponding segment value.
+	// This is used to fill the segments with their values after parsing.
+	SegmentMap map[string]string
+	// OutputFormData is the form data for the output directory and file.
+	OutputFormData web.BaseTemplateData
 }
 
 // SearchTemplateData contains templates to render as search results and a flag indicating if the query was too short.
@@ -62,7 +76,17 @@ type SearchTemplateData struct {
 	QueryTooShort bool
 }
 
+// OutputFormData is the form data for the output directory and file search form.
+// It is used to fill the form with the previously selected values.
+type OutputFormData struct {
+	OutputDir  string
+	OutputFile string
+}
+
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
+	cfg := Cfg{}
+	util.Ok(config.C(&cfg, config.From("eiffel"), config.Validate(appCtx.Validator)))
+
 	// TODO move this to module init when module manager is implemented (see subscribeEvents)
 	subscribeEvents(appCtx)
 
@@ -77,8 +101,10 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	router.Post("/eiffel/elicitation/templates/search", searchTemplate(appCtx, webCtx).ServeHTTP)
 	router.Get("/eiffel/elicitation/{templateID}", elicitationTemplate(appCtx, webCtx, true).ServeHTTP)
 	router.Get("/eiffel/elicitation/{templateID}/{variant}", elicitationTemplate(appCtx, webCtx, false).ServeHTTP)
-	router.Post("/eiffel/elicitation/{templateID}/{variant}", parseRequirement(appCtx, webCtx).ServeHTTP)
-	router.Get("/eiffel/elicitation/output/file/form", outputFileForm(appCtx, webCtx).ServeHTTP)
+	router.Post("/eiffel/elicitation/{templateID}/{variant}", parseRequirement(appCtx, webCtx, cfg).ServeHTTP)
+	router.Post("/eiffel/elicitation/output/search", outputSearchForm(appCtx, webCtx, cfg).ServeHTTP)
+	router.Post("/eiffel/elicitation/output/dir/search", outputSearchDir(appCtx, webCtx, cfg).ServeHTTP)
+	router.Post("/eiffel/elicitation/output/file/search", outputFileSearch(appCtx, webCtx, cfg).ServeHTTP)
 }
 
 func subscribeEvents(appCtx *hctx.AppCtx) {
@@ -232,14 +258,144 @@ func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVaria
 	})
 }
 
-func parseRequirement(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+func parseRequirement(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handler {
+	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		return io.Render(nil, "eiffel.elicitation.form", "eiffel/_form-elicitation.go.html")
+		request := io.Request()
+		ctx := request.Context()
+		parsers := RuleParsers()
+
+		templateID := web.URLParam(request, "templateID")
+		variant := web.URLParam(request, "variant")
+		outputDir := BuildDirPath(cfg.Output.BaseDir, request.FormValue("elicitationOutputDir"))
+		outputFile := BuildFilename(request.FormValue("elicitationOutputFile"))
+
+		formData, err := TemplateFormFromRequest(
+			ctx,
+			templateID,
+			variant,
+			templateRepository,
+			parsers,
+			appCtx.Validator,
+			false,
+		)
+		if err != nil {
+			return io.InlineError(err)
+		}
+
+		segmentMap, err := SegmentMapFromRequest(request, len(formData.Variant.Rules))
+		if err != nil {
+			return io.InlineError(web.ErrInternal)
+		}
+		formData.SegmentMap = segmentMap
+
+		parsingResult, err := formData.Template.Parse(ctx, parsers, formData.VariantKey, SegmentMapToSegments(segmentMap)...)
+		formData.ParsingResult = &parsingResult
+
+		var s []string
+		if parsingResult.Flawless() {
+			s = []string{"eiffel.elicitation.parse.flawless-success"}
+		} else if parsingResult.Ok() {
+			s = []string{"eiffel.elicitation.parse.success"}
+		}
+
+		if parsingResult.Ok() {
+			usr := user.MustCtxUser(ctx)
+			csv, created, err := CreateIfNotExists(outputDir, outputFile, 0750)
+			if err != nil {
+				return io.InlineError(ErrCouldNotCreateFile, err)
+			}
+
+			writer := CSVWriter{file: csv}
+			if created {
+				err := writer.WriteHeaderRow()
+				if err != nil {
+					return io.InlineError(web.ErrInternal, err)
+				}
+			}
+
+			err = writer.WriteRow(parsingResult, usr)
+			if err != nil {
+				return io.InlineError(web.ErrInternal, err)
+			}
+		}
+
+		return io.Render(web.NewFormData(formData, s, err), "eiffel.elicitation.form", "eiffel/_form-elicitation.go.html")
 	})
 }
 
-func outputFileForm(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+func outputSearchForm(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handler {
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		return io.Render(nil, "eiffel.elicitation.output-file.form", "eiffel/_form-output-file.go.html")
+		request := io.Request()
+		err := request.ParseForm()
+		if err != nil {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		rawDir := request.FormValue("output-dir")
+		dir := BuildDirPath(cfg.Output.BaseDir, rawDir)
+		rawFile := request.FormValue("output-file")
+		file := BuildFilename(rawFile)
+
+		path := filepath.Join(dir, file)
+		if path == "" {
+			return io.InlineError(ErrInvalidFilepath)
+		}
+
+		csv, created, err := CreateIfNotExists(dir, file, 0750)
+		if err != nil {
+			return io.InlineError(ErrCouldNotCreateFile, err)
+		}
+
+		if created {
+			writer := CSVWriter{file: csv}
+			err = writer.WriteHeaderRow()
+			if err != nil {
+				return io.InlineError(web.ErrInternal, err)
+			}
+		}
+
+		return io.Render(web.NewFormData(OutputFormData{
+			OutputDir:  rawDir,
+			OutputFile: rawFile,
+		}, []string{"eiffel.elicitation.output.file.success"}), "eiffel.elicitation.output-file.form", "eiffel/_form-output-file.go.html")
+	})
+}
+
+func outputSearchDir(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handler {
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		request := io.Request()
+		err := request.ParseForm()
+		if err != nil {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		query := request.FormValue("output-dir")
+		dirs, err := DirSearch(cfg.Output.BaseDir, query)
+		if err != nil {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		return io.Render(dirs, "eiffel.elicitation.output.dir.search-result", "eiffel/_output-dir-search-result.go.html")
+	})
+}
+
+func outputFileSearch(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handler {
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		request := io.Request()
+		err := request.ParseForm()
+		if err != nil {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		query := request.FormValue("output-file")
+		dir := request.FormValue("output-dir")
+		files, err := FileSearch(cfg.Output.BaseDir, dir, query)
+		if err != nil {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		return io.Render(files, "eiffel.elicitation.output.file.search-result", "eiffel/_output-file-search-result.go.html")
 	})
 }
