@@ -9,6 +9,7 @@ import (
 	"github.com/org-harmony/harmony/src/core/trace"
 	"github.com/org-harmony/harmony/src/core/util"
 	"net/http"
+	"time"
 )
 
 const MiddlewarePkg = "user.middleware"
@@ -132,6 +133,18 @@ func LoggedInUser(r *http.Request, sessionStore SessionRepository) (*User, error
 	userSession, err := SessionFromRequest(r, sessionStore)
 	if err != nil {
 		return nil, err
+	}
+
+	if userSession.IsExpired() {
+		err = TryExtendSession(r.Context(), userSession, time.Hour, sessionStore)
+		if err != nil && !errors.Is(err, ErrHardSessionExpiry) {
+			return nil, err
+		}
+
+		if err != nil && errors.Is(err, ErrHardSessionExpiry) {
+			err = sessionStore.Delete(r.Context(), userSession.ID)
+			return nil, err
+		}
 	}
 
 	return &userSession.Payload, nil

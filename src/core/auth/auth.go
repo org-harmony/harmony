@@ -91,13 +91,14 @@ func OAuthCfgFromProviderCfg(p *ProviderCfg, redirectURL string) *oauth2.Config 
 
 // SetSession sets the session cookie on the response.
 // The session id is used as the cookie value.
-// The cookie expires at the same time as the session.
+// The cookie expires at the same time as the session + 48 hours.
+// This allows for db cleanup when using an expired session that is still sent to the backend.
 func SetSession[P, M any](w http.ResponseWriter, name string, session *persistence.Session[P, M]) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,
 		Value:    session.ID.String(),
-		Expires:  session.ExpiresAt,
-		SameSite: http.SameSiteLaxMode, // must be lax for OAuth2, otherwise redirect will lead to weird states
+		Expires:  session.ExpiresAt.Add(48 * time.Hour), // will be validated by the backend but allows for db cleanup
+		SameSite: http.SameSiteLaxMode,                  // must be lax for OAuth2, otherwise redirect will lead to weird states
 		Path:     "/",
 		Secure:   true,
 		HttpOnly: true,

@@ -95,7 +95,7 @@ func TestSetSession(t *testing.T) {
 	cookie := cookies[0]
 	assert.Equal(t, "test", cookie.Name)
 	assert.Equal(t, session.ID.String(), cookie.Value)
-	assert.Equal(t, session.ExpiresAt.UTC().Truncate(time.Second), cookie.Expires.UTC().Truncate(time.Second))
+	assert.Equal(t, session.ExpiresAt.UTC().Add(48*time.Hour).Truncate(time.Second), cookie.Expires.UTC().Truncate(time.Second))
 }
 
 func TestClearSession(t *testing.T) {

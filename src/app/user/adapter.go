@@ -24,6 +24,9 @@ type OAuthUserAdapter interface {
 	CreateUser(ctx context.Context, email string, token *oauth2.Token, cfg *auth.ProviderCfg, client *http.Client) (*ToCreate, error)
 }
 
+// TODO add Google adapter
+// TODO add Azure adapter
+
 // Adapters returns a map of OAuthUserAdapters with the provider name as key.
 // These adapters are used to adapt the OAuth2 user data to the user entity.
 func Adapters() map[string]OAuthUserAdapter {

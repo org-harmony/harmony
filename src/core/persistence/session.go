@@ -94,7 +94,12 @@ func PGDeleteSession(ctx context.Context, db *pgxpool.Pool, key uuid.UUID) error
 	return err
 }
 
+// IsExpired checks if a session has expired.
+func (s *Session[P, M]) IsExpired() bool {
+	return s.ExpiresAt.Before(time.Now())
+}
+
 // IsValidSession checks if a session has expired.
 func IsValidSession[P, M any](session *Session[P, M]) bool {
-	return session.ExpiresAt.After(time.Now())
+	return !session.IsExpired()
 }

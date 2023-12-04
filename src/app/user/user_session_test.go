@@ -57,10 +57,8 @@ func TestPGUserSessionRepository_Read_Expired(t *testing.T) {
 	assert.NoError(t, err)
 
 	readSession, err := sessionStore.Read(ctx, session.ID)
-	assert.Error(t, err)
-	assert.ErrorIs(t, err, persistence.ErrSessionExpired)
-	assert.ErrorIs(t, err, persistence.ErrReadRow)
-	assert.Nil(t, readSession)
+	assert.NoError(t, err)
+	assert.NotNil(t, readSession)
 }
 
 func TestPGUserSessionRepository_Insert(t *testing.T) {
@@ -98,6 +96,43 @@ func TestPGUserSessionRepository_Delete(t *testing.T) {
 
 	err = sessionStore.Delete(ctx, session.ID)
 	assert.NoError(t, err)
+}
+
+func TestSession_IsHardExpired(t *testing.T) {
+	s := NewUserSession(&User{}, time.Hour)
+	assert.False(t, s.IsHardExpired())
+
+	s.ExpiresAt = time.Now().Add(-24 * time.Hour)
+	assert.True(t, s.IsHardExpired())
+
+	s.ExpiresAt = time.Now().Add(-23 * time.Hour)
+	assert.False(t, s.IsHardExpired())
+
+	s.ExpiresAt = time.Now().Add(24 * time.Hour)
+	assert.False(t, s.IsHardExpired())
+
+	s.ExpiresAt = time.Now().Add(-90 * time.Minute)
+	s.CreatedAt = time.Now().Add(-8 * time.Hour)
+	assert.True(t, s.IsHardExpired())
+
+	extendedAt := time.Now().Add(-2 * time.Hour)
+	s.Meta.ExtendedAt = &extendedAt
+	assert.False(t, s.IsHardExpired())
+
+	s.Meta.ExtendedAt = nil
+	assert.True(t, s.IsHardExpired())
+
+	now := time.Now()
+	s.ExpiresAt = now.Add(-23 * time.Hour)
+	s.CreatedAt = now.Add(-3 * time.Hour)
+	s.Meta.ExtendedAt = &now
+	assert.False(t, s.IsHardExpired())
+
+	s.Meta.ExtendedAt = nil
+	assert.True(t, s.IsHardExpired())
+
+	s.Meta.FirstLoginAt = now.Add(-25 * time.Hour)
+	assert.True(t, s.IsHardExpired())
 }
 
 func fooUserSession() *Session {
