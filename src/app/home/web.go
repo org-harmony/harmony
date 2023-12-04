@@ -5,6 +5,7 @@ import (
 	"github.com/org-harmony/harmony/src/core/web"
 )
 
+// RegisterController registers the home controller and navigation.
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	registerNavigation(appCtx, webCtx)
 

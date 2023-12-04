@@ -161,3 +161,28 @@ func (s *Session) IsHardExpired() bool {
 
 	return false
 }
+
+// AddSetting adds a setting to the session. Settings are stored in the SessionMeta.Settings map.
+// If the map is nil it will be initialized.
+func (s *Session) AddSetting(key, value string) {
+	if s.Meta.Settings == nil {
+		s.Meta.Settings = make(map[string]string)
+	}
+
+	s.Meta.Settings[key] = value
+}
+
+// Setting returns the value for the given key from the SessionMeta.Settings map.
+// If the map is nil or the key is not present it returns an error.
+func (s *Session) Setting(key string) (string, error) {
+	if s.Meta.Settings == nil {
+		return "", errors.New("setting not found")
+	}
+
+	value, ok := s.Meta.Settings[key]
+	if !ok {
+		return "", errors.New("setting not found")
+	}
+
+	return value, nil
+}

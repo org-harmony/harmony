@@ -5,3 +5,5 @@ package eiffel
 type Cfg struct {
 	Output OutputCfg `toml:"output"`
 }
+
+// TODO add tests for service, web and output
