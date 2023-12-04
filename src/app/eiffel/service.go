@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/app/template/parser"
+	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/validation"
 	"net/http"
 	"strings"
@@ -151,4 +152,56 @@ func SegmentMapToSegments(segments map[string]string) []parser.ParsingSegment {
 	}
 
 	return parsingSegments
+}
+
+// CopyAfterParseSetting returns whether the checkbox for copying after parsing should be rendered as checked.
+// If the checkbox is checked in the request, the setting will be set to "on" in the session.
+// If the checkbox is not checked in the request, the setting will be set to "off" in the session if it is not an initial request.
+// If the initial request flag is set to true, the setting will not be changed and the request not read.
+//
+// Initial request means that the request initially loaded the form because in that case the setting should not be changed,
+// as initially the value from the form will always be empty. Then only the value from the session is used.
+// TODO add tests for this
+func CopyAfterParseSetting(request *http.Request, sessionStore user.SessionRepository, init bool) bool {
+	session, err := user.SessionFromRequest(request, sessionStore)
+	if err != nil {
+		return false
+	}
+
+	copyAfterParse, err := session.Setting("eiffel.CopyAfterParse")
+
+	requestCopyAfterParse := ""
+	if !init {
+		err := request.ParseForm()
+		if err != nil {
+			return false
+		}
+		requestCopyAfterParse = request.FormValue("copyAfterParse")
+	}
+
+	if err != nil && requestCopyAfterParse == "" {
+		return false
+	}
+
+	if requestCopyAfterParse == "on" {
+		session.AddSetting("eiffel.CopyAfterParse", "on")
+		err := sessionStore.Write(request.Context(), session.ID, session)
+		if err != nil {
+			return false
+		}
+
+		return true
+	}
+
+	if requestCopyAfterParse == "" && !init {
+		session.AddSetting("eiffel.CopyAfterParse", "off")
+		err := sessionStore.Write(request.Context(), session.ID, session)
+		if err != nil {
+			return false
+		}
+
+		return false
+	}
+
+	return copyAfterParse == "on"
 }

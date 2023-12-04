@@ -4,10 +4,6 @@
     {{ $parsingResult := .Data.Form.ParsingResult }}
     {{ $segments := .Data.Form.SegmentMap }}
 
-    {{/*
-    TODO save copy to clipboard setting to user session
-    */}}
-
     <h4>{{ t "eiffel.elicitation.form.title" }}</h4>
     <form hx-post="/eiffel/elicitation/{{ .Data.Form.TemplateID }}/{{ .Data.Form.VariantKey }}"
         hx-target=".eiffel-elicitation-template-variant-form"

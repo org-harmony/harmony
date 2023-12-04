@@ -83,6 +83,7 @@ type OutputFormData struct {
 	OutputFile string
 }
 
+// RegisterController registers the controllers as well as the navigation and event listeners.
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	cfg := Cfg{}
 	util.Ok(config.C(&cfg, config.From("eiffel"), config.Validate(appCtx.Validator)))
@@ -154,6 +155,7 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 
 func eiffelElicitationPage(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+	sessionStore := util.UnwrapType[user.SessionRepository](appCtx.Repository(user.SessionRepositoryName))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		templateID := web.URLParam(io.Request(), "templateID")
@@ -171,6 +173,8 @@ func eiffelElicitationPage(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 			appCtx.Validator,
 			true,
 		)
+
+		formData.CopyAfterParse = CopyAfterParseSetting(io.Request(), sessionStore, true)
 
 		return renderElicitationPage(io, formData, nil, []error{err})
 	})
@@ -227,6 +231,7 @@ func searchTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 
 func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVariant bool) http.Handler {
 	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+	sessionStore := util.UnwrapType[user.SessionRepository](appCtx.Repository(user.SessionRepositoryName))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		templateID := web.URLParam(io.Request(), "templateID")
@@ -247,6 +252,8 @@ func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVaria
 			return io.InlineError(err)
 		}
 
+		formData.CopyAfterParse = CopyAfterParseSetting(io.Request(), sessionStore, true)
+
 		io.Response().Header().Set("HX-Push-URL", fmt.Sprintf("/eiffel/%s/%s", templateID, formData.VariantKey))
 
 		return io.Render(
@@ -260,6 +267,7 @@ func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVaria
 
 func parseRequirement(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handler {
 	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+	sessionStore := util.UnwrapType[user.SessionRepository](appCtx.Repository(user.SessionRepositoryName))
 
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		request := io.Request()
@@ -325,6 +333,8 @@ func parseRequirement(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handle
 				return io.InlineError(web.ErrInternal, err)
 			}
 		}
+
+		formData.CopyAfterParse = CopyAfterParseSetting(request, sessionStore, false)
 
 		return io.Render(web.NewFormData(formData, s, err), "eiffel.elicitation.form", "eiffel/_form-elicitation.go.html")
 	})
