@@ -22,9 +22,13 @@ type Session struct {
 	persistence.Session[User, SessionMeta]
 }
 
-// SessionMeta is the meta for a user session. Currently, no session meta is used.
-// This is reserved for future security related features such as auto-refresh (soft/hard expiry) and remember-me (refresh-token).
-type SessionMeta struct{}
+// SessionMeta is the meta for a user session. It contains extra settings for the user session and the first login time.
+// FirstLoginAt allows for soft-/hard-expiry of user sessions.
+type SessionMeta struct {
+	Settings     map[string]string
+	FirstLoginAt time.Time
+	ExtendedAt   *time.Time
+}
 
 // PGUserSessionRepository is a PostgreSQL implementation of the SessionRepository interface for user sessions.
 // It implements the SessionRepository interface and by that the persistence.SessionRepository interface.
@@ -53,14 +57,14 @@ func (r *PGUserSessionRepository) RepositoryName() string {
 	return SessionRepositoryName
 }
 
-// Read reads a valid user session from the database by id.
-// If the session has expired it will be deleted and the Read returns a persistence.ErrSessionExpired.
+// Read reads a valid/invalid user session from the database by id.
+// If the session has expired it will still be returned and no error will be returned.
 func (r *PGUserSessionRepository) Read(ctx context.Context, id uuid.UUID) (*Session, error) {
 	session := &Session{
 		Session: persistence.Session[User, SessionMeta]{},
 	}
 
-	err := persistence.PGReadValidSession(ctx, r.db, id, &session.Session)
+	err := persistence.PGReadSession(ctx, r.db, id, &session.Session)
 	if err != nil {
 		return nil, persistence.PGReadErr(err)
 	}
@@ -69,7 +73,7 @@ func (r *PGUserSessionRepository) Read(ctx context.Context, id uuid.UUID) (*Sess
 }
 
 // Write writes a user session to the database, identified by the id passed in *not* the session's id on the struct.
-// The session struct's id will be overwritten by the id passed as second argument to PGUserSessionRepository.Write.
+// The session structs id will be overwritten by the id passed as second argument to PGUserSessionRepository.Write.
 func (r *PGUserSessionRepository) Write(ctx context.Context, id uuid.UUID, session *Session) error {
 	session.ID = id
 
@@ -116,15 +120,44 @@ func SessionStore(app *hctx.AppCtx) SessionRepository {
 }
 
 // NewUserSession creates a new user session with the given user that expires now + duration.
+// The SessionMeta.FirstLoginAt will be set to the current time.
 // The id will be set to a zero uuid.UUID value.
 func NewUserSession(user *User, duration time.Duration) *Session {
 	return &Session{
 		Session: persistence.Session[User, SessionMeta]{
-			Type:      SessionType,
-			Payload:   *user,
-			Meta:      SessionMeta{},
+			Type:    SessionType,
+			Payload: *user,
+			Meta: SessionMeta{
+				FirstLoginAt: time.Now(),
+			},
 			CreatedAt: time.Now(),
 			ExpiresAt: time.Now().Add(duration),
 		},
 	}
+}
+
+// IsHardExpired checks if a session has hard expired. This means the session has expired more than 24 hours ago or
+// the session has expired and not been extended within the last 3 hours or the first login was more than 24 hours ago.
+func (s *Session) IsHardExpired() bool {
+	if !s.IsExpired() {
+		return false
+	}
+
+	olderThan24h := s.ExpiresAt.Before(time.Now().Add(-24 * time.Hour))
+	if olderThan24h {
+		return true
+	}
+
+	firstLoginOlderThan24h := s.Meta.FirstLoginAt.Before(time.Now().Add(-24 * time.Hour))
+	if firstLoginOlderThan24h {
+		return true
+	}
+
+	createdInTime := s.CreatedAt.After(time.Now().Add(-3 * time.Hour))
+	extendedInTime := s.Meta.ExtendedAt != nil && s.Meta.ExtendedAt.After(time.Now().Add(-3*time.Hour))
+	if s.IsExpired() && !createdInTime && !extendedInTime {
+		return true
+	}
+
+	return false
 }
