@@ -41,15 +41,16 @@ func TestBasicParser_Parse(t *testing.T) {
 		parser.ParsingSegment{Name: "fooRule", Value: " foo "},
 		parser.ParsingSegment{Name: "fooPostfixRule", Value: "example"},
 		parser.ParsingSegment{Name: "end", Value: "."},
-		parser.ParsingSegment{Name: "optionalEmptyErrorTestRule", Value: ""},
+		parser.ParsingSegment{Name: "optionalErrorTestRule", Value: "bar"},
 	)
 
 	require.NoError(t, err)
 	require.Len(t, parsingResult.Notices, 1)
+	assert.True(t, parsingResult.Notices[0].Downgrade)
 	assert.Equal(t, "test-template", parsingResult.TemplateID)
 	assert.True(t, parsingResult.Ok(), "parsing result should be ok but parsing errors occurred")
 	assert.True(t, parsingResult.Flawless(), "parsing result should be flawless")
-	assert.Equal(t, parsingResult.Notices[0].Segment.Name, "optionalEmptyErrorTestRule")
+	assert.Equal(t, parsingResult.Notices[0].Segment.Name, "optionalErrorTestRule")
 	assert.True(t, parsingResult.Notices[0].Downgrade, "notice should be downgraded for optional rule")
 }
 
@@ -90,7 +91,7 @@ func basicTemplate() *BasicTemplate {
 				Type:     "placeholder",
 				Optional: true,
 			},
-			"optionalEmptyErrorTestRule": {
+			"optionalErrorTestRule": {
 				Name:     "Optional Empty Error Test Rule",
 				Type:     "equals",
 				Value:    "foo",
@@ -108,7 +109,7 @@ func basicTemplate() *BasicTemplate {
 					"fooRule",
 					"fooPostfixRule",
 					"optionalMissingTestRule",
-					"optionalEmptyErrorTestRule",
+					"optionalErrorTestRule",
 				},
 			},
 		},
