@@ -115,7 +115,7 @@
         "no-further-info": "Es wurden keine weiteren Informationen für diese Regel hinterlegt.",
         "value": "Erwartet",
         "value-single-select": "Ein Wert aus",
-        "copy-and-clear": "Kopieren und<br/>leeren"
+        "copy-and-clear": "Kopieren und leeren"
       },
       "output": {
         "title": "Ausgabedatei festlegen (Alt + O)",
