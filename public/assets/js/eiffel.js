@@ -201,6 +201,7 @@ function clearElicitationForm() {
     const inputs = elicitationForm.querySelectorAll('input:not([type="hidden"]):not([disabled]), textarea:not([disabled])');
     inputs.forEach(input => {
         input.value = '';
+        input.dispatchEvent(new Event('change'));
     });
 }
 
@@ -214,14 +215,14 @@ function autoResizeInput() {
         // disable resizing by the user
         input.style.resize = 'none';
 
-        // init height for cases of autofill
-        input.style.height = 'auto';
-        input.style.height = input.scrollHeight + 'px';
-
-        input.addEventListener('input', function () {
+        const setHeight = () => {
             input.style.height = 'auto';
             input.style.height = input.scrollHeight + 'px';
-        });
+        }
+
+        setHeight();
+        input.addEventListener('input', setHeight);
+        input.addEventListener('change', setHeight);
 
         input.dataset.eiffelStatus = 'setup';
     });
