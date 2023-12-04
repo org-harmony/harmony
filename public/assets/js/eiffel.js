@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', registerDynamicFocuses);
 document.addEventListener('htmx:afterSettle', registerDynamicFocuses);
 
+document.addEventListener('DOMContentLoaded', autoResizeInput);
+document.addEventListener('htmx:afterSettle', autoResizeInput);
+
 registerFocuses();
 
 registerShortcuts();
@@ -180,7 +183,7 @@ function copyRequirementToClipboard() {
     if (!requirement) return;
 
     return navigator.clipboard.writeText(requirement.value)
-        .catch((e) => {
+        .catch(() => {
             alert('Unfortunately, your browser blocked copying the requirement to the clipboard. Please click somewhere on the page and try again then or try to copy manually. Sorry for the inconvenience!');
         })
         .then(() => {
@@ -198,5 +201,28 @@ function clearElicitationForm() {
     const inputs = elicitationForm.querySelectorAll('input:not([type="hidden"]):not([disabled]), textarea:not([disabled])');
     inputs.forEach(input => {
         input.value = '';
+    });
+}
+
+function autoResizeInput() {
+    const inputs = document.querySelectorAll('[data-eiffel-auto-resize]');
+    inputs.forEach(input => {
+        if (input.dataset.eiffelStatus === 'setup') return;
+
+        // border-box is important to include the padding and border in the height
+        input.style.boxSizing = 'border-box';
+        // disable resizing by the user
+        input.style.resize = 'none';
+
+        // init height for cases of autofill
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+
+        input.addEventListener('input', function () {
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
+        });
+
+        input.dataset.eiffelStatus = 'setup';
     });
 }

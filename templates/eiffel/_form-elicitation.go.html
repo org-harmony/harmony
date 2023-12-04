@@ -100,6 +100,7 @@
                                         aria-description="{{ $rule.Hint }}"
                                         {{ if not $rule.Optional }}required{{ end }}
                                         {{ if $first }}autofocus{{ end }}
+                                        data-eiffel-auto-resize {{/* see eiffel.js */}}
                                         rows="1">{{ if not $parsingResult }}{{ $rule.Value }}{{ else }}{{ index $segments $ruleName }}{{ end }}</textarea>
 
                                     {{ if $violations }}
@@ -210,6 +211,7 @@
                                 </button>
                                 <textarea class="form-control eiffel-elicitation-form-requirement"
                                     aria-label="{{ t "eiffel.elicitation.form.copy-and-clear" }}"
+                                    data-eiffel-auto-resize
                                     disabled rows="3">
                                     {{- .Data.Form.ParsingResult.Requirement -}}
                                 </textarea>
