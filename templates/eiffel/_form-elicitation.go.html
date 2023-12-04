@@ -207,12 +207,12 @@
                         {{ if .Data.Form.ParsingResult.Ok }}
                             <div class="col-12 input-group mb-3">
                                 <button type="button" class="input-group-text eiffel-elicitation-form-copy-and-clear">
-                                    {{ t "eiffel.elicitation.form.copy-and-clear" | safeHTML }}
+                                    {{ t "eiffel.elicitation.form.copy-and-clear" }}
                                 </button>
                                 <textarea class="form-control eiffel-elicitation-form-requirement"
                                     aria-label="{{ t "eiffel.elicitation.form.copy-and-clear" }}"
                                     data-eiffel-auto-resize
-                                    disabled rows="3">
+                                    disabled>
                                     {{- .Data.Form.ParsingResult.Requirement -}}
                                 </textarea>
                             </div>
