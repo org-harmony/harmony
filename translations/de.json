@@ -105,7 +105,7 @@
         "success": "Die Anforderung ist gültig, jedoch wurden potentielle Probleme gefunden."
       },
       "form": {
-        "title": "Anforderung erfassen",
+        "title": "Anforderung erfassen (Alt + P)",
         "submit": "Anforderung prüfen (Alt + Enter)",
         "parsing-error": "Die Anforderung entspricht nicht der Schablone.",
         "rule-description": "{{ .rule }}",
@@ -118,6 +118,7 @@
         "copy-and-clear": "Kopieren und<br/>leeren"
       },
       "output": {
+        "title": "Ausgabedatei festlegen (Alt + O)",
         "file": "Ausgabedatei",
         "file.success": "Ausgabedatei für Erfassung festgelegt.",
         "file.save": "Ausgabedatei für Erfassung speichern",

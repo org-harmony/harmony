@@ -8,6 +8,7 @@
     <form hx-post="/eiffel/elicitation/{{ .Data.Form.TemplateID }}/{{ .Data.Form.VariantKey }}"
         hx-target=".eiffel-elicitation-template-variant-form"
         hx-disabled-elt=".eiffel-elicitation-form-fieldset"
+        autocomplete="off"
         id="eiffelElicitationForm">
         <fieldset class="eiffel-elicitation-form-fieldset">
             <div class="row">
@@ -202,16 +203,18 @@
                     {{ end }}
 
                     {{ if .Data.Form.ParsingResult.Requirement }}
-                        <div class="col-12 input-group mb-3">
-                            <button type="button" class="input-group-text eiffel-elicitation-form-copy-and-clear">
-                                {{ t "eiffel.elicitation.form.copy-and-clear" | safeHTML }}
-                            </button>
-                            <textarea class="form-control eiffel-elicitation-form-requirement"
-                                aria-label="{{ t "eiffel.elicitation.form.copy-and-clear" }}"
-                                disabled rows="3">
-                                {{- .Data.Form.ParsingResult.Requirement -}}
-                            </textarea>
-                        </div>
+                        {{ if .Data.Form.ParsingResult.Ok }}
+                            <div class="col-12 input-group mb-3">
+                                <button type="button" class="input-group-text eiffel-elicitation-form-copy-and-clear">
+                                    {{ t "eiffel.elicitation.form.copy-and-clear" | safeHTML }}
+                                </button>
+                                <textarea class="form-control eiffel-elicitation-form-requirement"
+                                    aria-label="{{ t "eiffel.elicitation.form.copy-and-clear" }}"
+                                    disabled rows="3">
+                                    {{- .Data.Form.ParsingResult.Requirement -}}
+                                </textarea>
+                            </div>
+                        {{ end }}
                     {{ end }}
                 {{ end }}
             </div>
