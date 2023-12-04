@@ -1,19 +1,43 @@
-document.addEventListener('DOMContentLoaded', initEiffel);
-document.body.addEventListener('htmx:afterSettle', initEiffel);
+document.addEventListener('DOMContentLoaded', registerDynamicFocuses);
+document.addEventListener('htmx:afterSettle', registerDynamicFocuses);
 
-let init = false;
+registerFocuses();
 
-async function initEiffel() {
-    if (init) return;
+registerShortcuts();
 
-    const elicitationForm = document.querySelector('.eiffel-elicitation')
-    if (!elicitationForm) return;
+registerCopyToClipboard();
 
-    registerShortcuts();
-    registerFocuses();
-    registerCopyToClipboard();
+function registerFocuses() {
+    // focus search input when search form is loaded (in the case bootstrap finishes showing the modal before the form is loaded)
+    document.addEventListener('htmx:afterSettle', function(event) {
+        if (event.detail.elt.id !== 'eiffelTemplateSearch') return;
+        focusSearchInput();
+    })
 
-    init = true;
+    // focus first input of elicitation form when elicitation form is loaded (in case htmx finishes after bootstrap)
+    document.addEventListener('htmx:afterSettle', function(event) {
+        if (event.detail.elt.id !== 'eiffelElicitationTemplate') return;
+        focusElicitationInput();
+    })
+
+    // focus first input of elicitation when output file form was loaded (in case htmx finishes after bootstrap)
+    document.addEventListener('htmx:afterSettle', function(event) {
+        if (!event.detail.elt.classList.contains('eiffel-requirements')) return;
+        focusElicitationInput();
+    })
+}
+
+function registerCopyToClipboard() {
+    document.addEventListener('htmx:afterSettle', async function(event) {
+        if (!event.detail.elt.className.includes('eiffel-elicitation-template-variant-form')) return;
+        registerCopyBtn();
+
+        // copy automatically if checkbox is checked
+        const autoCopyCheckbox = document.getElementById('copyAfterParse');
+        if (!autoCopyCheckbox || !autoCopyCheckbox.checked) return;
+
+        await copyRequirementToClipboard();
+    });
 }
 
 function registerShortcuts() {
@@ -71,33 +95,55 @@ function registerShortcuts() {
             previous.click();
         }
     });
+
+    // alt + o to focus output dir + file input
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'o' && event.altKey) {
+            event.preventDefault();
+
+            const outputDirInput = document.getElementById('eiffelOutputDir');
+            if (!outputDirInput) return;
+
+            outputDirInput.focus();
+        }
+    });
+
+    // alt + p to focus requirement parsing form (first input)
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'p' && event.altKey) {
+            event.preventDefault();
+            focusElicitationInput();
+        }
+    });
+
+    // alt + k to copy requirement to clipboard - this is not at random, but because alt + k is not used by any other shortcut
+    // We don't want to override existing, important shortcuts. Also, alt + k is easy to reach and firefox will block copying
+    // to the clipboard if it is not triggered by a user event (and it seems it doesn't like preventDefault in this context)
+    document.addEventListener('keydown', async function (event) {
+        if (event.key === 'k' && event.altKey) {
+            const copyBtn = document.getElementsByClassName('eiffel-elicitation-form-copy-and-clear')[0];
+            if (!copyBtn) return;
+
+            await copyRequirementToClipboard();
+        }
+    });
 }
 
-function registerFocuses() {
-    const searchModal = document.getElementById('eiffelTemplateSearch');
-    if (!searchModal) console.error('could not find template search modal for elicitation');
+function registerDynamicFocuses() {
+    const templateSearch = document.getElementById('eiffelTemplateSearch');
+    if (!templateSearch || templateSearch.dataset.eiffelStatus === 'setup') return;
 
-    // focus search input when modal is shown
-    searchModal.addEventListener('shown.bs.modal', function () {
+    // focus search input inside search modal when modal is shown
+    templateSearch.addEventListener('shown.bs.modal', function () {
         focusSearchInput();
     });
-
-    // focus search input when search form is loaded (in the case bootstrap finishes showing the modal before the form is loaded)
-    document.addEventListener('htmx:afterSettle', function(event) {
-        if (event.detail.elt.id !== 'eiffelTemplateSearch') return;
-        focusSearchInput();
-    })
 
     // focus first input of elicitation form when modal is closed
-    searchModal.addEventListener('hidden.bs.modal', function () {
+    templateSearch.addEventListener('hidden.bs.modal', function () {
         focusElicitationInput();
     });
 
-    // focus first input of elicitation form when search form is loaded (in the case bootstrap finishes hiding the modal before the form is loaded)
-    document.addEventListener('htmx:afterSettle', function(event) {
-        if (event.detail.elt.id !== 'eiffelElicitationForm') return;
-        focusElicitationInput();
-    })
+    templateSearch.dataset.eiffelStatus = 'setup';
 }
 
 // focus search input inside search modal
@@ -113,63 +159,36 @@ function focusElicitationInput() {
     const firstInput = document.querySelector('#eiffelElicitationForm input:not([type="hidden"]):not([disabled]), #eiffelElicitationForm textarea:not([disabled])')
     if (!firstInput) return;
 
-    // wait for the modal to be hidden/the form to be loaded - unfortunately, for firefox this is the only way it works
-    // the 10ms timeout should be sufficient and is not noticeable
-    setTimeout(function() {
+    setTimeout(() => {
         firstInput.focus();
-    }, 10);
-}
-
-function registerCopyToClipboard() {
-    document.addEventListener('htmx:afterSettle', function(event) {
-        if (!event.detail.elt.className.includes('eiffel-elicitation-template-variant-form')) return;
-        registerCopyBtn();
-
-        // copy automatically if checkbox is checked
-        const autoCopyCheckbox = document.getElementById('copyAfterParse');
-        if (!autoCopyCheckbox || !autoCopyCheckbox.checked) return;
-
-        const copyBtn = document.getElementsByClassName('eiffel-elicitation-form-copy-and-clear')[0];
-        if (!copyBtn) return;
-
-        copyBtn.click();
-    });
-
-    // alt + k to copy requirement to clipboard - this is not at random, but because alt + k is not used by any other shortcut
-    // We don't want to override existing, important shortcuts. Also, alt + k is easy to reach and firefox will block copying
-    // to the clipboard if it is not triggered by a user event (and it seems it doesn't like preventDefault in this context)
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'k' && event.altKey) {
-            const copyBtn = document.getElementsByClassName('eiffel-elicitation-form-copy-and-clear')[0];
-            if (!copyBtn) return;
-
-            copyRequirementToClipboard().then(() => {
-                clearElicitationForm();
-                focusElicitationInput();
-            });
-        }
-    });
+    }, 7); // wait for the modal to be fully closed - unfortunately, this is necessary
 }
 
 function registerCopyBtn() {
     const copyBtn = document.getElementsByClassName('eiffel-elicitation-form-copy-and-clear')[0];
-    if (!copyBtn) return;
+    if (!copyBtn || copyBtn.dataset.eiffelStatus === 'setup') return;
 
-    copyBtn.addEventListener('click', function () {
-        copyRequirementToClipboard().then(() => {
-            clearElicitationForm();
-            focusElicitationInput();
-        });
+    copyBtn.addEventListener('click', async function () {
+        await copyRequirementToClipboard();
     });
+
+    copyBtn.dataset.eiffelStatus = 'setup';
 }
 
 function copyRequirementToClipboard() {
     const requirement = document.getElementsByClassName('eiffel-elicitation-form-requirement')[0];
     if (!requirement) return;
 
-    return navigator.clipboard.writeText(requirement.value).catch(() => {
-        alert('Unfortunately, your browser blocked copying the requirement to the clipboard. Please click somewhere on the page and try again then or try to copy manually. Using automatic copy + clear should work fine. Sorry for the inconvenience!')
-    })
+    return navigator.clipboard.writeText(requirement.value)
+        .catch((e) => {
+            alert('Unfortunately, your browser blocked copying the requirement to the clipboard. Please click somewhere on the page and try again then or try to copy manually. Sorry for the inconvenience!');
+        })
+        .then(() => {
+            clearElicitationForm();
+        })
+        .finally(() => {
+            focusElicitationInput();
+        });
 }
 
 function clearElicitationForm() {

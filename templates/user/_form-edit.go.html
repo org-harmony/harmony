@@ -9,7 +9,9 @@
     <div class="card user-edit-form-card">
         <div class="card-header">{{ tf "user.settings.for" "firstname" $fn "lastname" $ln }}</div>
         <div class="card-body">
-            <form hx-post="/user/me" hx-trigger="submit" hx-disabled-elt=".user-edit-fieldset" hx-swap="outerHTML" hx-target=".user-edit-form-card">
+            <form hx-post="/user/me" hx-disabled-elt=".user-edit-fieldset"
+                  hx-swap="outerHTML" hx-target=".user-edit-form-card"
+                  autocomplete="off">
                 <fieldset class="user-edit-fieldset">
                     <div id="form-messages">
                         {{ range $success := .Data.Successes }}
@@ -26,7 +28,6 @@
                             <input
                                     id="firstname"
                                     type="text"
-                                    autocomplete="off"
                                     class="form-control {{ if .Data.FieldHasViolations "Firstname" }}is-invalid{{ end }}"
                                     name="Firstname"
                                     placeholder="{{ t "user.firstname" }}"
@@ -41,7 +42,6 @@
                             <input
                                     id="lastname"
                                     type="text"
-                                    autocomplete="off"
                                     class="form-control {{ if .Data.FieldHasViolations "Lastname" }}is-invalid{{ end }}"
                                     name="Lastname"
                                     placeholder="{{ t "user.lastname" }}"

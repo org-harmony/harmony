@@ -9,6 +9,8 @@
     {{ end }}
 
     <div class="eiffel-elicitation-output-file">
+        <h5>{{ t "eiffel.elicitation.output.title" }}</h5>
+
         <form hx-post="/eiffel/elicitation/output/search" hx-trigger="submit"
               hx-target=".eiffel-requirements" hx-disabled-elt=".eiffel-elicitation-output-file-fieldset"
               id="eiffelOutputForm">
