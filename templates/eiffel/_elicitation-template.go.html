@@ -6,30 +6,30 @@
         {{ $variantKey := .Data.Form.VariantKey }}
 
         <div class="eiffel-elicitation-template-variant mt-3 bg-light rounded p-3 w-100 m-auto border border-light-subtle">
-            <div class="row">
-                <div class="col">
-                    {{ $current := false }}
-                    {{ $prevOrNext := "prev" }}
-                    {{ range $key, $variant := .Data.Form.Template.Variants }}
-                        {{ $class := printf "eiffel-template-variant-%s" $prevOrNext }}
+            <div class="px-2 row row-cols-lg-3 row-cols-md-2 row-gap-1">
+                {{ $current := false }}
+                {{ $prevOrNext := "prev" }}
+                {{ range $key, $variant := .Data.Form.Template.Variants }}
+                    {{ $class := printf "eiffel-template-variant-%s" $prevOrNext }}
 
-                        {{ if eq $variantKey $key }}
-                            {{ $current = true }}
-                            {{ $class = "eiffel-template-variant-current" }}
-                        {{ end }}
+                    {{ if eq $variantKey $key }}
+                        {{ $current = true }}
+                        {{ $class = "eiffel-template-variant-current" }}
+                    {{ end }}
 
+                    <div class="col p-1">
                         <button hx-get="/eiffel/elicitation/{{ $templateID }}/{{ $key }}"
                             hx-target="#eiffelElicitationTemplate"
-                            class="btn {{ $class }} {{ if eq $variantKey $key }}btn-outline-primary{{ else }}btn-outline-secondary{{ end }}">
+                            class="btn m-auto w-100 {{ $class }} {{ if eq $variantKey $key }}btn-secondary{{ else }}btn-outline-secondary{{ end }}">
                             {{ $variant.Name }}
                         </button>
+                    </div>
 
-                        {{ if $current }}
-                            {{ $prevOrNext = "next" }}
-                            {{ $current = false }}
-                        {{ end }}
+                    {{ if $current }}
+                        {{ $prevOrNext = "next" }}
+                        {{ $current = false }}
                     {{ end }}
-                </div>
+                {{ end }}
             </div>
             <div class="row mt-2">
                 <div class="col d-flex justify-content-between">

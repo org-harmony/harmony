@@ -122,11 +122,20 @@ func BuildDirPath(baseDir, subPath string) string {
 
 // BuildFilename takes in a filename (w/o extension) and returns the sanitized filename with the .csv-extension.
 func BuildFilename(filename string) string {
-	return fmt.Sprintf("%s.csv", SanitizeFilepath(filename))
+	return fmt.Sprintf("%s.csv", SanitizeFilename(filename))
+}
+
+// SanitizeFilename takes in a filename and returns the sanitized filename.
+// Every character that is not a letter, number, underscore or hyphen is replaced by an underscore.
+// Different from SanitizeFilepath, this function replaces slashes with underscores.
+func SanitizeFilename(filename string) string {
+	reg := regexp.MustCompile(`[^a-zA-Z0-9_-]+`)
+
+	return reg.ReplaceAllString(filename, "_")
 }
 
 // SanitizeFilepath takes in a filepath and returns the sanitized filepath.
-// Every character that is not a letter, number, underscore or hyphen is replaced by an underscore.
+// Every character that is not a letter (a-z & A-Z), number (0-9), underscore, slash or hyphen is replaced by an underscore.
 func SanitizeFilepath(path string) string {
 	reg := regexp.MustCompile(`[^/a-zA-Z0-9_-]+`)
 

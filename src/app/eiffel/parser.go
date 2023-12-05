@@ -492,7 +492,7 @@ func (p EqualsAnyRuleParser) Parse(ctx context.Context, rule BasicRule, segment 
 		Segment:         &segment,
 		Level:           parser.ParsingLogLevelError,
 		Message:         "eiffel.parser.equals-any.error",
-		TranslationArgs: []string{"expected", strings.Join(rv, ", "), "actual", segment.Value}, // use the original values here
+		TranslationArgs: []string{"expected", "\"" + strings.Join(rv, "\", \"") + "\"", "actual", segment.Value}, // use the original values here
 	}}, nil
 }
 
