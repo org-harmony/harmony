@@ -1,0 +1,152 @@
+{
+  "id": "glossar",
+  "type": "ebt",
+  "name": "Glossareintrag",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise",
+    "Oliver Linssen"
+  ],
+  "license": "MIT",
+  "description": "Glossareintrag bedeutet in PARIS eine Definition, mit der ein Begriff, eine Abkürzung oder ein Verb für einen bestimmten Geltungsbereich erklärt wird.",
+  "rules": {
+    "definiendum": {
+      "name": "Definiendum",
+      "type": "placeholder",
+      "hint": "Welcher Begriff?",
+      "explanation": "Ein zu erklärender Begriff, eine Abkürzung oder ein Verb. Beispiel: Kunde",
+      "size": "medium"
+    },
+    "definiendum-vereinfacht": {
+      "name": "Definiendum",
+      "type": "placeholder",
+      "hint": "Welcher Begriff?",
+      "explanation": "Ein zu erklärender Begriff, eine Abkürzung oder ein Verb. Beispiel: Kunde (Synonyme: Ausleiher, Besucher, Leser) (engl. Reader)",
+      "size": "large"
+    },
+    "synonyme": {
+      "name": "Synonyme",
+      "type": "placeholder",
+      "hint": "Mit welchen Synonymen?",
+      "explanation": "Synonyme für den zu erklärenden Begriff. Beispiel: (Synonyme: Ausleiher, Besucher, Leser)",
+      "optional": true,
+      "size": "medium"
+    },
+    "uebersetzung": {
+      "name": "Übersetzung",
+      "type": "placeholder",
+      "hint": "Mit welchen Übersetzungen?",
+      "explanation": "Übersetzung des zu erklärenden Begriffs. Beispiel: (engl. Reader)",
+      "optional": true,
+      "size": "medium"
+    },
+    "bedeutet": {
+      "name": "Bedeutet",
+      "type": "equals",
+      "value": "bedeutet",
+      "size": "small"
+    },
+    "prae-bereich": {
+      "name": "Prä-Bereich",
+      "type": "equalsAny",
+      "value": [
+        "im",
+        "in",
+        "in der"
+      ],
+      "optional": true,
+      "size": "small"
+    },
+    "bereich": {
+      "name": "Bereich",
+      "type": "placeholder",
+      "hint": "Wird für welchen Bereich?",
+      "explanation": "Bezug, auf den sich der zu erklärende Begriff bezieht. Beispiel: im System Libri",
+      "size": "small"
+    },
+    "bereich-vereinfacht": {
+      "name": "Bereich",
+      "type": "placeholder",
+      "hint": "Wird für welchen Bereich?",
+      "explanation": "Bezug, auf den sich der zu erklärende Begriff bezieht. Beispiel: im System Libri",
+      "size": "medium"
+    },
+    "prae-definiens": {
+      "name": "Prä-Definiens",
+      "type": "equalsAny",
+      "value": [
+        "die Abkürzung",
+        "den Prozess"
+      ],
+      "optional": true,
+      "size": "small"
+    },
+    "definiens": {
+      "name": "Definiens",
+      "type": "placeholder",
+      "hint": "Wie definiert?",
+      "explanation": "Erklärung des zu erklärenden Begriffs. Beispiel: eine natürliche Person,",
+      "size": "medium"
+    },
+    "spezifikation-definiens": {
+      "name": "Spezifikation des Definiens",
+      "type": "placeholder",
+      "hint": "Was bedeutet das?",
+      "explanation": "Spezifikation des Definiens. Beispiel: die berechtigt ist, Medien auszuleihen,",
+      "optional": true,
+      "size": "full"
+    },
+    "begruendung": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum ist es so festgelegt?",
+      "explanation": "Begründung für die Definition. Beispiel: weil juristische Personen nicht zur Ausleihe zugelassen sind",
+      "optional": true,
+      "size": "large"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small",
+      "extra": {
+        "before": "",
+        "after": ""
+      }
+    }
+  },
+  "variants": {
+    "glossareintrag": {
+      "name": "Glossareintrag",
+      "description": "Glossareintrag definiert einen Begriff, eine Abkürzung oder ein Verb für einen bestimmten Geltungsbereich.",
+      "example": "Kunde (Synonyme: Ausleiher, Besucher, Leser) (engl. Reader) bedeutet im System Libri eine natürliche Person, die berechtigt ist, Medien auszuleihen, weil juristische Personen nicht zur Ausleihe zugelassen sind.",
+      "rules": [
+        "definiendum",
+        "synonyme",
+        "uebersetzung",
+        "bedeutet",
+        "prae-bereich",
+        "bereich",
+        "prae-definiens",
+        "definiens",
+        "spezifikation-definiens",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "glossareintrag-vereinfacht": {
+      "name": "Glossareintrag vereinfacht",
+      "description": "Glossareintrag vereinfacht definiert einen Begriff, eine Abkürzung oder ein Verb für einen bestimmten Geltungsbereich.",
+      "example": "Kunde (Synonyme: Ausleiher, Besucher, Leser) (engl. Reader) bedeutet im System Libri eine natürliche Person, die berechtigt ist, Medien auszuleihen, weil juristische Personen nicht zur Ausleihe zugelassen sind.",
+      "rules": [
+        "definiendum-vereinfacht",
+        "bedeutet",
+        "bereich-vereinfacht",
+        "definiens",
+        "spezifikation-definiens",
+        "begruendung",
+        "punkt"
+      ]
+    }
+  }
+}

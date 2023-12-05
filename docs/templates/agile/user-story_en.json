@@ -1,0 +1,79 @@
+{
+  "id": "user-story_en",
+  "type": "ebt",
+  "name": "User Story (English)",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise"
+  ],
+  "license": "MIT",
+  "description": "User stories originate from agile software development and describe the requirements for a system from the user's perspective. They are usually short and concise and are written on index cards. This template is designed for the English language.",
+  "rules": {
+    "as": {
+      "name": "As",
+      "type": "equals",
+      "value": "As",
+      "size": "small"
+    },
+    "role": {
+      "name": "Role",
+      "type": "placeholder",
+      "hint": "Who?",
+      "explanation": "Describes the role of the user who is making the requirement.",
+      "size": "large"
+    },
+    "i-want": {
+      "name": "I want",
+      "type": "equals",
+      "value": "I want",
+      "size": "small"
+    },
+    "goal": {
+      "name": "Goal",
+      "type": "placeholder",
+      "hint": "What?",
+      "explanation": "Describes the goal the user wants to achieve.",
+      "size": "large"
+    },
+    "so-that": {
+      "name": "So that",
+      "type": "equals",
+      "value": "so that",
+      "size": "small"
+    },
+    "benefit": {
+      "name": "Benefit",
+      "type": "placeholder",
+      "hint": "Why?",
+      "explanation": "Describes the benefit the user gets from achieving the goal.",
+      "size": "large"
+    },
+    "point": {
+      "name": "Point",
+      "type": "equals",
+      "value": ".",
+      "size": "small",
+      "extra": {
+        "before": "",
+        "after": ""
+      }
+    }
+  },
+  "variants": {
+    "user-story": {
+      "name": "User Story",
+      "description": "A user story describes a requirement from the user's perspective.",
+      "format": "As a <role> I want <goal>, so that <benefit>.",
+      "example": "As a user I want to check a requirement with the tool, so that I can improve quality.",
+      "rules": [
+        "as",
+        "role",
+        "i-want",
+        "goal",
+        "so-that",
+        "benefit",
+        "point"
+      ]
+    }
+  }
+}
