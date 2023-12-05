@@ -95,7 +95,7 @@
         "not-a-slice": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" ist keine Liste. Bitte überprüfen Sie die Schablonen-Dokumentation.",
         "not-a-string": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" sollte aus einer Zeichenkette oder einer Liste an Zeichenketten bestehen, jedoch wurde ein anderer Typ gefunden. Bitte überprüfen Sie die Schablonen-Dokumentation."
       },
-      "equals.error": "Erwarteter Wert: {{ .expected }}.",
+      "equals.error": "Erwarteter Wert: \"{{ .expected }}\".",
       "equals-any.error": "Erwarteter Wert: {{ .expected }}."
     },
     "elicitation": {
