@@ -1,0 +1,87 @@
+{
+  "id": "user-story_de",
+  "type": "ebt",
+  "name": "User Story (Deutsch)",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise"
+  ],
+  "license": "MIT",
+  "description": "User Stories stammen aus der agilen Softwareentwicklung und beschreiben die Anforderungen an ein System aus der Sicht des Benutzers. Sie sind in der Regel kurz und prägnant formuliert und werden auf Karteikarten geschrieben. Diese Vorlage ist für die deutsche Sprache ausgelegt.",
+  "rules": {
+    "als": {
+      "name": "Als",
+      "type": "equals",
+      "value": "Als",
+      "size": "small"
+    },
+    "rolle": {
+      "name": "Rolle",
+      "type": "placeholder",
+      "hint": "Wer?",
+      "explanation": "Beschreibt die Rolle des Benutzers, der die Anforderung stellt.",
+      "size": "large"
+    },
+    "moechte-ich": {
+      "name": "Möchte ich",
+      "type": "equals",
+      "value": "möchte ich",
+      "size": "small"
+    },
+    "funktion": {
+      "name": "Funktion",
+      "type": "placeholder",
+      "hint": "Was?",
+      "explanation": "Beschreibt die Funktion, die der Benutzer benötigt.",
+      "size": "large"
+    },
+    "um": {
+      "name": "Um",
+      "type": "equals",
+      "value": "um",
+      "size": "small"
+    },
+    "nutzen": {
+      "name": "Nutzen",
+      "type": "placeholder",
+      "hint": "Warum?",
+      "explanation": "Beschreibt den Nutzen, den der Benutzer aus der Funktion zieht.",
+      "size": "large"
+    },
+    "zu-erreichen": {
+      "name": "zu erreichen",
+      "type": "equalsAny",
+      "value": ["zu erreichen"],
+      "optional": true,
+      "size": "large"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small",
+      "extra": {
+        "before": "",
+        "after": ""
+      }
+    }
+  },
+  "variants": {
+    "user-story": {
+      "name": "User Story",
+      "description": "Eine User Story beschreibt eine Anforderung aus der Sicht des Benutzers.",
+      "format": "Als <Rolle> möchte ich <Funktion>, um <Nutzen> (zu erreichen).",
+      "example": "Als Benutzer möchte ich eine Anforderung mit dem Tool prüfen, um eine Qualitätsverbesserung zu erreichen.",
+      "rules": [
+        "als",
+        "rolle",
+        "moechte-ich",
+        "funktion",
+        "um",
+        "nutzen",
+        "zu-erreichen",
+        "punkt"
+      ]
+    }
+  }
+}
