@@ -1,5 +1,9 @@
-# HARMONY
+# HARMONY & EIFFEL
 Highly Adaptable Requirements Management and Organization sYstem - HARMONY
+Elicitation Interface for eFFective Language - EIFFEL
 
-HARMONY is a requirements management and organization tool. The adaptibility will be implemented through various concepts. One of them being modules, similar to the way Caddy leverages extensibility in Go projects.
-The early versions of HARMONY will only support an elicitation companion through one of the core modules of HARMONY: Elicitation Interface for eFFective Language (EIFFEL).
+The idea is to simplify requirements elicitation using templates by supplying user's with a way to input and validate template based requirements more conveniently. The templates in mind for the system's design were by the German PARIS pattern language. This is an approach and also a research project by Prof. Dr. rer. oec. Oliver Linssen.
+However, the design supports various other templates. Templates can be defined using JSON configurations, examples for already designed templates can be found in docs/templates/. Also, further documentation will explain how templates can be created using the already existing configuration files as examples.
+
+HARMONY will further be extended to suit more (hopefully someday all) needs of the requirements engineering.
+Join us during this journey, no matter if you're a contributor, user or just watching!
