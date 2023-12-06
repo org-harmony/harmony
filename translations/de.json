@@ -138,7 +138,8 @@
           "start": "Suchen Sie im Eingabefeld nach einer Schablone und wählen Sie diese für die Erfassung aus.",
           "call-to-action": "Es wurde noch keine Schablone ausgewählt. Bitte nutzen Sie die Suche, um eine Schablone zu finden.",
           "not-found": "Keine Schablonen gefunden.",
-          "query-too-short": "Geben Sie mindestens 3 Zeichen ein, um die Suche zu starten."
+          "query-too-short": "Geben Sie mindestens 3 Zeichen ein, um die Suche zu starten.",
+          "not-yet-selected": "Es wurde noch keine Schablone ausgewählt."
         },
         "not-found": "Die Schablone wurde nicht gefunden.",
         "variant": {

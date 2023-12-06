@@ -1,38 +1,42 @@
 {{ define "eiffel.elicitation.template" }}
+    <div class="eiffel-elicitation-template">
+        <div class="eiffel-elicitation-template-search-wrapper bg-light rounded p-3 row w-100 m-auto border border-light-subtle">
+            <div class="eiffel-elicitation-template-search col-3">
+                <button hx-get="/eiffel/elicitation/templates/search/modal"
+                        hx-target="#eiffelTemplateSearch"
+                        data-bs-toggle="modal"
+                        data-bs-target="#eiffelTemplateSearch"
+                        class="btn w-100 h-100 p-0">
+                    <img class="m-auto align-baseline w-25 d-block" src="{{ asset "icons/search.svg" }}" alt="{{ t "harmony.generic.search" }}">
+                    <span class="badge shadow rounded-pill text-bg-secondary mt-3">{{ t "eiffel.elicitation.template.search.shortcut" }}</span>
+                </button>
+
+                <div id="eiffelTemplateSearch"
+                     class="modal fade"
+                     tabindex="-1"
+                     aria-labelledby="eiffelTemplateSearchLabel">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="eiffel-elicitation-template-current col">
+                {{ if .Data.Form.Template }}
+                    Aktuelle Schablone <span class="eiffel-elicitation-template-current-name"><b>{{ .Data.Form.Template.Name }}</b></span>
+                    <br/>
+                    <span class="eiffel-elicitation-template-current-description fst-italic">{{ .Data.Form.Template.Description }}</span>
+                {{ else }}
+                    <span class="eiffel-elicitation-template-current-name"><b>{{ t "eiffel.elicitation.template.search.not-yet-selected" }}</b></span>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+
     {{ if .Data.Form.Template }}
         {{ $templateID := .Data.Form.TemplateID }}
         {{ $rules := .Data.Form.Template.Rules }}
         {{ $displayTypes := .Data.Form.DisplayTypes }}
         {{ $variantKey := .Data.Form.VariantKey }}
-
-        <div class="eiffel-elicitation-template">
-            <div class="eiffel-elicitation-template-search-wrapper bg-light rounded p-3 row w-100 m-auto border border-light-subtle">
-                <div class="eiffel-elicitation-template-search col-3">
-                    <button hx-get="/eiffel/elicitation/templates/search/modal"
-                        hx-target="#eiffelTemplateSearch"
-                        data-bs-toggle="modal"
-                        data-bs-target="#eiffelTemplateSearch"
-                        class="btn w-100 h-100 p-0">
-                        <img class="m-auto align-baseline w-25 d-block" src="{{ asset "icons/search.svg" }}" alt="{{ t "harmony.generic.search" }}">
-                        <span class="badge shadow rounded-pill text-bg-secondary mt-3">{{ t "eiffel.elicitation.template.search.shortcut" }}</span>
-                    </button>
-
-                    <div id="eiffelTemplateSearch"
-                        class="modal fade"
-                        tabindex="-1"
-                        aria-labelledby="eiffelTemplateSearchLabel">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="eiffel-elicitation-template-current col">
-                    Aktuelle Schablone <span class="eiffel-elicitation-template-current-name"><b>{{ .Data.Form.Template.Name }}</b></span>
-                    <br/>
-                    <span class="eiffel-elicitation-template-current-description fst-italic">{{ .Data.Form.Template.Description }}</span>
-                </div>
-            </div>
-        </div>
 
         <div class="eiffel-elicitation-template-variant mt-3 bg-light rounded p-3 w-100 m-auto border border-light-subtle">
             <div class="px-2 row row-cols-lg-3 row-cols-md-2 row-gap-1">
