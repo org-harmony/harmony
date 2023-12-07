@@ -7,3 +7,5 @@ However, the design supports various other templates. Templates can be defined u
 
 HARMONY will further be extended to suit more (hopefully someday all) needs of the requirements engineering.
 Join us during this journey, no matter if you're a contributor, user or just watching!
+
+The project and everybody involved in it is looking forward for your feedback, as we continuously strive to improve HARMONY and EIFFEL. The project is still under active development.
