@@ -159,11 +159,11 @@
   },
   "harmony": {
     "head": {
-      "welcome": "Willkommen bei HARMONY",
+      "welcome": "Willkommen bei HARMONY & EIFFEL",
       "title.suffix": "HARMONY"
     },
     "text": {
-      "welcome": "<p>HARMONY ist ein anpassbares Tool zur Erfassung, zum Management und zur Organisation von Anforderungen. Wir möchten ein einfaches, aber leistungsstarkes Werkzeug zur Verwaltung von Anforderungen und langfristig auch zur besseren Organisation von Projekten zur Verfügung stellen. Wir bemühen uns sehr HARMONY konstant zu verbessern und weiterzuentwickeln. Wenn Sie also Vorschläge haben, lassen Sie es uns bitte wissen!</p><p>HARMONY befindet sich derzeit in der Alpha-Phase, daher kann es sein, dass es noch Fehler und fehlende Funktionen gibt.<br />Wir sind auf Ihr Feedback und Erfahrungen gespannt. :)</p>"
+      "welcome": "<p>Highly Adaptable Requirements Management and Organization sYstem - HARMONY<br/>\nElicitation Interface for eFFective Language - EIFFEL<br/>\n<br/>\nDie Idee besteht darin, die Ermittlung von Anforderungen durch die Verwendung von Schablonen zu vereinfachen, indem den Benutzern eine Möglichkeit geboten wird, Schablonen-basierte Anforderungen einfacher einzugeben und zu validieren. Die Schablonen, die für das Design des Systems vorgesehen waren, stammen von der PARIS-Mustersprache. Dies ist ein Ansatz und auch ein Forschungsprojekt von Prof. Dr. rer. oec. Oliver Linssen.<br/>\nDas Design unterstützt jedoch verschiedene andere Schablonen. Schablonen können mit JSON-Konfigurationen definiert werden, Beispiele für bereits entworfene Schablonen finden sich in <a href=\"https://github.com/org-harmony/harmony/tree/main/docs/templates\">docs/templates/</a>. Weitere Dokumentationen erklären, wie Schablonen unter Verwendung der bereits existierenden Konfigurationsdateien als Beispiele erstellt werden können.<br/>\n<br/>\nHARMONY wird weiter ausgebaut, um mehr (und hoffentlich eines Tages alle) Bedürfnisse des Anforderungsmanagements zu erfüllen.<br/>\nBegleiten Sie uns auf dieser Reise, egal ob Sie ein Contributor, Benutzer oder nur Zuschauer sind!<br/>\n<br/>\nDas Projekt und alle Beteiligten freuen sich auf Ihr Feedback, da wir kontinuierlich daran arbeiten, HARMONY und EIFFEL zu verbessern. Das Projekt befindet sich noch in aktiver Entwicklung.<br/></p>"
     },
     "footer": {
       "visit": "Besuchen Sie <strong>HARMONY</strong> auf {{ .link }}."
