@@ -143,7 +143,11 @@ func LoggedInUser(r *http.Request, sessionStore SessionRepository) (*User, error
 
 		if err != nil && errors.Is(err, ErrHardSessionExpiry) {
 			err = sessionStore.Delete(r.Context(), userSession.ID)
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, ErrHardSessionExpiry
 		}
 	}
 
