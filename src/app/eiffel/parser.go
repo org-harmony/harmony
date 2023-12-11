@@ -286,6 +286,10 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 	return result, nil
 }
 
+// Validate makes sure that the template is valid. It checks the structure of and semantic of the values inside.
+// Each rule configuration is validated by the corresponding rule parser.
+// It returns a slice of validation errors that are safe to show to the user (translatable).
+// In almost any case, the returned slice will contain the template.ErrInvalidTemplate error.
 func (bt *BasicTemplate) Validate(v validation.V, ruleParsers *RuleParserProvider) []error {
 	errs := validation.Validate("", "", bt, RuleReferencesValidator)
 	if len(errs) > 0 {
@@ -294,7 +298,7 @@ func (bt *BasicTemplate) Validate(v validation.V, ruleParsers *RuleParserProvide
 
 	err, validationErrs := v.ValidateStruct(bt)
 	if err != nil {
-		return []error{err}
+		return []error{t.ErrInvalidTemplate, err}
 	}
 
 	// Unfortunately, validation is currently not capable of validating slices/maps of structs.
@@ -302,14 +306,14 @@ func (bt *BasicTemplate) Validate(v validation.V, ruleParsers *RuleParserProvide
 	for _, rule := range bt.Rules {
 		err, ruleValidationErrs := v.ValidateStruct(rule) // this is validating the generic rule struct
 		if err != nil {
-			return []error{err}
+			return []error{t.ErrInvalidTemplate, err}
 		}
 
 		validationErrs = append(validationErrs, ruleValidationErrs...)
 
 		ruleParser, err := ruleParsers.Parser(rule.Type)
 		if err != nil {
-			return []error{err}
+			return []error{t.ErrInvalidTemplate, err}
 		}
 
 		// This is requesting the rule parser to validate the rule value.
@@ -321,7 +325,7 @@ func (bt *BasicTemplate) Validate(v validation.V, ruleParsers *RuleParserProvide
 	for _, variant := range bt.Variants {
 		err, variantValidationErrs := v.ValidateStruct(variant)
 		if err != nil {
-			return []error{err}
+			return []error{t.ErrInvalidTemplate, err}
 		}
 
 		validationErrs = append(validationErrs, variantValidationErrs...)
