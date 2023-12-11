@@ -13,7 +13,6 @@ import (
 	"github.com/org-harmony/harmony/src/core/hctx"
 	"github.com/org-harmony/harmony/src/core/persistence"
 	"github.com/org-harmony/harmony/src/core/util"
-	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/org-harmony/harmony/src/core/web"
 	"net/http"
 	"path/filepath"
@@ -134,7 +133,6 @@ func subscribeEvents(appCtx *hctx.AppCtx) {
 		validationErrs := ebt.Validate(appCtx.Validator, RuleParsers())
 		if len(validationErrs) > 0 {
 			validateEvent.AddErrors(validationErrs...)
-			validateEvent.AddErrors(validation.Error{Msg: "eiffel.parser.error.invalid-template"})
 			return nil
 		}
 
