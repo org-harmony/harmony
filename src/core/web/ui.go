@@ -567,7 +567,11 @@ func makeTemplateTranslatable(ctx context.Context, t *template.Template) error {
 				return t.Translate(translator)
 			}
 
-			return fmt.Sprintf("%s", t)
+			if e, ok := t.(error); ok {
+				return translator.T(e.Error())
+			}
+
+			return translator.T(fmt.Sprintf("%s", t))
 		},
 	})
 
