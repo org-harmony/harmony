@@ -83,10 +83,29 @@
                             <img src="{{ asset "icons/edit.svg" }}" alt="{{ "template.set.action.edit" | t }}" title="{{ "template.set.action.edit" | t }}" class="align-baseline" />
                         </a>
 
+                        {{/* copy button + modal */}}
+                        <button hx-get="/template/{{ .ID }}/copy/modal"
+                            hx-target="#copyModalFor-{{ .ID }}"
+                            data-bs-toggle="modal"
+                            data-bs-target="#copyModalFor-{{ .ID }}"
+                            class="copy-icon bg-transparent border-0 me-2 p-0">
+                            <img src="{{ asset "icons/copy.svg" }}" alt="{{ "template.copy.title" | t }}" title="{{ "template.copy.title" | t }}" class="align-baseline" />
+                        </button>
+                        <div id="copyModalFor-{{ .ID }}"
+                             class="modal fade" tabindex="-1"
+                             aria-labelledby="copyModalFor-{{ .ID }}-label"
+                             aria-label="{{ "template.copy.title" | t }}"
+                             aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                </div>
+                            </div>
+                        </div>
+
                         {{/* delete button + modal */}}
                         <span data-bs-toggle="modal" data-bs-target="#delete-modal-for-{{ .ID }}" class="delete-icon" role="button">
-                                <img src="{{ asset "icons/x.svg" }}" alt="{{ "template.action.delete" | t }}" title="{{ "template.action.delete" | t }}" class="align-baseline" />
-                            </span>
+                            <img src="{{ asset "icons/x.svg" }}" alt="{{ "template.action.delete" | t }}" title="{{ "template.action.delete" | t }}" class="align-baseline" />
+                        </span>
                         <div class="modal fade" id="delete-modal-for-{{ .ID }}" tabindex="-1" role="dialog" aria-labelledby="delete-modal-for-{{ .ID }}-label" aria-hidden="true">
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">

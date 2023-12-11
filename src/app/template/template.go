@@ -115,9 +115,11 @@ type Repository interface {
 	// It will join the template.Set onto template.Template and read it into Set.TemplateSetElem.
 	// It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
 	FindByQueryForType(ctx context.Context, query string, templateType string) ([]*Template, error)
-	// FindByID finds a template by its id. It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
+	// FindByID finds a template by its id.
+	// It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
 	FindByID(ctx context.Context, id uuid.UUID) (*Template, error)
-	// FindByTemplateSetID finds all templates by their template set id. It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
+	// FindByTemplateSetID finds all templates by their template set id.
+	// It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
 	FindByTemplateSetID(ctx context.Context, templateSetID uuid.UUID) ([]*Template, error)
 	// Create creates a new template and returns it. It returns persistence.ErrInsert if the template could not be inserted.
 	// It also extracts the necessary information from the template's config JSON and saves it in the database.
@@ -127,6 +129,10 @@ type Repository interface {
 	// It also extracts the necessary information from the template's config JSON and saves it in the database.
 	// If the config JSON does not contain the necessary information, it returns ErrTemplateConfigMissingInfo.
 	Update(ctx context.Context, template *ToUpdate) (*Template, error)
+	// CopyInto copies an existing template into a template set and returns it.
+	// It returns persistence.ErrInsert if the template could not be inserted.
+	// The new template will also have a new UUID but the same config.
+	CopyInto(ctx context.Context, templateID uuid.UUID, templateSetID uuid.UUID, createdBy uuid.UUID) (*Template, error)
 	// Delete deletes an existing template by its id. It returns persistence.ErrDelete if the template could not be deleted.
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -255,7 +261,8 @@ WHERE templates.name ILIKE $1 OR templates.version ILIKE $1 OR template_sets.nam
 	return templates, nil
 }
 
-// FindByID finds a template by its id. It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
+// FindByID finds a template by its id.
+// It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
 func (r *PGRepository) FindByID(ctx context.Context, id uuid.UUID) (*Template, error) {
 	t := &Template{}
 	err := r.db.QueryRow(ctx, "SELECT id, template_set, type, name, version, config, created_by, created_at, updated_at FROM templates WHERE id = $1", id).
@@ -268,7 +275,8 @@ func (r *PGRepository) FindByID(ctx context.Context, id uuid.UUID) (*Template, e
 	return t, nil
 }
 
-// FindByTemplateSetID finds all templates by their template set id. It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
+// FindByTemplateSetID finds all templates by their template set id.
+// It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
 func (r *PGRepository) FindByTemplateSetID(ctx context.Context, templateSetID uuid.UUID) ([]*Template, error) {
 	rows, err := r.db.Query(ctx, "SELECT id, template_set, type, name, version, config, created_by, created_at, updated_at FROM templates WHERE template_set = $1", templateSetID)
 	if err != nil {
@@ -361,7 +369,32 @@ func (r *PGRepository) Update(ctx context.Context, toUpdate *ToUpdate) (*Templat
 	return template, nil
 }
 
-// Delete deletes an existing template by its id. It returns persistence.ErrDelete if the template could not be deleted.
+// CopyInto copies an existing template into a template set and returns it.
+// It returns persistence.ErrInsert if the template could not be inserted.
+// The new template will also have a new UUID but the same config.
+func (r *PGRepository) CopyInto(ctx context.Context, templateID uuid.UUID, templateSetID uuid.UUID, createdBy uuid.UUID) (*Template, error) {
+	t := &Template{ID: uuid.New()}
+	err := r.db.QueryRow(
+		ctx,
+		`INSERT INTO templates (id, template_set, type, name, version, config, created_by, created_at)
+		SELECT $1, $2, type, name, version, config, $3, NOW()
+		FROM templates
+		WHERE id = $4
+		RETURNING id, template_set, type, name, version, config, created_by, created_at, updated_at`,
+		t.ID, templateSetID, createdBy, templateID,
+	).Scan(
+		&t.ID, &t.TemplateSet, &t.Type, &t.Name, &t.Version, &t.Config, &t.CreatedBy, &t.CreatedAt, &t.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, errors.Join(persistence.ErrInsert, err)
+	}
+
+	return t, nil
+}
+
+// Delete deletes an existing template by its id.
+// It returns persistence.ErrDelete if the template could not be deleted.
 func (r *PGRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.Exec(ctx, "DELETE FROM templates WHERE id = $1", id)
 	if err != nil {
@@ -371,7 +404,8 @@ func (r *PGRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// FindByID finds a template set by its id. It returns persistence.ErrNotFound if the template set could not be found and persistence.ErrReadRow for any other error.
+// FindByID finds a template set by its id.
+// It returns persistence.ErrNotFound if the template set could not be found and persistence.ErrReadRow for any other error.
 func (r *PGSetRepository) FindByID(ctx context.Context, id uuid.UUID) (*Set, error) {
 	t := &Set{}
 	err := r.db.QueryRow(ctx, "SELECT id, name, version, description, created_by, created_at, updated_at FROM template_sets WHERE id = $1", id).
@@ -384,7 +418,8 @@ func (r *PGSetRepository) FindByID(ctx context.Context, id uuid.UUID) (*Set, err
 	return t, nil
 }
 
-// FindByCreatedBy finds all template sets for a user. It returns persistence.ErrNotFound if no template sets could be found and persistence.ErrReadRow for any other error.
+// FindByCreatedBy finds all template sets for a user.
+// It returns persistence.ErrNotFound if no template sets could be found and persistence.ErrReadRow for any other error.
 func (r *PGSetRepository) FindByCreatedBy(ctx context.Context, userID uuid.UUID) ([]*Set, error) {
 	rows, err := r.db.Query(ctx, "SELECT id, name, version, description, created_by, created_at, updated_at FROM template_sets WHERE created_by = $1", userID)
 	if err != nil {

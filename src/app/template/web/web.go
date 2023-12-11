@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/hctx"
@@ -17,6 +18,15 @@ var (
 	// ErrTemplateConfigIncomplete is a validation error that is displayed to the user when the template config is incomplete.
 	ErrTemplateConfigIncomplete = validation.Error{Msg: "template.new.config-incomplete"}
 )
+
+// TemplateCopyFormData is passed to the template copy modal to render the form that allows users to copy a template into another template set.
+type TemplateCopyFormData struct {
+	Name          string `hvalidate:"required"`
+	TemplateSetID string `hvalidate:"required"`
+	Template      *template.Template
+	TemplateSets  []*template.Set
+	Copied        bool
+}
 
 // RegisterController registers the controllers and navigation for the template module.
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
@@ -37,6 +47,8 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	router.Get("/template/{id}/edit", templateEditPageController(appCtx, webCtx).ServeHTTP)
 	router.Put("/template/{id}", templateEditSaveController(appCtx, webCtx).ServeHTTP)
 	router.Delete("/template/{id}", templateDeleteController(appCtx, webCtx).ServeHTTP)
+	router.Get("/template/{id}/copy/modal", templateCopyModalController(appCtx, webCtx).ServeHTTP)
+	router.Post("/template/{id}/copy", templateCopyController(appCtx, webCtx).ServeHTTP)
 }
 
 func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
@@ -300,5 +312,80 @@ func templateDeleteController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler
 			TemplateSet: templateSet,
 			Templates:   templates,
 		}, "template.list", "template/_list.go.html")
+	})
+}
+
+func templateCopyModalController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+	templateSetRepository := util.UnwrapType[template.SetRepository](appCtx.Repository(template.SetRepositoryName))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		tmpl, err := TemplateFromParams(io, templateRepository, "id")
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		tmplSets, err := templateSetRepository.FindByCreatedBy(io.Context(), user.MustCtxUser(io.Context()).ID)
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		return io.Render(web.NewFormData(TemplateCopyFormData{
+			Template:     tmpl,
+			TemplateSets: tmplSets,
+		}, nil), "template.copy.modal", "template/_modal-copy.go.html")
+	})
+}
+
+func templateCopyController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+	templateSetRepository := util.UnwrapType[template.SetRepository](appCtx.Repository(template.SetRepositoryName))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		ctx := io.Context()
+		usr := user.MustCtxUser(ctx)
+
+		tmpl, err := TemplateFromParams(io, templateRepository, "id")
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		tmplSets, err := templateSetRepository.FindByCreatedBy(ctx, usr.ID)
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		formData := &TemplateCopyFormData{Template: tmpl, TemplateSets: tmplSets}
+		err, validationErrs := web.ReadForm(io.Request(), formData, appCtx.Validator)
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		tmplSetUUID, err := uuid.Parse(formData.TemplateSetID)
+		if err != nil {
+			validationErrs = append(validationErrs, validation.Error{Msg: "template.copy.invalid-template-set-id"})
+
+			intoTmplSet, err := templateSetRepository.FindByID(ctx, tmplSetUUID)
+			if err != nil && !errors.Is(err, persistence.ErrNotFound) {
+				return io.Error(web.ErrInternal, err)
+			}
+
+			if err != nil || intoTmplSet.CreatedBy != usr.ID {
+				validationErrs = append(validationErrs, validation.Error{Msg: "template.copy.template-set-not-found"})
+			}
+		}
+
+		if validationErrs != nil {
+			return io.Render(web.NewFormData(formData, nil, validationErrs...), "template.copy.modal", "template/_modal-copy.go.html")
+		}
+
+		_, err = CopyTemplate(ctx, tmpl, tmplSetUUID, usr.ID, formData.Name, templateRepository)
+		if err != nil {
+			return io.Error(web.ErrInternal, err)
+		}
+
+		formData.Copied = true
+
+		return io.Render(web.NewFormData(formData, []string{"template.copy.success"}), "template.copy.modal", "template/_modal-copy.go.html")
 	})
 }

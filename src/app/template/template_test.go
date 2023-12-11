@@ -136,6 +136,25 @@ func TestPGRepository(t *testing.T) {
 		unifiedConfigEqual(t, toUpdate.Config, update.Config)
 	})
 
+	t.Run("Copy Template", func(t *testing.T) {
+		_, _, toCreate := fooToCreate()
+		toCreate.TemplateSet = tmplSet.ID
+		toCreate.CreatedBy = u.ID
+		newTmpl, err := templateRepo.Create(ctx, toCreate)
+		require.NoError(t, err)
+
+		copyTmpl, err := templateRepo.CopyInto(ctx, newTmpl.ID, tmplSet.ID, u.ID)
+		require.NoError(t, err)
+		require.NotNil(t, copyTmpl)
+		assert.NotEqual(t, newTmpl.ID, copyTmpl.ID)
+		assert.Equal(t, newTmpl.Type, copyTmpl.Type)
+		assert.Equal(t, newTmpl.Name, copyTmpl.Name)
+		assert.Equal(t, newTmpl.Version, copyTmpl.Version)
+		assert.Equal(t, newTmpl.TemplateSet, copyTmpl.TemplateSet)
+		assert.Equal(t, newTmpl.CreatedBy, copyTmpl.CreatedBy)
+		unifiedConfigEqual(t, newTmpl.Config, copyTmpl.Config)
+	})
+
 	t.Run("Delete Template", func(t *testing.T) {
 		_, _, toCreate := fooToCreate()
 		toCreate.TemplateSet = tmplSet.ID
