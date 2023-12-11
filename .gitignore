@@ -24,7 +24,7 @@ var/
 tmp/
 
 # HARMONY specific
-config/**/*.local.toml
+config/**/*.local.*
 files/**/*
 !files/.gitkeep
 

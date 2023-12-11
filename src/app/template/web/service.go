@@ -1,6 +1,8 @@
 package web
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/org-harmony/harmony/src/app/template"
@@ -88,6 +90,40 @@ func TemplateFromParams(io web.IO, repo template.Repository, param string) (*tem
 	}
 
 	return tmpl, nil
+}
+
+// CopyTemplate copies the given template into the given template set. It returns the copied template.
+// The name of the template is set to the given name, the user id is set as the created by user id of the template.
+// Errors are returned transparently.
+func CopyTemplate(ctx context.Context, tmpl *template.Template, tmplSetID, usrID uuid.UUID, name string, repo template.Repository) (*template.Template, error) {
+	newTmpl, err := repo.CopyInto(ctx, tmpl.ID, tmplSetID, usrID)
+	if err != nil {
+		return nil, err
+	}
+
+	toUpdate := newTmpl.ToUpdate()
+
+	configMap := make(map[string]any)
+	err = json.Unmarshal([]byte(tmpl.Config), &configMap)
+	if err != nil {
+		return nil, err
+	}
+
+	configMap["name"] = name
+
+	config, err := json.Marshal(configMap)
+	if err != nil {
+		return nil, err
+	}
+
+	toUpdate.Config = string(config)
+
+	newTmpl, err = repo.Update(ctx, toUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	return newTmpl, nil
 }
 
 // templateSetInlineDelete reads the template set id from the request 'id' parameter and deletes the template set.

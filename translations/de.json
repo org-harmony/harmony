@@ -74,6 +74,17 @@
       "title": "Schablone bearbeiten",
       "updated": "Die Schablone wurde aktualisiert."
     },
+    "copy": {
+      "title": "Schablone kopieren",
+      "modal-title": "Schablone \"{{ .name }}\" kopieren",
+      "text": "Die Schablone \"{{ .name }}\" kann in einen anderen Schablonensatz kopiert werden. Legen Sie den Namen der Schablone im neuen Schablonensatz fest und wählen Sie den Schablonensatz aus.",
+      "name": "Name",
+      "template-set": "Schablonensatz",
+      "invalid-template-set-id": "Wählen Sie bitte einen vorgeschlagenen Schablonensatz aus. Der Identifikator ist ungültig.",
+      "template-set-not-found": "Der Schablonensatz wurde nicht gefunden. Bitte überprüfen Sie den Identifikator und versuchen Sie es erneut.",
+      "success": "Die Schablone wurde erfolgreich in den Schablonensatz kopiert.",
+      "copied-link": "Zum Schablonensatz, in den die Schablone kopiert wurde, wechseln."
+    },
     "name": "Name",
     "version": "Version",
     "config": "Konfiguration (JSON)",
@@ -189,7 +200,8 @@
             "ID": "Bitte geben Sie eine ID ein.",
             "Name": "Bitte geben Sie einen Namen ein.",
             "Version": "Bitte geben Sie eine Version ein.",
-            "Variants": "Bitte geben Sie eine Variante ein."
+            "Variants": "Bitte geben Sie eine Variante ein.",
+            "TemplateSetID": "Bitte wählen Sie einen validen Schablonensatz aus."
           }
         },
         "semantic-version": {
@@ -205,7 +217,9 @@
       "refresh": "Aktualisieren",
       "save": "Speichern",
       "create": "Erstellen",
-      "search": "Suchen"
+      "search": "Suchen",
+      "copy": "Kopieren",
+      "copy-again": "Erneut kopieren"
     }
   }
 }

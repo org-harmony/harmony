@@ -1,0 +1,67 @@
+{{ define "template.copy.modal" }}
+    <div class="modal-dialog">
+        <div class="modal-content template-copy-modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="copyModalFor-{{ .Data.Form.Template.ID }}-label">{{ tf "template.copy.modal-title" "name" .Data.Form.Template.Name }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t "harmony.generic.close" }}"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>{{ tf "template.copy.text" "name" .Data.Form.Template.Name }}</p>
+                <form hx-post="/template/{{ .Data.Form.Template.ID }}/copy"
+                      hx-target="#copyModalFor-{{ .Data.Form.Template.ID }}"
+                      hx-disabled-elt=".template-copy-modal-fieldset"
+                      id="copyModalFor-{{ .Data.Form.Template.ID }}-form"
+                      autocomplete="off">
+                    <fieldset class="template-copy-modal-fieldset">
+                        {{ range .Data.AllValidationErrors }}
+                            <div class="alert alert-danger" role="alert">{{ tryTranslate .FieldErrorKey }}</div>
+                        {{ end }}
+
+                        {{ range .Data.Successes }}
+                            <div class="alert alert-success" role="alert">{{ tryTranslate . }}</div>
+                        {{ end }}
+
+                        {{ if .Data.Form.Copied }}
+                            <a hx-boost="true" href="/template-set/{{ .Data.Form.TemplateSetID }}/list"
+                                hx-target="body" role="link"
+                                class="btn btn-primary w-100 mb-4">
+                                {{ t "template.copy.copied-link"}}
+                            </a>
+                        {{ end }}
+
+                        <div class="mb-3">
+                            <label for="templateCopyNameInput-{{ .Data.Form.Template.ID }}" class="form-label">{{ t "template.copy.name" }}</label>
+                            <input type="text" class="form-control" id="templateCopyNameInput-{{ .Data.Form.Template.ID }}"
+                               value="{{ .Data.Form.Name }}" name="Name" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="templateCopyTemplateIDInput-{{ .Data.Form.Template.ID }}" class="form-label">{{ t "template.copy.template-set" }}</label>
+                            <input type="text" class="form-control"
+                               id="templateCopyTemplateIDInput-{{ .Data.Form.Template.ID }}"
+                               name="TemplateSetID" list="templateCopyTemplateIDList-{{ .Data.Form.Template.ID }}"
+                               value="{{ .Data.Form.TemplateSetID }}"
+                               required/>
+                            <datalist id="templateCopyTemplateIDList-{{ .Data.Form.Template.ID }}">
+                                {{ range .Data.Form.TemplateSets }}
+                                    <option value="{{ .ID }}">{{ .Name }}</option>
+                                {{ end }}
+                            </datalist>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t "harmony.generic.close" }}</button>
+                <button type="submit" form="copyModalFor-{{ .Data.Form.Template.ID }}-form" class="btn btn-primary">
+                    {{ if .Data.Form.Copied }}
+                        {{ t "harmony.generic.copy-again" }}
+                    {{ else }}
+                        {{ t "harmony.generic.copy" }}
+                    {{ end }}
+                </button>
+            </div>
+        </div>
+    </div>
+{{ end }}
