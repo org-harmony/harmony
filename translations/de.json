@@ -128,18 +128,6 @@
         "value-single-select": "Ein Wert aus",
         "copy-and-clear": "Kopieren und leeren"
       },
-      "output": {
-        "title": "Ausgabedatei festlegen (Alt + O)",
-        "file": "Ausgabedatei",
-        "file.success": "Ausgabedatei für Erfassung festgelegt.",
-        "file.save": "Ausgabedatei für Erfassung speichern",
-        "file.help": "Die Ausgabedatei wird automatisch erstellt, wenn sie nicht existiert. Anforderungen werden angehängt. Die \".csv\"-Dateierweiterung wird automatisch hinzugefügt.",
-        "directory": "Ausgabeverzeichnis",
-        "directory.help": "Unterverzeichnisse sollten durch \"\/\" getrennt werden. Nicht existierende Verzeichnisse werden automatisch erstellt.",
-        "file.info": "Legen Sie eine Ausgabedatei fest, in die Anforderungen nach der Prüfung automatisch geschrieben werden. Somit gehen keine Anforderungen verloren.",
-        "file.path-invalid": "Der Pfad ist ungültig. Bitte überprüfen Sie den Pfad und versuchen Sie es erneut.",
-        "file.create-failed": "Die Datei konnte nicht erstellt werden. Bitte überprüfen Sie den Pfad und die Dateiberechtigungen und versuchen Sie es erneut."
-      },
       "template": {
         "search": {
           "title": "Schablone suchen",
@@ -165,6 +153,14 @@
         "description": "Schablonenbeschreibung",
         "settings": "Einstellungen",
         "copy-after-parse": "Anforderung nach erfolgreicher Prüfung automatisch kopieren und das Formular leeren (manuell: Alt + K)"
+      }
+    },
+    "output": {
+      "recent": {
+        "title": "Zuletzt erfasste Anforderungen",
+        "description": "Ihre 420 letzten erfassten Anforderungen werden auf Ihrem Gerät gespeichert und hier angezeigt. Sie können diese Anforderungen durch Klicken kopieren.",
+        "empty": "Es wurden noch keine Anforderungen erfasst.",
+        "empty-button": "Letzte Anforderungen leeren"
       }
     }
   },
