@@ -1,0 +1,12 @@
+{{ define "eiffel.requirements.list" }}
+    <h3>{{ t "eiffel.output.recent.title" }}</h3>
+    <p>{{ t "eiffel.output.recent.description" }}</p>
+    <div id="eiffelRequirementsListWrapper">
+        <ul class="list-unstyled">
+            <li class="eiffel-requirements-list-item">
+                <b>{{ t "eiffel.output.recent.empty" }}</b>
+            </li>
+        </ul>
+    </div>
+    <button class="btn btn-outline-secondary w-100 mt-2" id="eiffelRequirementsEmpty">{{ t "eiffel.output.recent.empty-button" }}</button>
+{{ end }}

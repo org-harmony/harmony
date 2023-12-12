@@ -28,12 +28,12 @@ type ParsingSegment struct {
 
 // ParsingResult is the result of parsing a requirement using a template.
 type ParsingResult struct {
-	TemplateID      string
+	TemplateID      string `json:"templateID,omitempty"`
 	TemplateType    string
-	TemplateVersion string
-	TemplateName    string
-	VariantName     string
-	Requirement     string
+	TemplateVersion string `json:"templateVersion,omitempty"`
+	TemplateName    string `json:"templateName,omitempty"`
+	VariantName     string `json:"variantName,omitempty"`
+	Requirement     string `json:"requirement,omitempty"`
 	Errors          []ParsingLog
 	Warnings        []ParsingLog
 	Notices         []ParsingLog

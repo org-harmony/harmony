@@ -1,8 +1,20 @@
+const EiffelMaxRequirementsInLocalStorage = 420;
+
 document.addEventListener('DOMContentLoaded', registerDynamicFocuses);
 document.addEventListener('htmx:afterSettle', registerDynamicFocuses);
 
+document.addEventListener('DOMContentLoaded', initRequirementsList);
+document.addEventListener('htmx:afterSettle', initRequirementsList);
+
 document.addEventListener('DOMContentLoaded', autoResizeInput);
 document.addEventListener('htmx:afterSettle', autoResizeInput);
+
+document.addEventListener('DOMContentLoaded', registerOutputEmptyBtn);
+document.addEventListener('htmx:afterSettle', registerOutputEmptyBtn);
+
+document.addEventListener('htmx:afterRequest', requirementParsed);
+document.addEventListener('newRequirementEvent', newRequirement);
+document.addEventListener('emptyRequirementsEvent', emptyRequirements);
 
 registerFocuses();
 
@@ -194,6 +206,29 @@ function copyRequirementToClipboard() {
         });
 }
 
+function registerOutputEmptyBtn() {
+    const outputEmptyBtn = document.getElementById('eiffelRequirementsEmpty');
+    if (!outputEmptyBtn || outputEmptyBtn.dataset.eiffelStatus === 'setup') return;
+
+    outputEmptyBtn.addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('emptyRequirementsEvent'));
+    });
+
+    outputEmptyBtn.dataset.eiffelStatus = 'setup';
+}
+
+function copyOutputToClipboard(event) {
+    const target = event.target;
+    if (!target) return;
+
+    const output = target.innerText;
+
+    return navigator.clipboard.writeText(output)
+        .catch(() => {
+            alert('Sorry, your browser blocked copying the output to the clipboard. Try to copy manually.');
+        });
+}
+
 function clearElicitationForm() {
     const elicitationForm = document.getElementById('eiffelElicitationForm');
     if (!elicitationForm) return;
@@ -226,4 +261,154 @@ function autoResizeInput() {
 
         input.dataset.eiffelStatus = 'setup';
     });
+}
+
+function requirementParsed(event) {
+    const xhr = event.detail.xhr;
+    if (!xhr) return;
+
+    const responseHeaders = xhr.getResponseHeader('ParsingSuccessEvent');
+    if (!responseHeaders) return;
+
+    // base64 decode the response header and parse it as JSON
+    event = JSON.parse(new TextDecoder().decode(base64ToBytes(responseHeaders)));
+    if (!event) return;
+
+    const parsingSuccessEvent = event.parsingSuccessEvent;
+    if (!parsingSuccessEvent) return;
+
+    const requirement = parsingSuccessEvent.requirement;
+    if (!requirement) return;
+
+    const timestamp = Date.now();
+    let key = `eiffel-requirement-${timestamp}`;
+    localStorage.setItem(key, requirement);
+
+    document.dispatchEvent(new CustomEvent('newRequirementEvent', {
+        detail: {
+            requirement: requirement,
+            key: key
+        }
+    }));
+}
+
+function newRequirement(event) {
+    const requirement = event.detail.requirement;
+    const key = event.detail.key;
+    if (!requirement) return;
+
+    const requirementList = document.querySelector('#eiffelRequirementsListWrapper ul');
+    if (!requirementList) return;
+
+    const firstListItem = requirementList.querySelector('ul > li.eiffel-requirements-list-item')
+    if (!firstListItem) return;
+
+    const newListItem = firstListItem.cloneNode(true);
+    newListItem.innerText = requirement;
+    newListItem.dataset.eiffelRequirementKey = key;
+    newListItem.addEventListener('click', copyOutputToClipboard);
+    requirementList.prepend(newListItem);
+
+    if (!firstListItem.dataset.eiffelRequirementKey) {
+        firstListItem.classList.add('d-none');
+    }
+}
+
+function initRequirementsList() {
+    const requirementListWrapper = document.getElementById('eiffelRequirementsListWrapper');
+    if (!requirementListWrapper || requirementListWrapper.dataset.eiffelStatus === 'setup') return;
+
+    let items = {};
+
+    // get all items from local storage
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key.startsWith('eiffel-requirement-')) continue;
+
+        const requirement = localStorage.getItem(key);
+        if (!requirement) continue;
+
+        items[key] = requirement;
+    }
+
+    // sort items ascending by timestamp (from key)
+    const sortedKeys = Object.keys(items).sort((a, b) => {
+        const aTimestamp = parseInt(a.replace('eiffel-requirement-', ''));
+        const bTimestamp = parseInt(b.replace('eiffel-requirement-', ''));
+
+        return aTimestamp - bTimestamp;
+    });
+    const sortedItems = {};
+    sortedKeys.forEach(key => {
+        sortedItems[key] = items[key];
+    });
+    items = sortedItems;
+
+    // clean up old items
+    items = cleanRequirementsList(items, EiffelMaxRequirementsInLocalStorage);
+
+    // call newRequirement for each item
+    Object.keys(items).forEach(key => {
+        document.dispatchEvent(new CustomEvent('newRequirementEvent', {
+            detail: {
+                requirement: items[key],
+                key: key
+            }
+        }));
+    });
+
+    requirementListWrapper.dataset.eiffelStatus = 'setup';
+}
+
+// cleanup oldest items if there are more than max items
+// expects items to be an object with key => value pairs that is sorted ascending by timestamp (from key)
+// returns the cleaned items object that was passed in
+function cleanRequirementsList(items, max) {
+    const keys = Object.keys(items);
+    // return early if there are less than max items
+    if (keys.length <= max) return items;
+
+    // delete the oldest items
+    const keysToDelete = keys.slice(0, keys.length - max);
+    keysToDelete.forEach(key => {
+        localStorage.removeItem(key);
+    });
+    console.info(`Removed ${keysToDelete.length} requirements from local storage.`);
+
+    // remove the deleted items from the list
+    keysToDelete.forEach(key => {
+        delete items[key];
+    });
+
+    return items;
+}
+
+function emptyRequirements() {
+    const requirementList = document.querySelector('#eiffelRequirementsListWrapper ul');
+    if (!requirementList) return;
+
+    const itemNodes = requirementList.querySelectorAll('li.eiffel-requirements-list-item');
+    if (!itemNodes) return;
+
+    const items = {};
+    itemNodes.forEach(itemNode => {
+        if (!itemNode.dataset.eiffelRequirementKey) return;
+        items[itemNode.dataset.eiffelRequirementKey] = itemNode.innerText;
+    });
+
+    cleanRequirementsList(items, 0);
+
+    itemNodes.forEach((itemNode) => {
+        if (!itemNode.dataset.eiffelRequirementKey) {
+            itemNode.classList.remove('d-none');
+            return;
+        }
+
+        itemNode.remove();
+    });
+}
+
+function base64ToBytes(base64) {
+    const binString = atob(base64);
+    return Uint8Array.from(binString, (m) => m.codePointAt(0));
 }
