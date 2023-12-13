@@ -7,7 +7,7 @@
     "Jens Heise"
   ],
   "license": "MIT",
-  "description": "User stories originate from agile software development and describe the requirements for a system from the user's perspective. They are usually short and concise and are written on index cards. This template is designed for the English language.",
+  "description": "User stories describe the requirements for a system from the user's perspective. This template is designed for the English language.",
   "rules": {
     "as": {
       "name": "As",

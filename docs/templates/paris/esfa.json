@@ -8,7 +8,7 @@
     "Oliver Linssen"
   ],
   "license": "MIT",
-  "description": "Die erweiterte Schablone für funktionale Anforderungen (ESFA) dient der präzsien Beschreibung verschiedener Arten von funktionalen Anforderungen. Es ist zu beachten, dass aus Gründen der technischen Machbarkeit, bzw. der besseren Benutzbarkeit der Schablonen an einigen Stellen, Details der PARIS-Spezifikation abgewandelt wurden. Die hier definierte ESFA Schablone ist dabei PARIS-Kompatibel, streicht jedoch einige Freiheiten der PARIS-Spezifikation, um die Benutzbarkeit innerhalb HARMONYs zu verbessern.",
+  "description": "Die erweiterte Schablone für funktionale Anforderungen (ESFA) dient der präzsien Beschreibung verschiedener Arten von funktionalen Anforderungen.",
   "rules": {
     "bedingung": {
       "name": "Bedingung",

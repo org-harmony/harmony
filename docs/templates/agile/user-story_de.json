@@ -7,7 +7,7 @@
     "Jens Heise"
   ],
   "license": "MIT",
-  "description": "User Stories stammen aus der agilen Softwareentwicklung und beschreiben die Anforderungen an ein System aus der Sicht des Benutzers. Sie sind in der Regel kurz und prägnant formuliert und werden auf Karteikarten geschrieben. Diese Vorlage ist für die deutsche Sprache ausgelegt.",
+  "description": "User Stories beschreiben die Anforderungen an ein System aus der Sicht des Benutzers. Diese Vorlage ist für die deutsche Sprache ausgelegt.",
   "rules": {
     "als": {
       "name": "Als",
