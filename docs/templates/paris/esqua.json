@@ -8,7 +8,7 @@
     "Oliver Linssen"
   ],
   "license": "MIT",
-  "description": "Qualitätsanforderung bedeutet in PARIS eine Anforderung, die sich auf ein Qualitätsmerkmal bezieht. Hinweis 1: Die Qualität eines Schulunterrichts ist von völlig anderen Kriterien abhängig wie die Qualität eines Softwareprodukts, einer Kantine oder einer Waschmaschine: Qualitätsmerkmale sind extrem vielfältig und vom jeweiligen betrachteten Gegenstand abhängig. Hinweis 2: Zu beachten ist, dass eine Qualitätsanforderung mindestens ein Qualitätskriterium, bestehend aus Indikator, Messverfahren, Masseinheit und Ziel, besitzen muss.",
+  "description": "Qualitätsanforderung bedeutet in PARIS eine Anforderung, die sich auf ein Qualitätsmerkmal bezieht. Qualitätsanforderungen bestehen immer aus einem Qualitätsmerkmal und 1-n Qualitätskriterien.",
   "rules": {
     "bedingung": {
       "name": "Bedingung",
