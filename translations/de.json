@@ -158,7 +158,7 @@
     "output": {
       "recent": {
         "title": "Zuletzt erfasste Anforderungen",
-        "description": "Ihre 420 letzten erfassten Anforderungen werden auf Ihrem Gerät gespeichert und hier angezeigt. Sie können diese Anforderungen durch Klicken kopieren.",
+        "description": "Ihre 150 letzten erfassten Anforderungen werden auf Ihrem Gerät gespeichert und hier angezeigt. Sie können diese Anforderungen durch Klicken kopieren.",
         "empty": "Es wurden noch keine Anforderungen erfasst.",
         "empty-button": "Letzte Anforderungen leeren"
       }

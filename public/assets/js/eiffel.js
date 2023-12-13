@@ -1,4 +1,4 @@
-const EiffelMaxRequirementsInLocalStorage = 420;
+const EiffelMaxRequirementsInLocalStorage = 150;
 
 document.addEventListener('DOMContentLoaded', registerDynamicFocuses);
 document.addEventListener('htmx:afterSettle', registerDynamicFocuses);
