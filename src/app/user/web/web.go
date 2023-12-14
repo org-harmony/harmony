@@ -6,9 +6,11 @@ import (
 	"github.com/org-harmony/harmony/src/core/auth"
 	"github.com/org-harmony/harmony/src/core/config"
 	"github.com/org-harmony/harmony/src/core/hctx"
+	"github.com/org-harmony/harmony/src/core/trans"
 	"github.com/org-harmony/harmony/src/core/util"
 	"github.com/org-harmony/harmony/src/core/web"
 	"net/http"
+	"time"
 )
 
 const Pkg = "app.user.web"
@@ -18,6 +20,7 @@ var ErrUpdateUser = errors.New("user.settings.update-error")
 
 // RegisterController registers the web controllers for the user module.
 // It registers the following routes:
+//   - GET /user/me/language/{locale} For updating the user language.
 //   - GET /auth/login For displaying various OAuth2 login buttons.
 //   - GET /auth/logout For logging out the user.
 //   - GET /user/me For displaying the user profile.
@@ -35,6 +38,7 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	authCfg := &auth.Cfg{}
 	util.Ok(config.C(authCfg, config.From("auth"), config.Validate(appCtx.Validator)))
 
+	router.Get("/user/me/language/{locale}", userLanguageController(appCtx, webCtx).ServeHTTP)
 	router.Get("/auth/login", loginController(appCtx, webCtx, authCfg).ServeHTTP)
 	router.Get("/auth/logout", logoutController(appCtx, webCtx).ServeHTTP)
 
@@ -78,6 +82,34 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 		},
 		Position: 1000,
 	})
+
+	webCtx.Navigation.Add("user.language.de", web.NavItem{
+		URL:  "/user/me/language/de",
+		Name: "harmony.menu.language.de",
+		Display: func(io web.IO) (bool, error) {
+			locale, err := io.Request().Cookie(trans.LocaleSessionKey)
+			if err != nil {
+				return false, err
+			}
+
+			return locale.Value != "de", nil
+		},
+		Position: 1050,
+	})
+
+	webCtx.Navigation.Add("user.language.en", web.NavItem{
+		URL:  "/user/me/language/en",
+		Name: "harmony.menu.language.en",
+		Display: func(io web.IO) (bool, error) {
+			locale, err := io.Request().Cookie(trans.LocaleSessionKey)
+			if err != nil {
+				return true, err
+			}
+
+			return locale.Value != "en", nil
+		},
+		Position: 1050,
+	})
 }
 
 func registerTemplateDataExtensions(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
@@ -117,6 +149,25 @@ func logoutController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 		if err != nil {
 			return err
 		}
+
+		return io.Redirect("/", http.StatusTemporaryRedirect)
+	})
+}
+
+func userLanguageController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		request := io.Request()
+		locale := web.URLParam(request, "locale")
+
+		cookie := http.Cookie{
+			Name:     trans.LocaleSessionKey,
+			Value:    locale,
+			Expires:  time.Now().Add(365 * 24 * time.Hour),
+			SameSite: http.SameSiteLaxMode,
+			Path:     "/",
+		}
+
+		http.SetCookie(io.Response(), &cookie)
 
 		return io.Redirect("/", http.StatusTemporaryRedirect)
 	})
