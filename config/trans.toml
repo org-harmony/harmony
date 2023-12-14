@@ -8,3 +8,7 @@ default = true
 [locales.en]
 path = "en"
 name = "English"
+
+[locales.es]
+path = "es"
+name = "Español"

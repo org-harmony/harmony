@@ -181,7 +181,12 @@
       "template-sets": "Schablonen",
       "user": "Profil",
       "login": "Anmelden",
-      "logout": "Abmelden"
+      "logout": "Abmelden",
+      "language": {
+        "label": "Sprache",
+        "de": "Deutsch",
+        "en": "Englisch"
+      }
     },
     "error": {
       "generic": "Leider ist ein unerwarteter Fehler aufgetreten.",
