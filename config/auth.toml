@@ -9,3 +9,13 @@ userinfo_uri = "https://api.github.com/user"
 client_id = "[client_id]"
 client_secret = "[client_secret]"
 scopes = ["read:user", "user:email"]
+
+[provider.google]
+name = "google"
+display_name = "Google"
+authorize_uri = "https://accounts.google.com/o/oauth2/v2/auth"
+access_token_uri = "https://oauth2.googleapis.com/token"
+userinfo_uri = "https://openidconnect.googleapis.com/v1/userinfo"
+client_id = "[client_id]"
+client_secret = "[client_secret]"
+scopes = ["openid", "email", "profile"]

@@ -50,8 +50,8 @@ type LoginFunc[P, M any] func(context.Context, *oauth2.Token, *ProviderCfg) (*pe
 // The login callback is responsible for creating the user session.
 //
 // Login happens through a callback because the user session is not part of the auth package rather it is domain specific.
-func OAuthLogin[P, M any](ctx context.Context, state, code string, provider *ProviderCfg, login LoginFunc[P, M]) (*persistence.Session[P, M], error) {
-	oAuthCfg := OAuthCfgFromProviderCfg(provider, "") // empty redirect URL because it is not used in this function
+func OAuthLogin[P, M any](ctx context.Context, state, code, redirectURL string, provider *ProviderCfg, login LoginFunc[P, M]) (*persistence.Session[P, M], error) {
+	oAuthCfg := OAuthCfgFromProviderCfg(provider, redirectURL) // some providers require a redirect URL to match (Google does while GitHub doesn't)
 
 	token, err := OAuthVerify(ctx, code, state, oAuthCfg)
 	if err != nil {
@@ -62,12 +62,16 @@ func OAuthLogin[P, M any](ctx context.Context, state, code string, provider *Pro
 }
 
 // OAuthVerify verifies the OAuth2 state and exchanges the code for a token.
-func OAuthVerify(ctx context.Context, code string, state string, cfg *oauth2.Config) (*oauth2.Token, error) {
+func OAuthVerify(ctx context.Context, code, state string, cfg *oauth2.Config) (*oauth2.Token, error) {
 	if state != "state" { // TODO add checks for dynamic state
 		return nil, ErrInvalidOAuthState
 	}
 
-	token, err := cfg.Exchange(ctx, code)
+	cfg.Endpoint.AuthStyle = oauth2.AuthStyleInParams                            // google requires this
+	authCodeOption := oauth2.SetAuthURLParam("grant_type", "authorization_code") // and this
+	redirectOption := oauth2.SetAuthURLParam("redirect_uri", cfg.RedirectURL)    // and this
+	token, err := cfg.Exchange(ctx, code, authCodeOption, redirectOption)
+
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrCodeExchangeFailed, err.Error())
 	}

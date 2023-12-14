@@ -15,6 +15,14 @@ import (
 
 type GitHubUserAdapter struct{}
 
+type GoogleUserAdapter struct{}
+
+type GoogleUserinfo struct {
+	Email     string `json:"email"`
+	Firstname string `json:"given_name"`
+	Lastname  string `json:"family_name"`
+}
+
 // OAuthUserAdapter adapts the OAuth2 user data to the user entity.
 // The Email method returns the email address of the user this is used to find the user in the database.
 // If the user was not found and can therefore not be logged-in, the CreateUser method is called.
@@ -24,7 +32,6 @@ type OAuthUserAdapter interface {
 	CreateUser(ctx context.Context, email string, token *oauth2.Token, cfg *auth.ProviderCfg, client *http.Client) (*ToCreate, error)
 }
 
-// TODO add Google adapter
 // TODO add Azure adapter
 
 // Adapters returns a map of OAuthUserAdapters with the provider name as key.
@@ -32,6 +39,7 @@ type OAuthUserAdapter interface {
 func Adapters() map[string]OAuthUserAdapter {
 	return map[string]OAuthUserAdapter{
 		"github": &GitHubUserAdapter{},
+		"google": &GoogleUserAdapter{},
 	}
 }
 
@@ -123,6 +131,64 @@ func (g *GitHubUserAdapter) CreateUser(ctx context.Context, email string, token 
 		Firstname: firstname,
 		Lastname:  lastname,
 	}, nil
+}
+
+// Email on the GoogleUserAdapter returns the email address of the user.
+func (g *GoogleUserAdapter) Email(ctx context.Context, token *oauth2.Token, cfg *auth.ProviderCfg, client *http.Client) (string, error) {
+	userinfo, err := getGoogleUserinfo(ctx, token.AccessToken, cfg, client)
+	if err != nil {
+		return "", err
+	}
+
+	email := userinfo.Email
+	if email == "" {
+		return "", fmt.Errorf("no email found in userinfo")
+	}
+
+	return email, nil
+}
+
+// CreateUser on the GoogleUserAdapter creates a new user with the given email address and name from the userinfo endpoint.
+func (g *GoogleUserAdapter) CreateUser(ctx context.Context, email string, token *oauth2.Token, cfg *auth.ProviderCfg, client *http.Client) (*ToCreate, error) {
+	userinfo, err := getGoogleUserinfo(ctx, token.AccessToken, cfg, client)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ToCreate{
+		Email:     userinfo.Email,
+		Firstname: userinfo.Firstname,
+		Lastname:  userinfo.Lastname,
+	}, nil
+}
+
+// getGoogleUserinfo returns the userinfo from the Google API.
+func getGoogleUserinfo(ctx context.Context, token string, cfg *auth.ProviderCfg, client *http.Client) (GoogleUserinfo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfg.UserinfoURI, nil)
+	userinfo := GoogleUserinfo{}
+	if err != nil {
+		return userinfo, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	response, err := client.Do(req)
+	if err != nil {
+		return userinfo, err
+	}
+	defer response.Body.Close()
+
+	content, err := io.ReadAll(response.Body)
+	if err != nil {
+		return userinfo, err
+	}
+
+	err = json.Unmarshal(content, &userinfo)
+	if err != nil {
+		return userinfo, err
+	}
+
+	return userinfo, nil
 }
 
 // githubGetUserinfo returns the userinfo from the userinfo endpoint.
