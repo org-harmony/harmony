@@ -1,1 +1,227 @@
-{}
+{
+  "user": {
+    "firstname": "First Name",
+    "lastname": "Last Name",
+    "email": "Email",
+    "email.help": "The email address is determined by the OAuth provider you sign in with. You cannot change this email address. We use this email address to identify you.",
+    "auth": {
+      "login": {
+        "title": "Sign In",
+        "action": "Log In",
+        "with-provider": "Sign in with {{ .provider }}",
+        "error": {
+          "oauth": "Error signing in with OAuth. Please try again.",
+          "invalid-provider": "This provider is not supported for OAuth login."
+        }
+      }
+    },
+    "settings": {
+      "for": "Settings for {{ .firstname }} {{ .lastname }}",
+      "updated": "Settings updated.",
+      "update-error": "Settings could not be updated."
+    }
+  },
+  "template": {
+    "set": {
+      "title": "Template Set",
+      "list": "Overview of Template Sets",
+      "list.empty": "No template sets have been created yet.",
+      "new": "Create New Template Set",
+      "information": "Information",
+      "name": "Name",
+      "version": "Version",
+      "type": "Type",
+      "description": "Description",
+      "createdAt": "Created at",
+      "updatedAt": "Last updated at",
+      "action": {
+        "actions": "Actions",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "delete": {
+        "title": "Are you sure you want to delete the template set \"{{ .name }}\"?",
+        "text": "If you delete the template set \"{{ .name }}\", all included templates will also be irrevocably deleted from the system.",
+        "confirm": "Delete anyway",
+        "cancel": "Cancel and keep"
+      },
+      "edit": {
+        "title": "Edit Template Set",
+        "name": "Name",
+        "version": "Version",
+        "description": "Description",
+        "confirm": "Save",
+        "cancel": "Cancel",
+        "updated": "The template set has been updated."
+      }
+    },
+    "title": "Template",
+    "list": "Overview of Templates {{ .name }}",
+    "list.empty": "No templates have been created yet.",
+    "new": {
+      "title": "Create New Template",
+      "button": "Create New Template",
+      "invalid-json": "The JSON configuration is invalid. Please check the syntax.",
+      "config-incomplete": "The JSON configuration is incomplete. Please check the template documentation.",
+      "did-not-validate": "The template could not be validated. Make sure the template type is correct. Please check the template documentation."
+    },
+    "delete": {
+      "title": "Are you sure you want to delete the template \"{{ .name }}\"?",
+      "text": "If you delete the template \"{{ .name }}\", it will be irrevocably removed from the system.",
+      "confirm": "Delete anyway",
+      "cancel": "Cancel and keep"
+    },
+    "edit": {
+      "title": "Edit Template",
+      "updated": "The template has been updated."
+    },
+    "copy": {
+      "title": "Copy Template",
+      "modal-title": "Copy template \"{{ .name }}\"",
+      "text": "The template \"{{ .name }}\" can be copied to another template set. Specify the name of the template in the new template set and select the template set.",
+      "name": "Name",
+      "template-set": "Template Set",
+      "invalid-template-set-id": "Please select a suggested template set. The identifier is invalid.",
+      "template-set-not-found": "The template set was not found. Please check the identifier and try again.",
+      "success": "The template has been successfully copied to the template set.",
+      "copied-link": "Switch to the template set the template was copied to."
+    },
+    "name": "Name",
+    "version": "Version",
+    "config": "Configuration (JSON)",
+    "action": {
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "eiffel": {
+    "parser": {
+      "error": {
+        "invalid-template": "The EIFFEL template is invalid. Please check the template documentation.",
+        "missing-rule": "In the variant {{ .variant }} of the template {{ .template }}, an attempt is made to use a rule \"{{ .rule }}\" that is not defined.",
+        "invalid-variant": "The variant is invalid.",
+        "missing-rule-parser": "The required parser for the rule is not available. Probably the rule type \"{{ .type }}\" is not correct. Please check the template documentation.",
+        "missing-segment": "An input for the rule \"{{ .name }}\" ({{ .technicalName }}) is missing.",
+        "invalid-rule-value": "The value \"value\" for the rule \"{{ .rule }}\" of type \"{{ .type }}\" is invalid. Please check the template documentation.",
+        "not-a-slice": "The value \"value\" for the rule \"{{ .rule }}\" of type \"{{ .type }}\" is not a list. Please check the template documentation.",
+        "not-a-string": "The value \"value\" for the rule \"{{ .rule }}\" of type \"{{ .type }}\" should consist of a string or a list of strings, but another type was found. Please check the template documentation."
+      },
+      "equals.error": "Expected value: \"{{ .expected }}\".",
+      "equals-any.error": "Expected value: {{ .expected }}."
+    },
+    "elicitation": {
+      "call-to-action": "Capture requirements with EIFFEL",
+      "parse": {
+        "flawless-success": "The requirement is flawless.",
+        "success": "The requirement is valid, but potential problems were found."
+      },
+      "form": {
+        "title": "Capture Requirement (Alt + P)",
+        "submit": "Check Requirement (Alt + Enter)",
+        "parsing-error": "The requirement does not conform to the template.",
+        "rule-description": "{{ .rule }}",
+        "rule-description.optional-flag": "(Optional)",
+        "hint": "Hint",
+        "explanation": "Explanation",
+        "no-further-info": "No further information has been provided for this rule.",
+        "value": "Expected",
+        "value-single-select": "A value from",
+        "copy-and-clear": "Copy and clear"
+      },
+      "template": {
+        "search": {
+          "title": "Search Template",
+          "shortcut": "Alt + F",
+          "select": "Select",
+          "placeholder": "Search templates - enter name here...",
+          "start": "Search in the input field for a template and select it for capturing.",
+          "call-to-action": "No template has been selected yet. Please use the search to find a template.",
+          "not-found": "No templates found.",
+          "query-too-short": "Enter at least 3 characters to start the search.",
+          "not-yet-selected": "No template has been selected yet."
+        },
+        "not-found": "The template was not found.",
+        "variant": {
+          "left.shortcut": "<- + Alt",
+          "right.shortcut": "Alt + ->",
+          "not-found": "The variant was not found.",
+          "description": "Variant Description"
+        },
+        "construction": "Template Construction",
+        "example": "Example Sentence",
+        "description.title": "Description",
+        "description": "Template Description",
+        "settings": "Settings",
+        "copy-after-parse": "Automatically copy the requirement after successful verification and clear the form (manually: Alt + K)"
+      }
+    },
+    "output": {
+      "recent": {
+        "title": "Recently Captured Requirements",
+        "description": "Your last 150 captured requirements are stored on your device and displayed here. You can copy these requirements by clicking.",
+        "empty": "No requirements have been captured yet.",
+        "empty-button": "Clear last requirements"
+      }
+    }
+  },
+  "harmony": {
+    "head": {
+      "welcome": "Welcome to HARMONY & EIFFEL",
+      "title.suffix": "HARMONY"
+    },
+    "text": {
+      "welcome": "<p>Highly Adaptable Requirements Management and Organization sYstem - HARMONY<br/>\nElicitation Interface for eFFective Language - EIFFEL<br/>\n<br/>\nThe idea is to simplify the elicitation of requirements by using templates, offering users a way to enter and validate template-based requirements more easily. The templates intended for the design of the system are derived from the PARIS pattern language. This is an approach and also a research project by Prof. Dr. rer. oec. Oliver Linssen.<br/>\nThe design, however, supports various other templates. Templates can be defined with JSON configurations, examples of already designed templates can be found at <a href=\"https://github.com/org-harmony/harmony/tree/main/docs/templates\">docs/templates/</a>. Further documentation explains how to create templates using the existing configuration files as examples.<br/>\n<br/>\nHARMONY continues to evolve to meet more (and hopefully one day all) needs of requirements management.<br/>\nJoin us on this journey, whether you are a contributor, user, or just an observer!<br/>\n<br/>\nThe project and all participants look forward to your feedback, as we continuously work to improve HARMONY and EIFFEL. The project is still in active development.<br/></p>"
+    },
+    "footer": {
+      "visit": "Visit <strong>HARMONY</strong> at {{ .link }}."
+    },
+    "menu": {
+      "home": "Home",
+      "eiffel": "EIFFEL",
+      "template-sets": "Templates",
+      "user": "Profile",
+      "login": "Login",
+      "logout": "Logout",
+      "language": {
+        "label": "Language",
+        "de": "German",
+        "en": "English"
+      }
+    },
+    "error": {
+      "generic": "Unfortunately, an unexpected error has occurred.",
+      "generic-reload": "Unfortunately, an unexpected error has occurred. Please reload the page.",
+      "validation": {
+        "email": {
+          "generic": "Please enter a valid email address."
+        },
+        "required": {
+          "generic": "Please fill out this field.",
+          "field": {
+            "ID": "Please enter an ID.",
+            "Name": "Please enter a name.",
+            "Version": "Please enter a version.",
+            "Variants": "Please enter a variant.",
+            "TemplateSetID": "Please select a valid template set."
+          }
+        },
+        "semantic-version": {
+          "generic": "Please enter a valid version number.",
+          "field": {
+            "Version": "Please enter a valid version number."
+          }
+        }
+      }
+    },
+    "generic": {
+      "close": "Close",
+      "refresh": "Refresh",
+      "save": "Save",
+      "create": "Create",
+      "search": "Search",
+      "copy": "Copy",
+      "copy-again": "Copy Again"
+    }
+  }
+}
