@@ -47,10 +47,13 @@ func oAuthLoginSuccessController(
 			return io.Error(errors.New("auth.error.invalid-provider"))
 		}
 
+		redirectURL := oAuthProviderRedirectURL(webCtx, name)
+
 		session, err := auth.OAuthLogin(
 			request.Context(),
 			request.FormValue("state"),
 			request.FormValue("code"),
+			redirectURL,
 			provider,
 			func(
 				ctx context.Context,

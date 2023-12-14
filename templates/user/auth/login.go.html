@@ -9,7 +9,7 @@
             {{ block "auth.login.providers" . }}
                 <div class="d-grid">
                     {{ range $provider := .Data.Providers }}
-                        <a href="/auth/login/{{ $provider.Name }}" class="btn btn-outline-secondary auth-login-provider-{{ $provider.Name }}">
+                        <a href="/auth/login/{{ $provider.Name }}" class="btn btn-outline-secondary auth-login-provider-{{ $provider.Name }} my-1">
                             {{ tf "user.auth.login.with-provider" "provider" $provider.DisplayName }}
                         </a>
                     {{ end }}
