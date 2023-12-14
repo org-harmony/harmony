@@ -3,6 +3,7 @@
     "firstname": "Vorname",
     "lastname": "Nachname",
     "email": "E-Mail",
+    "email.help": "Die E-Mail-Adresse wird durch den OAuth-Anbieter, mit dem Sie sich anmelden, festgelegt. Sie können diese E-Mail-Adresse nicht ändern. Wir nutzen diese E-Mail-Adresse, um Sie zu identifizieren.",
     "auth": {
       "login": {
         "title": "Anmelden",
