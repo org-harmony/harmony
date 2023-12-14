@@ -51,6 +51,11 @@
                                 <div class="invalid-feedback">{{ t $validation.GenericErrorKey }}</div>
                             {{ end }}
                         </div>
+                        <div class="col-12 mt-2">
+                            <label for="email" class="form-label">{{ t "user.email" }}</label>
+                            <input id="email" type="email" class="form-control" disabled value="{{ .Extra.User.Email }}"/>
+                            <div class="form-text">{{ t "user.email.help" }}</div>
+                        </div>
                         <div class="col mt-2">
                             <button type="submit" class="btn btn-primary">{{ t "harmony.generic.save" }}</button>
                         </div>
