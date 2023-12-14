@@ -89,7 +89,7 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 		Display: func(io web.IO) (bool, error) {
 			locale, err := io.Request().Cookie(trans.LocaleSessionKey)
 			if err != nil {
-				return false, err
+				return false, nil
 			}
 
 			return locale.Value != "de", nil
@@ -103,7 +103,7 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 		Display: func(io web.IO) (bool, error) {
 			locale, err := io.Request().Cookie(trans.LocaleSessionKey)
 			if err != nil {
-				return true, err
+				return true, nil
 			}
 
 			return locale.Value != "en", nil
