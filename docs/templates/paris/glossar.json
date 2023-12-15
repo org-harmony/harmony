@@ -30,6 +30,7 @@
       "hint": "Mit welchen Synonymen?",
       "explanation": "Synonyme für den zu erklärenden Begriff. Beispiel: (Synonyme: Ausleiher, Besucher, Leser)",
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "medium"
     },
     "uebersetzung": {
@@ -38,6 +39,7 @@
       "hint": "Mit welchen Übersetzungen?",
       "explanation": "Übersetzung des zu erklärenden Begriffs. Beispiel: (engl. Reader)",
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "medium"
     },
     "bedeutet": {
@@ -55,6 +57,7 @@
         "in der"
       ],
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "small"
     },
     "bereich": {
@@ -79,6 +82,7 @@
         "den Prozess"
       ],
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "small"
     },
     "definiens": {
@@ -102,6 +106,7 @@
       "hint": "Warum ist es so festgelegt?",
       "explanation": "Begründung für die Definition. Beispiel: weil juristische Personen nicht zur Ausleihe zugelassen sind",
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "large"
     },
     "punkt": {

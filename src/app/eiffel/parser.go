@@ -76,6 +76,10 @@ type BasicRule struct {
 	// Optional means a rule is not required to be parsed without template.ParsingLogLevelError (parsing error).
 	// By that parsing an invalid requirement for an optional rule will not result in a parsing error.
 	Optional bool `json:"optional"`
+	// IgnoreMissingWhenOptional means that a missing or empty segment for this rule will not be displayed at all.
+	// Usually, a missing or empty segment for an optional rule will be an error downgraded to a notice.
+	// However, if this flag is set to true, the segment will not be displayed at all.
+	IgnoreMissingWhenOptional bool `json:"ignoreMissingWhenOptional"`
 	// Size is the expected size of the rule's value. It is optional. Possible values are:
 	//  - "small" (default): The value is expected to be a short string. 1/4 of the input field width.
 	//  - "medium": The value is expected to be a medium-sized string. 2/4 of the input field width.
@@ -220,11 +224,14 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 			return result, RuleMissingError{Rule: ruleName, Template: bt.Name, Variant: variant.Name}
 		}
 
+		var parsingLogs []parser.ParsingLog
 		segment, ok := indexedSegments[ruleName]
-		if (!ok || segment.Value == "") && !rule.Optional {
-			result.Errors = append(result.Errors, parser.ParsingLog{
+
+		isMissing := !ok || segment.Value == ""
+		if isMissing {
+			parsingLogs = append(parsingLogs, parser.ParsingLog{
 				Segment: &parser.ParsingSegment{Name: ruleName},
-				Level:   parser.ParsingLogLevelError,
+				Level:   parser.ParsingLogLevelError, // if optional this will be downgraded to a notice in a moment
 				Message: "eiffel.parser.error.missing-segment",
 				TranslationArgs: []string{
 					"name",
@@ -233,35 +240,21 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 					ruleName,
 				},
 			})
+		}
+
+		if rule.Optional && isMissing && rule.IgnoreMissingWhenOptional {
 			continue
 		}
 
-		if !ok || segment.Value == "" {
-			continue // rule is optional and segment is missing -> ignore
-		}
+		if !isMissing {
+			var err error
+			parsingLogs, err = parse(ctx, ruleParsers, rule, segment)
+			if err != nil {
+				return result, err
+			}
 
-		ruleParser, err := ruleParsers.Parser(rule.Type)
-		if err != nil {
-			return result, err // should also never happen because the template is expected to be valid
+			buildRequirementIncrementally(rule, segment, &result)
 		}
-
-		parsingLogs, err := ruleParser.Parse(ctx, rule, segment)
-		if err != nil {
-			return result, err
-		}
-
-		be := " "
-		af := ""
-		before, bOk := rule.Extra["before"]
-		after, aOk := rule.Extra["after"]
-		if bStr, ok := before.(string); ok && bOk {
-			be = bStr
-		}
-		if aStr, ok := after.(string); ok && aOk {
-			af = aStr
-		}
-
-		result.Requirement += be + strings.TrimSpace(segment.Value) + af
 
 		for _, log := range parsingLogs {
 			switch log.Level {
@@ -284,6 +277,30 @@ func (bt *BasicTemplate) Parse(ctx context.Context, ruleParsers *RuleParserProvi
 	result.Requirement = strings.TrimSpace(result.Requirement)
 
 	return result, nil
+}
+
+func parse(ctx context.Context, ruleParsers *RuleParserProvider, rule BasicRule, segment parser.ParsingSegment) ([]parser.ParsingLog, error) {
+	ruleParser, err := ruleParsers.Parser(rule.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	return ruleParser.Parse(ctx, rule, segment)
+}
+
+func buildRequirementIncrementally(rule BasicRule, segment parser.ParsingSegment, result *parser.ParsingResult) {
+	be := " "
+	af := ""
+	before, bOk := rule.Extra["before"]
+	after, aOk := rule.Extra["after"]
+	if bStr, ok := before.(string); ok && bOk {
+		be = bStr
+	}
+	if aStr, ok := after.(string); ok && aOk {
+		af = aStr
+	}
+
+	result.Requirement += be + strings.TrimSpace(segment.Value) + af
 }
 
 // Validate makes sure that the template is valid. It checks the structure of and semantic of the values inside.

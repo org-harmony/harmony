@@ -46,6 +46,10 @@
                         {{ if or (eq $displayType "input-text")
                         (eq $displayType "text")
                         (eq $displayType "input-single-select") }}
+
+                            {{ $optionalText := and (eq $displayType "text") $rule.Optional }}
+                            {{ $nonOptionalText := and (eq $displayType "text") (not $optionalText) }}
+
                             <div class="mb-3">
                                 <div class="input-group {{ if $violations }}has-validation{{ end }}">
                                     <span data-bs-target="#eiffelRule-{{ $ruleName }}-info" class="input-group-text" role="button" data-bs-toggle="modal">i</span>
@@ -59,7 +63,7 @@
                                         </datalist>
                                     {{ end }}
 
-                                    {{ if eq $displayType "text" }}
+                                    {{ if $nonOptionalText }}
                                         <input type="hidden" name="{{ $inputName }}" value="{{ $rule.Value }}" />
                                     {{ end }}
 
@@ -67,12 +71,24 @@
                                         id="eiffelFormInput-{{ $ruleName }}"
                                         class="form-control {{ if $violations }}is-invalid{{ end }}"
                                         name="{{ $inputName }}"
-                                        placeholder="{{ $displayName}}"
                                         aria-label="{{ $displayName }}"
                                         aria-description="{{ $rule.Hint }}"
-                                        {{ if eq $displayType "text" }}
-                                            disabled value="{{ $rule.Value }}"
-                                        {{ else if $parsingResult }}value="{{ index $segments $ruleName }}"{{ end }}
+
+                                        {{ if $nonOptionalText }} {{/* show fixed text in input */}}
+                                            value="{{ $rule.Value }}"
+                                            disabled
+                                        {{ else if $parsingResult }} {{/* show content from last submit for optional text show value as placeholder */}}
+                                            value="{{ index $segments $ruleName }}"
+                                        {{ else if $optionalText }} {{/* show value that's suggested by the rule */}}
+                                            value="{{ $rule.Value }}"
+                                        {{ end }}
+
+                                        {{ if $optionalText }}
+                                            placeholder="{{ $rule.Value }}"
+                                        {{ else }}
+                                            placeholder="{{ $displayName }}"
+                                        {{ end }}
+
                                         {{ if eq $displayType "input-single-select" }}list="eiffelFormInput-{{ $ruleName }}-datalist"{{ end }}
                                         {{ if not $rule.Optional }}required{{ end }}
                                         {{ if $first }}autofocus{{ end }}
