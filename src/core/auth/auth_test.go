@@ -43,6 +43,7 @@ func TestOAuthLogin(t *testing.T) {
 			r.Context(),
 			r.FormValue("state"),
 			r.FormValue("code"),
+			"valid-callback-url",
 			providers["test"],
 			func(ctx context.Context, token *oauth2.Token, provider *ProviderCfg) (*persistence.Session[MockUser, MockMeta], error) {
 				return &persistence.Session[MockUser, MockMeta]{
