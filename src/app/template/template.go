@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/persistence"
 	"strings"
 	"time"
@@ -31,15 +32,17 @@ var (
 // Each template belongs to a template set. Templates are versioned and the information about the template should always match the template's config JSON.
 // Actually, Type, Name and Version are redundant, but they are used for easier querying.
 type Template struct {
-	ID              uuid.UUID
-	TemplateSet     uuid.UUID
-	Type            string
-	Name            string
-	Version         string
-	Config          string
-	CreatedBy       uuid.UUID
-	CreatedAt       time.Time
-	UpdatedAt       *time.Time
+	ID          uuid.UUID
+	TemplateSet uuid.UUID
+	Type        string
+	Name        string
+	Version     string
+	Config      string
+	CreatedBy   uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   *time.Time
+	// TemplateSetElem is the template set that the template belongs to joined onto the template.
+	// Don't expect this to be filled unless the origin of the template object explicitly states that it is filled.
 	TemplateSetElem *Set
 }
 
@@ -110,11 +113,12 @@ type PGSetRepository struct {
 type Repository interface {
 	persistence.Repository
 
-	// FindByQueryForType finds all templates by a query for a specified template type.
+	// FindByQueryForTypeAndUser finds all templates by a query for a specified template type and user.
 	// The query will be searched for in the template's name, version and in the template set's name.
 	// It will join the template.Set onto template.Template and read it into Set.TemplateSetElem.
+	// The search is limited to the user's templates as templates are private.
 	// It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
-	FindByQueryForType(ctx context.Context, query string, templateType string) ([]*Template, error)
+	FindByQueryForTypeAndUser(ctx context.Context, query, templateType string, usr *user.User) ([]*Template, error)
 	// FindByID finds a template by its id.
 	// It returns persistence.ErrNotFound if the template could not be found and persistence.ErrReadRow for any other error.
 	FindByID(ctx context.Context, id uuid.UUID) (*Template, error)
@@ -227,18 +231,19 @@ func (r *PGSetRepository) RepositoryName() string {
 	return SetRepositoryName
 }
 
-// FindByQueryForType finds all templates by a query for a specified template type.
+// FindByQueryForTypeAndUser finds all templates by a query for a specified template type and user.
 // It returns persistence.ErrNotFound if no templates could be found and persistence.ErrReadRow for any other error.
-func (r *PGRepository) FindByQueryForType(ctx context.Context, query string, templateType string) ([]*Template, error) {
+func (r *PGRepository) FindByQueryForTypeAndUser(ctx context.Context, query, templateType string, usr *user.User) ([]*Template, error) {
 	rows, err := r.db.Query(
 		ctx,
 		`SELECT 
 templates.id, templates.template_set, templates.type, templates.name, templates.version, templates.config, templates.created_by, templates.created_at, templates.updated_at,
 template_sets.name, template_sets.version, template_sets.description, template_sets.created_by, template_sets.created_at, template_sets.updated_at
 FROM templates LEFT JOIN template_sets ON templates.template_set = template_sets.id
-WHERE templates.name ILIKE $1 OR templates.version ILIKE $1 OR template_sets.name ILIKE $1 AND templates.type = $2`,
+WHERE (templates.name ILIKE $1 OR templates.version ILIKE $1 OR template_sets.name ILIKE $1) AND templates.type = $2 AND templates.created_by = $3`,
 		"%"+query+"%",
 		templateType,
+		usr.ID,
 	)
 	if err != nil {
 		return nil, persistence.PGReadErr(err)

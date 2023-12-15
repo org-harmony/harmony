@@ -202,7 +202,8 @@ func searchTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 			)
 		}
 
-		templates, err := templateRepository.FindByQueryForType(io.Context(), query, BasicTemplateType)
+		ctx := io.Context()
+		templates, err := templateRepository.FindByQueryForTypeAndUser(ctx, query, BasicTemplateType, user.MustCtxUser(ctx))
 		if err != nil && !errors.Is(err, persistence.ErrNotFound) {
 			return io.InlineError(web.ErrInternal, err)
 		}
