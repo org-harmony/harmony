@@ -55,6 +55,7 @@ func TemplateIntoBasicTemplate(t *template.Template, validator validation.V, rul
 // TemplateFormData struct. If the template or variant could not be found, an error is returned.
 // However, using the defaultFirstVariant flag, the first variant will be used if no variant was specified and no
 // error will be returned. TemplateFormFromRequest will also parse and validate the template.
+// TemplateFormFromRequest will return an error if the user is not permitted to access the template.
 //
 // Returned errors from TemplateFormFromRequest are safe to display to the user.
 func TemplateFormFromRequest(
@@ -73,6 +74,15 @@ func TemplateFormFromRequest(
 
 	tmpl, err := templateRepository.FindByID(ctx, templateUUID)
 	if err != nil {
+		return TemplateFormData{}, ErrTemplateNotFound
+	}
+
+	usr, err := user.CtxUser(ctx)
+	if err != nil {
+		return TemplateFormData{}, ErrTemplateNotFound
+	}
+
+	if tmpl.CreatedBy != usr.ID {
 		return TemplateFormData{}, ErrTemplateNotFound
 	}
 
