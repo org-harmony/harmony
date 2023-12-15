@@ -28,30 +28,107 @@ func TestBasicParser_Parse(t *testing.T) {
 	bt := basicTemplate()
 	rp := ruleParsers()
 
-	errs := bt.Validate(validation.New(), rp)
-	require.Len(t, errs, 0)
+	t.Run("basic variant is valid", func(t *testing.T) {
+		errs := bt.Validate(validation.New(), rp)
+		require.Len(t, errs, 0)
+	})
 
-	parsingResult, err := bt.Parse(
-		context.Background(),
-		rp,
-		"basicVariant",
-		parser.ParsingSegment{Name: "pre", Value: "This "},
-		parser.ParsingSegment{Name: "stateVerbRule", Value: "is"},
-		parser.ParsingSegment{Name: "mid", Value: "a"},
-		parser.ParsingSegment{Name: "fooRule", Value: " foo "},
-		parser.ParsingSegment{Name: "fooPostfixRule", Value: "example"},
-		parser.ParsingSegment{Name: "end", Value: "."},
-		parser.ParsingSegment{Name: "optionalErrorTestRule", Value: "bar"},
-	)
+	t.Run("basic variant parsing with error in optional rule downgraded to notice", func(t *testing.T) {
+		parsingResult, err := bt.Parse(
+			context.Background(),
+			rp,
+			"basicVariant",
+			parser.ParsingSegment{Name: "pre", Value: "This "},
+			parser.ParsingSegment{Name: "stateVerbRule", Value: "is"},
+			parser.ParsingSegment{Name: "mid", Value: "a"},
+			parser.ParsingSegment{Name: "fooRule", Value: " foo "},
+			parser.ParsingSegment{Name: "fooPostfixRule", Value: "example"},
+			parser.ParsingSegment{Name: "end", Value: "."},
+			parser.ParsingSegment{Name: "optionalErrorTestRule", Value: "bar"},
+		)
 
-	require.NoError(t, err)
-	require.Len(t, parsingResult.Notices, 1)
-	assert.True(t, parsingResult.Notices[0].Downgrade)
-	assert.Equal(t, "test-template", parsingResult.TemplateID)
-	assert.True(t, parsingResult.Ok(), "parsing result should be ok but parsing errors occurred")
-	assert.True(t, parsingResult.Flawless(), "parsing result should be flawless")
-	assert.Equal(t, parsingResult.Notices[0].Segment.Name, "optionalErrorTestRule")
-	assert.True(t, parsingResult.Notices[0].Downgrade, "notice should be downgraded for optional rule")
+		require.NoError(t, err)
+		require.Len(t, parsingResult.Notices, 1)
+		assert.True(t, parsingResult.Notices[0].Downgrade)
+		assert.Equal(t, "test-template", parsingResult.TemplateID)
+		assert.True(t, parsingResult.Ok(), "parsing result should be ok but parsing errors occurred")
+		assert.True(t, parsingResult.Flawless(), "parsing result should be flawless")
+		assert.Equal(t, parsingResult.Notices[0].Segment.Name, "optionalErrorTestRule")
+		assert.True(t, parsingResult.Notices[0].Downgrade, "notice should be downgraded for optional rule")
+	})
+
+	t.Run("missing optional rule with error downgraded to notice", func(t *testing.T) {
+		parsingResult, err := bt.Parse(
+			context.Background(),
+			rp,
+			"basicVariant",
+			parser.ParsingSegment{Name: "pre", Value: "This "},
+			parser.ParsingSegment{Name: "stateVerbRule", Value: "is"},
+			parser.ParsingSegment{Name: "mid", Value: "a"},
+			parser.ParsingSegment{Name: "fooRule", Value: " foo "},
+			parser.ParsingSegment{Name: "fooPostfixRule", Value: "example"},
+			parser.ParsingSegment{Name: "end", Value: "."},
+			parser.ParsingSegment{Name: "optionalErrorTestRule", Value: "bar"},
+		)
+
+		require.NoError(t, err)
+		require.Len(t, parsingResult.Notices, 1)
+		assert.True(t, parsingResult.Notices[0].Downgrade)
+	})
+
+	t.Run("missing input for a required (non-optional) rule error", func(t *testing.T) {
+		bt := basicTemplate()
+
+		parsingResult, err := bt.Parse(
+			context.Background(),
+			rp,
+			"basicVariant",
+			parser.ParsingSegment{Name: "pre", Value: "This "},
+			parser.ParsingSegment{Name: "stateVerbRule", Value: "wrong-state-verb"},
+			parser.ParsingSegment{Name: "mid", Value: "a"},
+			parser.ParsingSegment{Name: "fooRule", Value: "bar-missing-foo"},
+			parser.ParsingSegment{Name: "fooPostfixRule", Value: "example"},
+			parser.ParsingSegment{Name: "end", Value: "."},
+		)
+
+		require.NoError(t, err)
+		require.Len(t, parsingResult.Errors, 2)
+	})
+
+	t.Run("invalid variant, expecting error from parse", func(t *testing.T) {
+		_, err := bt.Parse(context.Background(), rp, "invalidVariant")
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid template config, expecting error from parse", func(t *testing.T) {
+		bt.Rules = map[string]BasicRule{}
+		_, err := bt.Parse(context.Background(), rp, "basicVariant")
+		assert.Error(t, err)
+	})
+
+	t.Run("valid variant, valid configuration, valid requirement, no errors, flawless result w/o notices", func(t *testing.T) {
+		bt := basicTemplate()
+		rp := ruleParsers()
+
+		parsingResult, err := bt.Parse(
+			context.Background(),
+			rp,
+			"basicVariant",
+			parser.ParsingSegment{Name: "pre", Value: "This "},
+			parser.ParsingSegment{Name: "stateVerbRule", Value: "is"},
+			parser.ParsingSegment{Name: "mid", Value: "a"},
+			parser.ParsingSegment{Name: "fooRule", Value: " foo "},
+			parser.ParsingSegment{Name: "fooPostfixRule", Value: "example"},
+			parser.ParsingSegment{Name: "end", Value: "."},
+			parser.ParsingSegment{Name: "optionalErrorTestRule", Value: "foo"},
+		)
+
+		require.NoError(t, err)
+		require.Len(t, parsingResult.Errors, 0)
+		require.Len(t, parsingResult.Notices, 0)
+		assert.True(t, parsingResult.Ok(), "parsing result should be ok but parsing errors occurred")
+		assert.True(t, parsingResult.Flawless(), "parsing result should be flawless")
+	})
 }
 
 func basicTemplate() *BasicTemplate {
@@ -87,9 +164,10 @@ func basicTemplate() *BasicTemplate {
 				Optional: true,
 			},
 			"optionalMissingTestRule": {
-				Name:     "Optional Missing Test Rule",
-				Type:     "placeholder",
-				Optional: true,
+				Name:                      "Optional Missing Test Rule",
+				Type:                      "placeholder",
+				Optional:                  true,
+				IgnoreMissingWhenOptional: true,
 			},
 			"optionalErrorTestRule": {
 				Name:     "Optional Empty Error Test Rule",

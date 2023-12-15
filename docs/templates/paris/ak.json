@@ -21,6 +21,7 @@
         "Gegeben,"
       ],
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "small"
     },
     "prae-bedingung-kurz": {
@@ -35,7 +36,8 @@
       "hint": "Welche Situation liegt vor?",
       "explanation": "Beschreibung der Situation vor dem Ereignis. Beispiel: Angenommen, der Anwender X hat ein Meeting für den Anwender X für den 1.3.201x von 13:00 bis 15:00 angelegt.",
       "size": "large",
-      "optional": true
+      "optional": true,
+      "ignoreMissingWhenOptional": true
     },
     "prae-ereignis": {
       "name": "Prä-Ereignis",
@@ -46,6 +48,7 @@
         "Prüfe"
       ],
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "small"
     },
     "prae-ereignis-kurz": {
@@ -60,7 +63,8 @@
       "hint": "Was soll passieren?",
       "explanation": "Beschreibung Ereignis(se) bzw. Aktion(en). Beispiel: Wenn ein anderer Anwender Y für den Anwender X ein zweites Meeting für den 1.3.201x von 13:00 bis 15:00 anlegen will,",
       "size": "large",
-      "optional": true
+      "optional": true,
+      "ignoreMissingWhenOptional": true
     },
     "prae-ergebnis": {
       "name": "Prä-Ergebnis",
@@ -71,6 +75,7 @@
         "dann"
       ],
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "small"
     },
     "prae-ergebnis-kurz": {
@@ -92,7 +97,8 @@
       "hint": "Warum ist es so?",
       "explanation": "Beschreibung der Begründung für das Ergebnis. Beispiel: weil ein Anwender immer nur in einem Meeting gleichzeitig anwesend sein kann.",
       "size": "large",
-      "optional": true
+      "optional": true,
+      "ignoreMissingWhenOptional": true
     },
     "punkt": {
       "name": "Punkt",

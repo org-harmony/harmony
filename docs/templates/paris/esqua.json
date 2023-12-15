@@ -84,6 +84,7 @@
       "hint": "Warum?",
       "explanation": "Beispiel: weil die Mitarbeiter in Ihren Pausen keine Wartezeiten tolerieren",
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "large"
     },
     "punkt": {

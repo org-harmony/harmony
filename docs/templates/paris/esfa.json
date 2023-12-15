@@ -98,6 +98,7 @@
       "hint": "Warum wird es getan?",
       "explanation": "Beispiel: weil dieser manuell nach Auffälligkeiten suchen will",
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "large"
     },
     "punkt": {
