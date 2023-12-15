@@ -1,4 +1,5 @@
 const EiffelMaxRequirementsInLocalStorage = 150;
+const EiffelMaxRequirementsInLocalStorageWarning = 100;
 
 document.addEventListener('DOMContentLoaded', registerDynamicFocuses);
 document.addEventListener('htmx:afterSettle', registerDynamicFocuses);
@@ -15,6 +16,9 @@ document.addEventListener('htmx:afterSettle', registerOutputEmptyBtn);
 document.addEventListener('htmx:afterRequest', requirementParsed);
 document.addEventListener('newRequirementEvent', newRequirement);
 document.addEventListener('emptyRequirementsEvent', emptyRequirements);
+
+document.addEventListener('newRequirementEvent', () => updateRequirementCount());
+document.addEventListener('emptyRequirementsEvent', () => updateRequirementCount(true));
 
 registerFocuses();
 
@@ -318,6 +322,8 @@ function initRequirementsList() {
     const requirementListWrapper = document.getElementById('eiffelRequirementsListWrapper');
     if (!requirementListWrapper || requirementListWrapper.dataset.eiffelStatus === 'setup') return;
 
+    updateRequirementCount(true);
+
     let items = {};
 
     // get all items from local storage
@@ -411,4 +417,51 @@ function emptyRequirements() {
 function base64ToBytes(base64) {
     const binString = atob(base64);
     return Uint8Array.from(binString, (m) => m.codePointAt(0));
+}
+
+function updateRequirementCount(reset = false) {
+    const currentCountElem = document.getElementById('eiffelRequirementsCurrentCount');
+    if (!currentCountElem) return;
+
+    const maxCountElem = document.getElementById('eiffelRequirementsMaxCount');
+    if (!maxCountElem) return;
+
+    if (!currentCountElem.dataset.eiffelCurrentCount) {
+        currentCountElem.dataset.eiffelCurrentCount = "0";
+        currentCountElem.innerText = "0";
+    }
+
+    const currentCount = parseInt(currentCountElem.dataset.eiffelCurrentCount);
+
+    if (!maxCountElem.dataset.eiffelMaxCount) {
+        maxCountElem.dataset.eiffelMaxCount = EiffelMaxRequirementsInLocalStorage.toString();
+        maxCountElem.innerText = EiffelMaxRequirementsInLocalStorage.toString();
+    }
+
+    const maxCount = parseInt(maxCountElem.dataset.eiffelMaxCount);
+
+    let newCount = currentCount + 1;
+    if (reset) {
+        newCount = 0;
+    }
+    currentCountElem.dataset.eiffelCurrentCount = newCount.toString();
+    currentCountElem.innerText = newCount.toString();
+
+    const warning = document.getElementById('eiffelRequirementsListAlmostFull');
+    if (!warning) return;
+
+    if (newCount >= EiffelMaxRequirementsInLocalStorageWarning) {
+        warning.classList.remove('d-none');
+        currentCountElem.classList.add('text-warning');
+    }
+
+    if (newCount < EiffelMaxRequirementsInLocalStorageWarning) {
+        warning.classList.add('d-none');
+        currentCountElem.classList.remove('text-warning');
+        currentCountElem.classList.remove('text-danger');
+    }
+
+    if (newCount > EiffelMaxRequirementsInLocalStorage) {
+        currentCountElem.classList.add('text-danger');
+    }
 }

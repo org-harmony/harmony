@@ -1,6 +1,8 @@
 {{ define "eiffel.requirements.list" }}
     <h3>{{ t "eiffel.output.recent.title" }}</h3>
     <p>{{ t "eiffel.output.recent.description" }}</p>
+    <p>{{ t "eiffel.output.recent.count" }} <span id="eiffelRequirementsCurrentCount">0</span>/<span id="eiffelRequirementsMaxCount">150</span>.</p>
+    <p class="d-none text-warning" id="eiffelRequirementsListAlmostFull">{{ t "eiffel.output.recent.almost-full" }}</p>
     <div id="eiffelRequirementsListWrapper">
         <ul class="list-unstyled">
             <li class="eiffel-requirements-list-item">
