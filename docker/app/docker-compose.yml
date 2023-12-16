@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  pg:
+    image: postgres:16.1-alpine3.19
+    # The container restarts automatically unless you stop it with "docker compose down"
+    restart: unless-stopped
+    networks:
+      - services
+    volumes:
+      # The postgres data is stored in the pg/data folder on your host machine, allowing postgres to persist data even if the container is removed
+      - ./pg/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: harmony
+      # This is the password you set in the .env file
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+  web:
+    image: jnslo/harmony:latest
+    # The container restarts automatically unless you stop it with "docker compose down"
+    restart: unless-stopped
+    networks:
+      - appnet
+      - services
+    volumes:
+      # You can override the default configuration by placing a local configuration file in harmony/config/local
+      - ./harmony/config/local:/app/config/local
+    environment:
+      BASE_URL: ${HTTP}://${BASE_URL}
+      DB_HOST: pg
+      DB_PORT: 5432
+      DB_USER: harmony
+      # This is the password you set in the .env file
+      DB_PASS: ${POSTGRES_PASSWORD}
+      DB_NAME: harmony
+    # Attention: You need to either expose the port by uncommenting the following port mapping or by using Traefik (see below).
+    # For production use Traefik is highly recommended as it allows you to use HTTPS and is more secure and isolated than exposing bare ports.
+    ports:
+      # This will bind your host machine's port 8080 to the container's port 8213
+      # In that case the BASE_URL should be localhost:8080 and HTTP should be http.
+      # Disable this for production and use BASE_URL: yourdomain.com and HTTP: https.
+      - "8080:8213"
+    # Uncomment the following labels to allow Traefik to route to this service. See explanations above each label for more information.
+    # Also, see the default /docker/traefik.example setup that is included in this repository. It is not necessary to implement this exact setup,
+    # but it might help you understand how to configure Traefik. For more see the Traefik documentation.
+    #labels:
+      # Enable Traefik for this service, otherwise it will not be routed to
+      #- "traefik.enable=true"
+      # You need to specify the domain name through the .env file (see .env.dist)
+      #- "traefik.http.routers.web.rule=Host(`${BASE_URL}`)"
+      # You need to specify the entrypoint by name that is configured for HTTPS in your Traefik setup, usually "websecure"
+      # HTTPS is required for most oauth providers to work and is recommended for production.
+      #- "traefik.http.routers.web.entrypoints=websecure"
+      # This is important as the default port of HARMONY inside the container is 8213
+      #- "traefik.http.services.web.loadbalancer.server.port=8213"
+      # Optional letsencrypt certificate resolver
+      #- "traefik.http.routers.web.tls.certresolver=letsencrypt"
+
+networks:
+  # This network is used by Traefik to route to services
+  appnet:
+    external: true
+  # This network is used only inside this docker-compose.yml and the associated containers to allow them to communicate with each other
+  services:
+    internal: true
