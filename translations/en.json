@@ -161,7 +161,9 @@
         "title": "Recently Captured Requirements",
         "description": "Your last 150 captured requirements are stored on your device and displayed here. You can copy these requirements by clicking.",
         "empty": "No requirements have been captured yet.",
-        "empty-button": "Clear last requirements"
+        "empty-button": "Clear last requirements",
+        "count": "Requirements captured on your device: ",
+        "almost-full": "Attention: after the 150th requirement, the oldest requirements will be deleted on refresh."
       }
     }
   },
