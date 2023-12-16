@@ -8,7 +8,7 @@ services:
     networks:
       - services
     volumes:
-      # The postgres data is stored in the pg/data folder on your host machine, allowing postgres to persist data even if the container is removed
+      # The postgres data is stored in the pg/data/ folder on your host machine, allowing postgres to persist data even if the container is removed
       - ./pg/data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: harmony
@@ -24,7 +24,7 @@ services:
       - appnet
       - services
     volumes:
-      # You can override the default configuration by placing a local configuration file in harmony/config/local
+      # You can override the default configuration by placing a local configuration file in harmony/config/local/
       - ./harmony/config/local:/app/config/local
     environment:
       BASE_URL: ${HTTP}://${BASE_URL}
@@ -42,7 +42,7 @@ services:
       # Disable this for production and use BASE_URL: yourdomain.com and HTTP: https.
       - "8080:8213"
     # Uncomment the following labels to allow Traefik to route to this service. See explanations above each label for more information.
-    # Also, see the default /docker/traefik.example setup that is included in this repository. It is not necessary to implement this exact setup,
+    # Also, see the default docker/traefik.example/ setup that is included in this repository. It is not necessary to implement this exact setup,
     # but it might help you understand how to configure Traefik. For more see the Traefik documentation.
     #labels:
       # Enable Traefik for this service, otherwise it will not be routed to
