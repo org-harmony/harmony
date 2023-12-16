@@ -8,10 +8,20 @@
         <div class="card-body">
             {{ block "auth.login.providers" . }}
                 <div class="d-grid">
+                    {{ $noProviders := true }}
                     {{ range $provider := .Data.Providers }}
-                        <a href="/auth/login/{{ $provider.Name }}" class="btn btn-outline-secondary auth-login-provider-{{ $provider.Name }} my-1">
-                            {{ tf "user.auth.login.with-provider" "provider" $provider.DisplayName }}
-                        </a>
+                        {{ if $provider.Enabled }}
+                            {{ $noProviders = false }}
+                            <a href="/auth/login/{{ $provider.Name }}" class="btn btn-outline-secondary auth-login-provider-{{ $provider.Name }} my-1">
+                                {{ tf "user.auth.login.with-provider" "provider" $provider.DisplayName }}
+                            </a>
+                        {{ end }}
+                    {{ end }}
+
+                    {{ if $noProviders }}
+                        <div class="alert alert-warning mb-0" role="alert">
+                            {{ t "user.auth.login.no-providers" }}
+                        </div>
                     {{ end }}
                 </div>
             {{ end }}

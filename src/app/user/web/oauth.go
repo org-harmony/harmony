@@ -14,14 +14,21 @@ import (
 	"net/http"
 )
 
+// ErrInvalidProvider is returned when the specified provider is not found or not activated.
+var ErrInvalidProvider = errors.New("user.auth.login.error.invalid-provider")
+
 func oAuthLoginController(appCtx *hctx.AppCtx, webCtx *web.Ctx, providers map[string]*auth.ProviderCfg) http.Handler {
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		name := web.URLParam(io.Request(), "provider")
 		redirectURL := oAuthProviderRedirectURL(webCtx, name)
 
-		oAuthCfg, _, err := oAuthCfgFromProviderMap(name, providers, redirectURL)
+		oAuthCfg, cfg, err := oAuthCfgFromProviderMap(name, providers, redirectURL)
 		if err != nil {
-			return io.Error(errors.New("user.auth.login.error.invalid-provider"))
+			return io.Error(ErrInvalidProvider, err)
+		}
+
+		if !cfg.Enabled {
+			return io.Error(ErrInvalidProvider, fmt.Errorf("the provider %s is not enabled", name))
 		}
 
 		url := oAuthCfg.AuthCodeURL("state") // TODO dynamize state through method in auth.go
@@ -45,6 +52,10 @@ func oAuthLoginSuccessController(
 		provider, ok := providers[name]
 		if !ok {
 			return io.Error(errors.New("auth.error.invalid-provider"))
+		}
+
+		if !provider.Enabled {
+			return io.Error(ErrInvalidProvider, fmt.Errorf("the provider %s is not enabled", name))
 		}
 
 		redirectURL := oAuthProviderRedirectURL(webCtx, name)

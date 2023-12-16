@@ -33,6 +33,7 @@ type Cfg struct {
 // ProviderCfg is the config for an OAuth2 provider.
 // The config struct can be used to show the login page and handle the login callback based on various providers.
 type ProviderCfg struct {
+	Enabled        bool     `toml:"enabled"`
 	Name           string   `toml:"name" hvalidate:"required"`
 	DisplayName    string   `toml:"display_name" hvalidate:"required"`
 	AuthorizeURI   string   `toml:"authorize_uri" hvalidate:"required"`

@@ -9,6 +9,7 @@
         "title": "Sign In",
         "action": "Log In",
         "with-provider": "Sign in with {{ .provider }}",
+        "no-provider": "No OAuth provider is configured and enabled. Please contact the administrator.",
         "error": {
           "oauth": "Error signing in with OAuth. Please try again.",
           "invalid-provider": "This provider is not supported for OAuth login."
