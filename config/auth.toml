@@ -1,6 +1,7 @@
 enable_oauth2 = true
 
 [provider.github]
+enabled = false
 name = "github"
 display_name = "GitHub"
 authorize_uri = "https://github.com/login/oauth/authorize"
@@ -11,6 +12,7 @@ client_secret = "[client_secret]"
 scopes = ["read:user", "user:email"]
 
 [provider.google]
+enabled = false
 name = "google"
 display_name = "Google"
 authorize_uri = "https://accounts.google.com/o/oauth2/v2/auth"

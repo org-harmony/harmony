@@ -9,6 +9,7 @@
         "title": "Anmelden",
         "action": "Anmelden",
         "with-provider": "Mit {{ .provider }} anmelden",
+        "no-providers": "Es wurden keine Anmeldeanbieter konfiguriert und aktiviert. Bitte kontaktieren Sie den Administrator.",
         "error": {
           "oauth": "Fehler bei der Anmeldung mit OAuth. Bitte erneut versuchen.",
           "invalid-provider": "Dieser Anbieter wird nicht für den OAuth-Login unterstützt."
