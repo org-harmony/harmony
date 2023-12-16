@@ -1,0 +1,22 @@
+entryPoints:
+  web:
+    address: ":80"
+  # Important: HTTPS is required for most oauth providers to work and is recommended for production
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    # For security reasons, you should not expose all containers by default
+    exposedByDefault: false
+    # This network is used by Traefik to route to services
+    network: appnet
+
+certificatesResolvers:
+  # You can replace this however you want, but if you keep it, you should set the email
+  letsencrypt:
+    acme:
+      email: [! YOUR EMAIL !]
+      storage: acme.json
+      httpChallenge:
+        entryPoint: web

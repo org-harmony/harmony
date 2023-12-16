@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    # Restart the container automatically unless you stop it with "docker compose down"
+    restart: unless-stopped
+    networks:
+      - appnet
+    ports:
+      - "80:80"
+      # Important: HTTPS is required for most oauth providers to work and is recommended for production
+      - "443:443"
+    volumes:
+      # This is necessary for Traefik to be able to route to other containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # You can override the default configuration by replacing the provided traefik.yml file
+      - ./traefik.yml:/etc/traefik/traefik.yml
+      # This will be handled by Traefik automatically
+      - ./acme.json:/acme.json
+
+networks:
+  # You have to create this network before running "docker compose up" as it is external
+  # This network is used by Traefik to route to services
+  appnet:
+    external: true
