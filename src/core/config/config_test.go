@@ -82,9 +82,13 @@ func TestC(t *testing.T) {
 
 	t.Run("local config override", func(t *testing.T) {
 		tempDir := t.TempDir()
+		localDir := filepath.Join(tempDir, "local")
+		err := os.Mkdir(localDir, 0755)
+		require.NoError(t, err)
+
 		path := filepath.Join(tempDir, "config.toml")
-		localPath := filepath.Join(tempDir, "config.local.toml")
-		err := os.WriteFile(path, []byte(`Name = "OriginalName"`), 0644)
+		localPath := filepath.Join(localDir, "config.toml")
+		err = os.WriteFile(path, []byte(`Name = "OriginalName"`), 0644)
 		require.NoError(t, err)
 
 		err = os.WriteFile(localPath, []byte(`Name = "LocalName"`), 0644)
