@@ -96,7 +96,7 @@ func defaultOptions() *Options {
 // Using default options the config file is expected to be located in the config/ directory.
 // Default example: config/config.toml
 //
-// For the local config it locates the sub-folder local/ and looks for a file with the same name and extension.
+// For the local config it locates the subdirectory local/ and looks for a file with the same name and extension.
 // Default example: config/local/config.toml
 // Before, this was done by appending ".local" to the filename and before the extension. However, this was changed because
 // it was inconvenient when using docker volumes.
