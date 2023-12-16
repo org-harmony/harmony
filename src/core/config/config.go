@@ -88,7 +88,7 @@ func defaultOptions() *Options {
 
 // C reads a config file of type TOML and unmarshalls it into the given config struct.
 // C will override the config struct with a local config file if it exists.
-// After overriding with .local.toml the config will be overwritten by environment variables as well.
+// After overriding with the local config file the config will be overwritten by environment variables as well.
 // The C function expects parameters through Option functions, default values are provided.
 //
 // If the Validate() Option is passed a validator.Validate the config struct will be validated.
@@ -96,9 +96,10 @@ func defaultOptions() *Options {
 // Using default options the config file is expected to be located in the config/ directory.
 // Default example: config/config.toml
 //
-// The config file will be overwritten by a local config file if it exists.
-// For the local config a "local" will be inserted between filename and file extension.
-// Default example: config/config.local.toml
+// For the local config it locates the sub-folder local/ and looks for a file with the same name and extension.
+// Default example: config/local/config.toml
+// Before, this was done by appending ".local" to the filename and before the extension. However, this was changed because
+// it was inconvenient when using docker volumes.
 //
 // Then the config will be overwritten by environment variables.
 // For overwriting through environment variables the struct must be annotated
@@ -127,13 +128,14 @@ func C(c any, opts ...Option) error {
 		opt(o)
 	}
 
-	fPath := filepath.Join(o.dir, fmt.Sprintf("%s.%s", o.filename, o.fileExt))
+	fullFilename := fmt.Sprintf("%s.%s", o.filename, o.fileExt)
+	fPath := filepath.Join(o.dir, fullFilename)
 	b, err := os.ReadFile(fPath)
 	if err != nil {
 		return errors.Join(herr.ErrReadFile, err)
 	}
 
-	flPath := filepath.Join(o.dir, fmt.Sprintf("%s.local.%s", o.filename, o.fileExt))
+	flPath := filepath.Join(o.dir, "local", fullFilename)
 	bl, _ := os.ReadFile(flPath) // ignore error
 
 	if err := parseConfig(c, b, bl); err != nil {
