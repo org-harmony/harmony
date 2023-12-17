@@ -290,22 +290,22 @@ func templateDeleteController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		tmpl, err := TemplateFromParams(io, templateRepository, "id")
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		err = templateRepository.Delete(io.Context(), tmpl.ID)
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		templateSet, err := templateSetRepository.FindByID(io.Context(), tmpl.TemplateSet)
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		templates, err := templateRepository.FindByTemplateSetID(io.Context(), templateSet.ID)
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		return io.Render(templateListPageData{
@@ -322,12 +322,12 @@ func templateCopyModalController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Hand
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		tmpl, err := TemplateFromParams(io, templateRepository, "id")
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		tmplSets, err := templateSetRepository.FindByCreatedBy(io.Context(), user.MustCtxUser(io.Context()).ID)
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		return io.Render(web.NewFormData(TemplateCopyFormData{
@@ -347,27 +347,30 @@ func templateCopyController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 
 		tmpl, err := TemplateFromParams(io, templateRepository, "id")
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		tmplSets, err := templateSetRepository.FindByCreatedBy(ctx, usr.ID)
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		formData := &TemplateCopyFormData{Template: tmpl, TemplateSets: tmplSets}
 		err, validationErrs := web.ReadForm(io.Request(), formData, appCtx.Validator)
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		tmplSetUUID, err := uuid.Parse(formData.TemplateSetID)
 		if err != nil {
 			validationErrs = append(validationErrs, validation.Error{Msg: "template.copy.invalid-template-set-id"})
+		}
 
-			intoTmplSet, err := templateSetRepository.FindByID(ctx, tmplSetUUID)
+		var intoTmplSet *template.Set
+		if err == nil {
+			intoTmplSet, err = templateSetRepository.FindByID(ctx, tmplSetUUID)
 			if err != nil && !errors.Is(err, persistence.ErrNotFound) {
-				return io.Error(web.ErrInternal, err)
+				return io.InlineError(web.ErrInternal, err)
 			}
 
 			if err != nil || intoTmplSet.CreatedBy != usr.ID {
@@ -381,7 +384,7 @@ func templateCopyController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 
 		_, err = CopyTemplate(ctx, tmpl, tmplSetUUID, usr.ID, formData.Name, templateRepository)
 		if err != nil {
-			return io.Error(web.ErrInternal, err)
+			return io.InlineError(web.ErrInternal, err)
 		}
 
 		formData.Copied = true
