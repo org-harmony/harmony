@@ -467,7 +467,8 @@ func (d *FormData[T]) AllViolations() []error {
 	var errs []error
 	for _, fieldErrs := range d.Violations {
 		for _, err := range fieldErrs {
-			if errors.Is(err, &validation.Error{}) {
+			var v validation.Error
+			if errors.As(err, &v) {
 				continue
 			}
 
