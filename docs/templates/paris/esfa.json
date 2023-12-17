@@ -204,7 +204,7 @@
         "punkt"
       ]
     },
-    "selbständige-aktivität-mit-bedingung": {
+    "selbstaendige-aktivitaet-mit-bedingung": {
       "name": "Selbständige Aktivität mit Bedingung",
       "description": "Eine selbständige Aktivität mit Bedingung",
       "example": "Am letzten Tag des Monats muss das System Libri selbständig eine Auswertung der Verbrauchsdaten erzeugen.",
@@ -219,7 +219,7 @@
         "punkt"
       ]
     },
-    "selbständige-aktivität-ohne-bedingung": {
+    "selbstaendige-aktivitaet-ohne-bedingung": {
       "name": "Selbständige Aktivität ohne Bedingung",
       "description": "Eine selbständige Aktivität ohne Bedingung",
       "example": "Das System Libri muss selbständig eine Auswertung der Verbrauchsdaten erzeugen.",
