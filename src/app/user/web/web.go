@@ -70,7 +70,7 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 			u, _ := user.CtxUser(io.Context())
 			return u != nil, nil
 		},
-		Position: 1100,
+		Position: 1200,
 	})
 
 	webCtx.Navigation.Add("user.login", web.NavItem{
@@ -80,7 +80,7 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 			u, _ := user.CtxUser(io.Context())
 			return u == nil, nil
 		},
-		Position: 1000,
+		Position: 1200,
 	})
 
 	webCtx.Navigation.Add("user.language.de", web.NavItem{
@@ -94,7 +94,7 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 
 			return locale.Value != "de", nil
 		},
-		Position: 1050,
+		Position: 1100,
 	})
 
 	webCtx.Navigation.Add("user.language.en", web.NavItem{
@@ -108,7 +108,7 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 
 			return locale.Value != "en", nil
 		},
-		Position: 1050,
+		Position: 1100,
 	})
 }
 
