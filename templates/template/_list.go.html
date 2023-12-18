@@ -67,6 +67,15 @@
                     <td colspan="6">{{ "template.list.empty" | t }}</td>
                 </tr>
             {{ end }}
+
+            {{ if .Data }}
+                {{ if not .Data.Templates }}
+                    <tr class="text-center">
+                        <td colspan="6">{{ "template.list.empty" | t }}</td>
+                    </tr>
+                {{ end }}
+            {{ end }}
+
             {{ range .Data.Templates }}
                 <tr>
                     <td>{{ .Name }}</td>
