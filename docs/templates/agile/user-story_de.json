@@ -48,13 +48,6 @@
       "explanation": "Beschreibt den Nutzen, den der Benutzer aus der Funktion zieht.",
       "size": "large"
     },
-    "zu-erreichen": {
-      "name": "zu erreichen",
-      "type": "equalsAny",
-      "value": ["zu erreichen"],
-      "optional": true,
-      "size": "large"
-    },
     "punkt": {
       "name": "Punkt",
       "type": "equals",
@@ -70,7 +63,7 @@
     "user-story": {
       "name": "User Story",
       "description": "Eine User Story beschreibt eine Anforderung aus der Sicht des Benutzers.",
-      "format": "Als <Rolle> möchte ich <Funktion>, um <Nutzen> (zu erreichen).",
+      "format": "Als <Rolle> möchte ich <Funktion>, um <Nutzen>.",
       "example": "Als Benutzer möchte ich eine Anforderung mit dem Tool prüfen, um eine Qualitätsverbesserung zu erreichen.",
       "rules": [
         "als",
@@ -79,7 +72,6 @@
         "funktion",
         "um",
         "nutzen",
-        "zu-erreichen",
         "punkt"
       ]
     }
