@@ -6,6 +6,7 @@
             </div>
             <div class="col">
                 <a href="/template-set/new" hx-boost="true" hx-target="body" class="btn btn-secondary">{{ "template.set.new" | t }}</a>
+                <button hx-post="/template-set/import/default-paris" hx-target=".template-set-list" hx-swap="outerHTML" class="btn btn-secondary mt-1">{{ "template.set.import.paris" | t }}</button>
             </div>
             <div class="col">
                 <button hx-get="/template-set/list" hx-target="body" class="btn btn-secondary">
