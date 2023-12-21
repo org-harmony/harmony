@@ -54,6 +54,9 @@
         "confirm": "Save",
         "cancel": "Cancel",
         "updated": "The template set has been updated."
+      },
+      "import": {
+        "paris": "Import PARIS"
       }
     },
     "title": "Template",
@@ -94,7 +97,8 @@
       "actions": "Actions",
       "edit": "Edit",
       "delete": "Delete"
-    }
+    },
+    "missing-default-template": "A default template was requested that could not be found in the system. Probably the necessary files are missing. Please contact the administrator."
   },
   "eiffel": {
     "parser": {

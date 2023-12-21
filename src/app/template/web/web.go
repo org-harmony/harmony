@@ -40,6 +40,8 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	router.Get("/template-set/edit/{id}", templateSetEditFormController(appCtx, webCtx).ServeHTTP)
 	router.Put("/template-set/{id}", templateSetEditController(appCtx, webCtx).ServeHTTP)
 	router.Delete("/template-set/{id}", templateSetDeleteController(appCtx, webCtx).ServeHTTP)
+	// TODO generalize this
+	router.Post("/template-set/import/default-paris", templateSetImportDefaultParisController(appCtx, webCtx).ServeHTTP)
 
 	router.Get("/template-set/{id}/list", templateListController(appCtx, webCtx).ServeHTTP)
 	router.Get("/template-set/{id}/new", templateNewController(appCtx, webCtx).ServeHTTP)
@@ -390,5 +392,26 @@ func templateCopyController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 		formData.Copied = true
 
 		return io.Render(web.NewFormData(formData, []string{"template.copy.success"}), "template.copy.modal", "template/_modal-copy.go.html")
+	})
+}
+
+func templateSetImportDefaultParisController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateSetRepository := util.UnwrapType[template.SetRepository](appCtx.Repository(template.SetRepositoryName))
+	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		ctx := io.Context()
+
+		err := ImportDefaultParisTemplates(ctx, templateSetRepository, templateRepository, user.MustCtxUser(ctx).ID)
+		if err != nil {
+			return io.InlineError(err)
+		}
+
+		templateSets, err := templateSetRepository.FindByCreatedBy(ctx, user.MustCtxUser(ctx).ID)
+		if err != nil {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		return io.Render(templateSets, "template.set.list", "template/_list-set.go.html")
 	})
 }

@@ -54,6 +54,9 @@
         "confirm": "Speichern",
         "cancel": "Abbrechen",
         "updated": "Der Schablonensatz wurde aktualisiert."
+      },
+      "import": {
+        "paris": "PARIS importieren"
       }
     },
     "title": "Schablone",
@@ -94,7 +97,8 @@
       "actions": "Aktionen",
       "edit": "Bearbeiten",
       "delete": "Löschen"
-    }
+    },
+    "missing-default-template": "Es wurde eine Standard-Schablone angefragt, die im System nicht gefunden werden konnte. Wahrscheinlich fehlen die notwendigen Dateien. Bitte kontaktieren Sie den Administrator."
   },
   "eiffel": {
     "parser": {

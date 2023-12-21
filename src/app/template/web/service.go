@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/org-harmony/harmony/src/app/eiffel"
 	"github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/event"
@@ -12,6 +13,7 @@ import (
 	"github.com/org-harmony/harmony/src/core/trace"
 	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/org-harmony/harmony/src/core/web"
+	"os"
 )
 
 var (
@@ -21,6 +23,8 @@ var (
 	ErrResourceNotFound = errors.New("resource not found")
 	// ErrUserNotPermitted is returned when the user is not permitted to access the requested resource, e.g. a template set.
 	ErrUserNotPermitted = errors.New("user not permitted")
+	// ErrDefaultTemplateDoesNotExist is returned when the default template does not exist.
+	ErrDefaultTemplateDoesNotExist = errors.New("default template does not exist")
 )
 
 // templateFormData is the data passed to the template form. It contains the template and information about the
@@ -124,6 +128,65 @@ func CopyTemplate(ctx context.Context, tmpl *template.Template, tmplSetID, usrID
 	}
 
 	return newTmpl, nil
+}
+
+func ImportDefaultParisTemplates(ctx context.Context, tmplSetRepo template.SetRepository, tmplRepo template.Repository, usrID uuid.UUID) error {
+	defaultAK, err := os.ReadFile("templates/default/paris/ak.json")
+	if err != nil {
+		return ErrDefaultTemplateDoesNotExist
+	}
+	defaultESFA, err := os.ReadFile("templates/default/paris/esfa.json")
+	if err != nil {
+		return ErrDefaultTemplateDoesNotExist
+	}
+	defaultESQUA, err := os.ReadFile("templates/default/paris/esqua.json")
+	if err != nil {
+		return ErrDefaultTemplateDoesNotExist
+	}
+	defaultGlossar, err := os.ReadFile("templates/default/paris/glossar.json")
+	if err != nil {
+		return ErrDefaultTemplateDoesNotExist
+	}
+
+	tmplSet, err := tmplSetRepo.Create(ctx, &template.SetToCreate{
+		Name:        "PARIS",
+		Version:     "0.6.2",
+		CreatedBy:   usrID,
+		Description: "Default PARIS templates. Change description and templates as needed.",
+	})
+	if err != nil {
+		return web.ErrInternal
+	}
+
+	_, err = tmplRepo.Create(ctx, &template.ToCreate{
+		TemplateSet: tmplSet.ID,
+		Type:        eiffel.BasicTemplateType,
+		Config:      string(defaultAK),
+		CreatedBy:   usrID,
+	})
+
+	_, err = tmplRepo.Create(ctx, &template.ToCreate{
+		TemplateSet: tmplSet.ID,
+		Type:        eiffel.BasicTemplateType,
+		Config:      string(defaultESFA),
+		CreatedBy:   usrID,
+	})
+
+	_, err = tmplRepo.Create(ctx, &template.ToCreate{
+		TemplateSet: tmplSet.ID,
+		Type:        eiffel.BasicTemplateType,
+		Config:      string(defaultESQUA),
+		CreatedBy:   usrID,
+	})
+
+	_, err = tmplRepo.Create(ctx, &template.ToCreate{
+		TemplateSet: tmplSet.ID,
+		Type:        eiffel.BasicTemplateType,
+		Config:      string(defaultGlossar),
+		CreatedBy:   usrID,
+	})
+
+	return nil
 }
 
 // templateSetInlineDelete reads the template set id from the request 'id' parameter and deletes the template set.
