@@ -1,0 +1,121 @@
+{
+  "id": "kontext",
+  "type": "ebt",
+  "name": "Kontext",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise",
+    "Oliver Linssen"
+  ],
+  "license": "MIT",
+  "description": "Kontext bedeutet in PARIS Informationen über die Umgebung, die für die Umsetzung von Anforderungen relevant ist. Diese Schablone dokumentiert die unterschiedlichen Aspekte im Kontext eines Systems und legt fest, welche Aspekte als relevant betrachtet werden.",
+  "rules": {
+    "bedingung": {
+      "name": "Bedingung",
+      "type": "placeholder",
+      "hint": "Unter welcher Bedingung?",
+      "explanation": "Beschreibung der Bedingung, unter der der Kontext relevant ist. Beispiel: Falls das Smartphone als Outdoor-Gerät bezeichnet wird,",
+      "size": "large"
+    },
+    "modalitaet": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "hint": "Mit welcher Verbindlichkeit?",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "small"
+    },
+    "modalitaet-medium": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "hint": "Mit welcher Verbindlichkeit?",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "medium"
+    },
+    "system": {
+      "name": "System",
+      "type": "placeholder",
+      "hint": "Ist für welchen Gegenstand, Sache, System?",
+      "explanation": "Beschreibung des Systems. Beispiel: die Komponente Außenhülle",
+      "size": "medium"
+    },
+    "system-full": {
+      "name": "System",
+      "type": "placeholder",
+      "hint": "Ist für welchen Gegenstand, Sache, System?",
+      "explanation": "Beschreibung des Systems. Beispiel: die Komponente Außenhülle",
+      "size": "full"
+    },
+    "relevanz": {
+      "name": "Relevanz",
+      "type": "equalsAny",
+      "value": [
+        "als relevant betrachten, dass",
+        "als nicht relevant betrachten, dass"
+      ],
+      "size": "medium"
+    },
+    "abgrenzung": {
+      "name": "Abgrenzung",
+      "type": "placeholder",
+      "hint": "Welcher Aspekt in welcher Form relevant / nicht relevant?",
+      "explanation": "Beschreibung des relevanten Aspekts. Beispiel: das System Smartphone bei einer Umgebungstemperatur von -20°C bis 40°C betrieben wird",
+      "size": "full"
+    },
+    "begruendung": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum ist es [nicht] relevant?",
+      "explanation": "Begründung für die Relevanz oder Nicht-Relevanz. Beispiel: …",
+      "optional": true,
+      "ignoreMissingWhenOptional": true,
+      "size": "large"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small"
+    }
+  },
+  "variants": {
+    "kontext-mit-bedingung": {
+      "name": "Kontext mit Bedingung",
+      "description": "Ein Kontext, der unter einer bestimmten Bedingung relevant ist.",
+      "example": "Falls das Smartphone als Outdoor-Gerät bezeichnet wird, muss die Komponente Außenhülle als relevant betrachten, dass das System Smartphone bei einer Umgebungstemperatur von -20°C bis 40°C betrieben wird, …",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "system",
+        "relevanz",
+        "abgrenzung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "kontext-ohne-bedingung": {
+      "name": "Kontext ohne Bedingung",
+      "description": "Ein Kontext, der unabhängig von Bedingungen relevant ist.",
+      "example": "Das System Z muss als relevant betrachten, dass die Eingabedaten von einem IBM-Großrechner geliefert werden.",
+      "rules": [
+        "system-full",
+        "modalitaet-medium",
+        "relevanz",
+        "abgrenzung",
+        "begruendung",
+        "punkt"
+      ]
+    }
+  }
+}

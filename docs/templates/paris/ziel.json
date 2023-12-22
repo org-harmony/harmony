@@ -1,0 +1,168 @@
+{
+  "id": "ziel",
+  "type": "ebt",
+  "name": "Ziel",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise",
+    "Oliver Linssen"
+  ],
+  "license": "MIT",
+  "description": "Ziel bedeutet in PARIS ein angestrebter Zustand, der durch die Erfüllung von Anforderungen erreicht werden soll.",
+  "rules": {
+    "bedingung": {
+      "name": "Bedingung",
+      "type": "placeholder",
+      "hint": "Unter welcher Bedingung?",
+      "explanation": "Beschreibung der Bedingung, unter der das Ziel gilt. Beispiel: Falls das System für den europäischen Markt entwickelt wird,",
+      "size": "full"
+    },
+    "es-gross": {
+      "name": "es",
+      "type": "equals",
+      "value": "Es",
+      "size": "small"
+    },
+    "es-klein": {
+      "name": "es",
+      "type": "equals",
+      "value": "es",
+      "size": "small"
+    },
+    "modalitaet": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "hint": "Mit welcher Verbindlichkeit?",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "small"
+    },
+    "ein-kein": {
+      "name": "ein/kein",
+      "type": "equalsAny",
+      "hint": "Ist es ein Ziel oder ein Nicht-Ziel?",
+      "value": [
+        "ein",
+        "kein"
+      ],
+      "size": "small"
+    },
+    "zielart": {
+      "name": "Zielart",
+      "type": "equalsAny",
+      "hint": "Welche Art von Ziel ist es?",
+      "value": [
+        "Ziel",
+        "Projektziel"
+      ],
+      "optional": true,
+      "size": "small"
+    },
+    "des-der": {
+      "name": "des/der",
+      "type": "equalsAny",
+      "value": [
+        "des",
+        "der"
+      ],
+      "size": "small"
+    },
+    "bezug": {
+      "name": "Bezug",
+      "type": "equalsAny",
+      "value": [
+        "Projekts",
+        "Systems",
+        "Komponente",
+        "Baugruppe",
+        "Moduls",
+        "Subsystems",
+        "Objekts",
+        "Service",
+        "Stakeholders"
+      ],
+      "optional": true,
+      "size": "small"
+    },
+    "eigenname": {
+      "name": "Eigenname",
+      "type": "placeholder",
+      "hint": "Worauf bezieht sich das Ziel?",
+      "explanation": "Eigener Name des Ziels. Beispiel: ABC",
+      "optional": true,
+      "size": "small"
+    },
+    "sein": {
+      "name": "Sein",
+      "type": "equals",
+      "value": "sein,",
+      "size": "small"
+    },
+    "zu-erreichender-zustand": {
+      "name": "Zu erreichender Zustand",
+      "type": "placeholder",
+      "hint": "Was ist das angestrebte Ziel?",
+      "explanation": "Beschreibung des zu erreichenden Zustands. Beispiel: dass das System die chinesische Alltagsschrift verarbeiten kann,",
+      "size": "full"
+    },
+    "begruendung": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum wird dieses Ziel verfolgt?",
+      "explanation": "Begründung für das Ziel. Beispiel: weil dies erheblichen Mehraufwand in der Entwicklung verursacht",
+      "optional": true,
+      "ignoreMissingWhenOptional": true,
+      "size": "large"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small"
+    }
+  },
+  "variants": {
+    "ziel-mit-bedingung": {
+      "name": "Ziel mit Bedingung",
+      "description": "Ein Ziel, das unter einer bestimmten Bedingung erreicht werden soll.",
+      "example": "Falls das System für den europäischen Markt entwickelt wird, muss es kein Ergebnisziel des Systems Abrakadabra sein, dass das System die chinesische Alltagsschrift verarbeiten kann, weil dies erheblichen Mehraufwand in der Entwicklung verursacht.",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "es-klein",
+        "ein-kein",
+        "zielart",
+        "des-der",
+        "bezug",
+        "eigenname",
+        "sein",
+        "zu-erreichender-zustand",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "ziel-ohne-bedingung": {
+      "name": "Ziel ohne Bedingung",
+      "description": "Ein Ziel, das unabhängig von Bedingungen erreicht werden soll.",
+      "example": "Es soll ein Ziel des Moduls ABC sein, die konfigurierbaren Parameter in einer XML-Datei abzulegen, damit die Konfiguration des Moduls nicht neu kompiliert werden muss.",
+      "rules": [
+        "es-gross",
+        "modalitaet",
+        "ein-kein",
+        "zielart",
+        "des-der",
+        "bezug",
+        "eigenname",
+        "sein",
+        "zu-erreichender-zustand",
+        "begruendung",
+        "punkt"
+      ]
+    }
+  }
+}

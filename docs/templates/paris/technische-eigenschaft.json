@@ -1,0 +1,124 @@
+{
+  "id": "technische-eigenschaft",
+  "type": "ebt",
+  "name": "Technische Eigenschaft",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise",
+    "Oliver Linssen"
+  ],
+  "license": "MIT",
+  "description": "Technische Eigenschaft bedeutet in PARIS eine Eigenschaft im Bezug auf die zu verwendende Technik, die bei der Erfüllung der funktionalen Anforderungen, Qualitätsanforderungen, Stakeholderanforderungen oder Eigenschaften eingehalten werden muss.",
+  "rules": {
+    "bedingung": {
+      "name": "Bedingung",
+      "type": "placeholder",
+      "hint": "Unter welcher Bedingung?",
+      "explanation": "Beschreibung der Bedingung, unter der die Eigenschaft gilt. Beispiel: Falls das System XYZ in tropischen Regionen des Landes eingesetzt wird, ...",
+      "size": "large"
+    },
+    "modalitaet": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "small"
+    },
+    "modalitaet-medium": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "medium"
+    },
+    "system": {
+      "name": "System",
+      "type": "placeholder",
+      "hint": "Erfüllt Gegenstand, Sache, System, Stakeholder?",
+      "explanation": "Beschreibung des Systems. Beispiel: das Aggregatgehäuse uvw",
+      "size": "medium"
+    },
+    "technisch-die-eigenschaft-haben": {
+      "name": "technisch die Eigenschaft haben",
+      "type": "equals",
+      "value": "technisch die Eigenschaft haben,",
+      "size": "medium"
+    },
+    "technisch-die-eigenschaft-haben-full": {
+      "name": "technisch die Eigenschaft haben",
+      "type": "equals",
+      "value": "technisch die Eigenschaft haben",
+      "size": "full"
+    },
+    "objektbeschreibung": {
+      "name": "Objektbeschreibung",
+      "type": "placeholder",
+      "hint": "Welche Eigenschaft?",
+      "explanation": "Beschreibung der technischen Eigenschaft. Beispiel: dass das Gehäuse aus 1,5 mm starkem nichtrostendem Stahlblech V4A besteht, ...",
+      "size": "full"
+    },
+    "name-der-eigenschaft": {
+      "name": "Name der Eigenschaft & zu erfüllende Bedingung",
+      "type": "placeholder",
+      "hint": "Welche Bedingung?",
+      "explanation": "Beschreibung der zu erfüllenden Bedingung der Eigenschaft.",
+      "size": "full"
+    },
+    "begruendung": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum wird die Eigenschaft gefordert?",
+      "explanation": "Begründung für die technische Eigenschaft. Beispiel: weil das Aggregat ohne Einhausung betrieben wird.",
+      "optional": true,
+      "ignoreMissingWhenOptional": true,
+      "size": "large"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small"
+    }
+  },
+  "variants": {
+    "technische-eigenschaft-mit-bedingung": {
+      "name": "Technische Eigenschaft mit Bedingung",
+      "description": "Eine technische Eigenschaft, die unter einer bestimmten Bedingung gilt.",
+      "example": "Falls das System XYZ in tropischen Regionen des Landes eingesetzt wird, muss das Aggregatgehäuse uvw technisch die Eigenschaft haben, dass das Gehäuse aus 1,5 mm starkem nichtrostendem Stahlblech V4A besteht, weil das Aggregat ohne Einhausung betrieben wird.",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "system",
+        "technisch-die-eigenschaft-haben",
+        "objektbeschreibung",
+        "name-der-eigenschaft",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "technische-eigenschaft-ohne-bedingung": {
+      "name": "Technische Eigenschaft ohne Bedingung",
+      "description": "Eine technische Eigenschaft, die unabhängig von Bedingungen gilt.",
+      "example": "Das Aggregatgehäuse uvw muss technisch die Eigenschaft haben, dass das Gehäuse aus 1,5 mm starkem nichtrostendem Stahlblech V4A besteht.",
+      "rules": [
+        "system",
+        "modalitaet-medium",
+        "technisch-die-eigenschaft-haben-full",
+        "objektbeschreibung",
+        "name-der-eigenschaft",
+        "begruendung",
+        "punkt"
+      ]
+    }
+  }
+}

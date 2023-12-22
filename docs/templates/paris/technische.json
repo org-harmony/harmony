@@ -1,0 +1,259 @@
+{
+  "id": "technische-anforderung",
+  "type": "ebt",
+  "name": "Technische Anforderung",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise",
+    "Oliver Linssen"
+  ],
+  "license": "MIT",
+  "description": "Technische Anforderung bedeutet in PARIS eine Eigenschaft oder Anforderung im Bezug auf die zu verwendende Technik, die bei der Erfüllung der funktionalen Anforderungen, Qualitätsanforderungen, Stakeholderanforderungen oder Eigenschaften eingehalten werden muss.",
+  "rules": {
+    "bedingung": {
+      "name": "Bedingung",
+      "type": "placeholder",
+      "hint": "Unter welcher Bedingung wird etwas getan?",
+      "explanation": "Beschreibung der Bedingung, unter der die technische Anforderung gilt. Beispiel: Falls es sich um Arbeitsplätze mit hohem Schutzbedarf handelt, ...",
+      "size": "large"
+    },
+    "modalitaet": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "small"
+    },
+    "modalitaet-medium": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "medium"
+    },
+    "system": {
+      "name": "System",
+      "type": "placeholder",
+      "hint": "Wer tut es?",
+      "explanation": "Beschreibung des Systems. Beispiel: das System TopSec",
+      "size": "medium"
+    },
+    "system-2": {
+      "name": "System",
+      "type": "placeholder",
+      "hint": "Wer tut es?",
+      "explanation": "Beschreibung des Systems. Beispiel: das System SopTec",
+      "size": "medium"
+    },
+    "benutzer": {
+      "name": "Benutzer",
+      "type": "placeholder",
+      "hint": "Für wen wird es getan?",
+      "explanation": "Beschreibung des Benutzers. Beispiel: dem Anwender",
+      "size": "medium"
+    },
+    "technisch-ermoeglichen": {
+      "name": "technisch ermöglichen",
+      "type": "equals",
+      "value": "technisch ermöglichen,",
+      "size": "medium"
+    },
+    "technisch-in-der-lage-sein": {
+      "name": "technisch in der Lage sein",
+      "type": "equals",
+      "value": "technisch in der Lage sein,",
+      "size": "medium"
+    },
+    "technisch": {
+      "name": "technisch",
+      "type": "equals",
+      "value": "technisch",
+      "size": "small"
+    },
+    "selbständig": {
+      "name": "selbstständig",
+      "type": "equals",
+      "value": "selbstständig",
+      "size": "small",
+      "optional": true
+    },
+    "objektbeschreibung": {
+      "name": "Objektbeschreibung",
+      "type": "placeholder",
+      "hint": "Woran / Womit wird es getan?",
+      "explanation": "Beschreibung des Objekts der Anforderung. Beispiel: über einen Browser Google Chrome Ver.X mit deaktiviertem Javascript",
+      "size": "medium",
+      "optional": true
+    },
+    "prozessbeschreibung": {
+      "name": "Prozessbeschreibung",
+      "type": "placeholder",
+      "hint": "Was wird getan?",
+      "explanation": "Beschreibung des Prozesses. Beispiel: zu interagieren, ...",
+      "size": "medium"
+    },
+    "prozessbeschreibung-full": {
+      "name": "Prozessbeschreibung",
+      "type": "placeholder",
+      "hint": "Was wird getan?",
+      "explanation": "Beschreibung des Prozesses. Beispiel: zu interagieren, ...",
+      "size": "full"
+    },
+    "prozessbeschreibung-small": {
+      "name": "Prozessbeschreibung",
+      "type": "placeholder",
+      "hint": "Was wird getan?",
+      "explanation": "Beschreibung des Prozesses. Beispiel: zu interagieren, ...",
+      "size": "small"
+    },
+    "begruendung": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum wird es getan?",
+      "explanation": "Begründung für die technische Anforderung. Beispiel: weil dadurch eine Vielzahl von Bedrohungen ausgeschlossen werden.",
+      "optional": true,
+      "ignoreMissingWhenOptional": true,
+      "size": "large"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small"
+    }
+  },
+  "variants": {
+    "technische-benutzeranforderung-mit-bedingung": {
+      "name": "Technische Benutzeranforderung mit Bedingung",
+      "description": "Dem Anwender wird, unter einer bestimmten Bedingung, etwas technisch ermöglicht.",
+      "example": "Falls es sich um Arbeitsplätze mit hohem Schutzbedarf handelt, muss das System TopSec dem Anwender technisch ermöglichen, über einen Browser Google Chrome Ver.X mit deaktiviertem Javascript zu interagieren, weil dadurch eine Vielzahl von Bedrohungen ausgeschlossen werden.",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "system",
+        "benutzer",
+        "technisch-ermoeglichen",
+        "objektbeschreibung",
+        "prozessbeschreibung-full",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "technische-benutzeranforderung-ohne-bedingung": {
+      "name": "Technische Benutzeranforderung ohne Bedingung",
+      "description": "Dem Anwender wird, unabhängig von Bedingungen, etwas technisch ermöglicht.",
+      "example": "Das System TopSec muss dem Anwender technisch ermöglichen, über einen Browser Google Chrome Ver.X mit deaktiviertem Javascript zu interagieren.",
+      "rules": [
+        "system",
+        "modalitaet-medium",
+        "benutzer",
+        "technisch-ermoeglichen",
+        "objektbeschreibung",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "technische-inter-system-anforderung-mit-bedingung": {
+      "name": "Technische Inter-System-Anforderung mit Bedingung",
+      "description": "Eine technische Anforderung zwischen Systemen, die unter einer bestimmten Bedingung gilt.",
+      "example": "Falls das System XYZ in einem bestimmten Netzwerk betrieben wird, muss es dem System ABC technisch ermöglichen, Daten im JSON-Format zu empfangen, um eine bessere Integration zu gewährleisten.",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "system",
+        "system-2",
+        "technisch-ermoeglichen",
+        "objektbeschreibung",
+        "prozessbeschreibung-full",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "technische-inter-system-anforderung-ohne-bedingung": {
+      "name": "Technische Inter-System-Anforderung ohne Bedingung",
+      "description": "Eine technische Anforderung zwischen Systemen, die unabhängig von Bedingungen gilt.",
+      "example": "Das System Rep2Print muss dem System Libri technisch ermöglichen, die Auswertung 0234 im XYZ-Format zu empfangen.",
+      "rules": [
+        "system",
+        "modalitaet-medium",
+        "system-2",
+        "technisch-ermoeglichen",
+        "objektbeschreibung",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "technische-schnittstellenanforderung-mit-bedingung": {
+      "name": "Technische Schnittstellenanforderung mit Bedingung",
+      "description": "Eine technische Anforderung an die Schnittstelle eines Systems, die unter einer bestimmten Bedingung gilt.",
+      "example": "Falls das System XYZ in einer spezifischen Netzwerkumgebung betrieben wird, muss das System XYZ technisch in der Lage sein, mit dem Protokoll TLS 1.3 zu kommunizieren, um die Datensicherheit zu erhöhen.",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "system",
+        "technisch-in-der-lage-sein",
+        "objektbeschreibung",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "technische-schnittstellenanforderung-ohne-bedingung": {
+      "name": "Technische Schnittstellenanforderung ohne Bedingung",
+      "description": "Eine technische Anforderung an die Schnittstelle eines Systems, die unabhängig von Bedingungen gilt.",
+      "example": "Das System muss technisch in der Lage sein, Daten über eine REST-Schnittstelle zu empfangen.",
+      "rules": [
+        "system",
+        "modalitaet-medium",
+        "technisch-in-der-lage-sein",
+        "objektbeschreibung",
+        "prozessbeschreibung-full",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "technische-selbststaendige-systemaktivitaet-mit-bedingung": {
+      "name": "Technische selbstständige Systemaktivität mit Bedingung",
+      "description": "Eine technische Anforderung, die beschreibt, was ein System unter bestimmten Bedingungen selbstständig tun muss.",
+      "example": "Falls das System XYZ in einem bestimmten Modus betrieben wird, muss das System XYZ technisch selbstständig eine Sicherheitsüberprüfung alle 24 Stunden durchführen.",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "system",
+        "technisch",
+        "selbständig",
+        "objektbeschreibung",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "technische-selbststaendige-systemaktivitaet-ohne-bedingung": {
+      "name": "Technische selbstständige Systemaktivität ohne Bedingung",
+      "description": "Eine technische Anforderung, die beschreibt, was ein System selbstständig tun muss, unabhängig von Bedingungen.",
+      "example": "Das System XYZ muss technisch selbstständig eine Sicherheitsüberprüfung alle 24 Stunden durchführen.",
+      "rules": [
+        "system",
+        "modalitaet",
+        "technisch",
+        "selbständig",
+        "objektbeschreibung",
+        "prozessbeschreibung-small",
+        "begruendung",
+        "punkt"
+      ]
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "id": "eigenschaft",
+  "type": "ebt",
+  "name": "Eigenschaft",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise",
+    "Oliver Linssen"
+  ],
+  "license": "MIT",
+  "description": "Eigenschaft bedeutet in PARIS eine Anforderung an die Beschaffenheit eines Systems, eines Teils eines Systems oder eines Stakeholders, die nicht durch Qualitätsanforderungen oder durch funktionale Anforderungen abgedeckt wird.",
+  "rules": {
+    "bedingung": {
+      "name": "Bedingung",
+      "type": "placeholder",
+      "hint": "Unter welcher Bedingung?",
+      "explanation": "Beschreibung der Bedingung, unter der die Eigenschaft gilt. Beispiel: Falls das System XYZ in tropischen Regionen des Landes eingesetzt wird,",
+      "size": "full"
+    },
+    "modalitaet": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "hint": "Mit welcher Verbindlichkeit?",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "medium"
+    },
+    "system-stakeholder": {
+      "name": "System/Stakeholder",
+      "type": "placeholder",
+      "hint": "Erfüllt Gegenstand, Sache, System, Stakeholder?",
+      "explanation": "Beschreibung des Systems oder Stakeholders. Beispiel: das Aggregat UVW",
+      "size": "medium"
+    },
+    "die-eigenschaft-haben": {
+      "name": "Die Eigenschaft haben",
+      "type": "equals",
+      "value": "die Eigenschaft haben,",
+      "size": "medium"
+    },
+    "objektbeschreibung": {
+      "name": "Objektbeschreibung",
+      "type": "placeholder",
+      "hint": "Welche Eigenschaft?",
+      "explanation": "Beschreibung der geforderten Eigenschaft. Beispiel: dass sein Gehäuse",
+      "size": "medium"
+    },
+    "name-eigenschaft-bedingung": {
+      "name": "Name der Eigenschaft & zu erfüllende Bedingung",
+      "type": "placeholder",
+      "hint": "Welche Bedingung?",
+      "explanation": "Beschreibung der Bedingung die erfüllt wird. Beispiel: aus einem korrosionsbeständigen Material besteht",
+      "size": "full"
+    },
+    "begruendung": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum wird die Eigenschaft gefordert?",
+      "explanation": "Begründung für die geforderte Eigenschaft. Beispiel: weil das Aggregat ohne Einhausung betrieben wird",
+      "optional": true,
+      "ignoreMissingWhenOptional": true,
+      "size": "large"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small"
+    }
+  },
+  "variants": {
+    "eigenschaft-mit-bedingung": {
+      "name": "Eigenschaft mit Bedingung",
+      "description": "Eine Eigenschaft, die unter einer bestimmten Bedingung gilt.",
+      "example": "Falls das System XYZ in tropischen Regionen des Landes eingesetzt wird, muss das Aggregat UVW die Eigenschaft haben, dass sein Gehäuse aus einem korrosionsbeständigen Material besteht, weil das Aggregat ohne Einhausung betrieben wird.",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "system-stakeholder",
+        "die-eigenschaft-haben",
+        "objektbeschreibung",
+        "name-eigenschaft-bedingung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "eigenschaft-ohne-bedingung": {
+      "name": "Eigenschaft ohne Bedingung",
+      "description": "Eine Eigenschaft, die unabhängig von Bedingungen gilt.",
+      "example": "Das System Pkw muss die Eigenschaft haben, dass das Auto die Farbe rot hat.",
+      "rules": [
+        "system-stakeholder",
+        "modalitaet",
+        "die-eigenschaft-haben",
+        "objektbeschreibung",
+        "name-eigenschaft-bedingung",
+        "begruendung",
+        "punkt"
+      ]
+    }
+  }
+}

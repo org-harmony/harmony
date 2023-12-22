@@ -29,6 +29,7 @@ COPY migrations/ migrations/
 COPY public/ public/
 COPY templates/ templates/
 COPY translations/ translations/
+COPY docs/templates/paris docs/templates/paris
 
 # Set environment variables
 ENV PORT 8213

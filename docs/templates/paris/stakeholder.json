@@ -1,0 +1,129 @@
+{
+  "id": "stakeholderanforderung",
+  "type": "ebt",
+  "name": "Stakeholderanforderung",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise",
+    "Oliver Linssen"
+  ],
+  "license": "MIT",
+  "description": "Stakeholderanforderung bedeutet in PARIS eine Anforderung eines Stakeholders, durch den ein Wunsch oder eine Vorgabe dokumentiert wird.",
+  "rules": {
+    "bedingung": {
+      "name": "Bedingung",
+      "type": "placeholder",
+      "hint": "Unter welcher Bedingung wird etwas getan?",
+      "explanation": "Beschreibung der Bedingung, unter der die Anforderung gestellt wird. Beispiel: Falls die XYZ AG Flugzeuge bauen will,",
+      "size": "large"
+    },
+    "stakeholder": {
+      "name": "Stakeholder",
+      "type": "placeholder",
+      "hint": "Fordert wer?",
+      "explanation": "Beschreibung des Stakeholders, der die Anforderung stellt. Beispiel: der Gesetzgeber",
+      "size": "small"
+    },
+    "forderung": {
+      "name": "Forderung",
+      "type": "equalsAny",
+      "value": [
+        "fordert",
+        "fordern"
+      ],
+      "size": "small"
+    },
+    "anforderungsquelle": {
+      "name": "Anforderungsquelle",
+      "type": "placeholder",
+      "hint": "Wo?",
+      "explanation": "Spezifikation der Anforderungsquelle. Beispiel: in § 235 des Luftfahrtsicherheitsgesetzes,",
+      "optional": true,
+      "size": "medium"
+    },
+    "dass": {
+      "name": "dass",
+      "type": "equals",
+      "value": ", dass",
+      "size": "small"
+    },
+    "inhalt": {
+      "name": "Inhalt der Forderung",
+      "type": "placeholder",
+      "hint": "Was?",
+      "explanation": "Beschreibung des Inhalts der Forderung. Beispiel: die RM-Verfahren des RISKIT eingehalten werden",
+      "size": "large"
+    },
+    "modalitaet": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "small",
+      "optional": true,
+      "ignoreMissingWhenOptional": true
+    },
+    "begruendung": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum wird es gefordert?",
+      "explanation": "Begründung für die Forderung. Beispiel: weil sich das Unternehmen sonst Schadensersatzansprüchen gegenübersieht",
+      "optional": true,
+      "ignoreMissingWhenOptional": true,
+      "size": "large"
+    },
+    "begruendung-medium": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum wird es gefordert?",
+      "explanation": "Begründung für die Forderung. Beispiel: weil sich sonst kein sachverständiger Dritter innerhalb angemessener Zeit einen Überblick über die Geschäftsvorfälle und über die Lage des Unternehmens verschaffen kann",
+      "optional": true,
+      "ignoreMissingWhenOptional": true,
+      "size": "medium"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small"
+    }
+  },
+  "variants": {
+    "stakeholderanforderung-mit-bedingung": {
+      "name": "Stakeholderanforderung mit Bedingung",
+      "description": "Eine Stakeholderanforderung, die unter einer bestimmten Bedingung gestellt wird.",
+      "example": "Falls die XYZ AG Flugzeuge bauen will, fordert der Gesetzgeber in § 235 des Luftfahrtsicherheitsgesetzes, dass die RM-Verfahren des RISKIT eingehalten werden müssen, weil sich das Unternehmen sonst Schadensersatzansprüchen gegenübersieht.",
+      "rules": [
+        "bedingung",
+        "forderung",
+        "stakeholder",
+        "anforderungsquelle",
+        "dass",
+        "inhalt",
+        "modalitaet",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "stakeholderanforderung-ohne-bedingung": {
+      "name": "Stakeholderanforderung ohne Bedingung",
+      "description": "Eine Stakeholderanforderung, die unabhängig von Bedingungen gestellt wird.",
+      "example": "Der Gesetzgeber fordert in § 238 HGB (Buchführungspflicht), dass jeder Kaufmann Bücher führen muss, weil sich sonst kein sachverständiger Dritter innerhalb angemessener Zeit einen Überblick über die Geschäftsvorfälle und über die Lage des Unternehmens verschaffen kann.",
+      "rules": [
+        "stakeholder",
+        "forderung",
+        "anforderungsquelle",
+        "dass",
+        "inhalt",
+        "modalitaet",
+        "begruendung-medium",
+        "punkt"
+      ]
+    }
+  }
+}
