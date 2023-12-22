@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/org-harmony/harmony/src/app/eiffel"
 	"github.com/org-harmony/harmony/src/app/template"
 	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/event"
@@ -14,6 +13,7 @@ import (
 	"github.com/org-harmony/harmony/src/core/validation"
 	"github.com/org-harmony/harmony/src/core/web"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -131,23 +131,6 @@ func CopyTemplate(ctx context.Context, tmpl *template.Template, tmplSetID, usrID
 }
 
 func ImportDefaultParisTemplates(ctx context.Context, tmplSetRepo template.SetRepository, tmplRepo template.Repository, usrID uuid.UUID) error {
-	defaultAK, err := os.ReadFile("templates/default/paris/ak.json")
-	if err != nil {
-		return ErrDefaultTemplateDoesNotExist
-	}
-	defaultESFA, err := os.ReadFile("templates/default/paris/esfa.json")
-	if err != nil {
-		return ErrDefaultTemplateDoesNotExist
-	}
-	defaultESQUA, err := os.ReadFile("templates/default/paris/esqua.json")
-	if err != nil {
-		return ErrDefaultTemplateDoesNotExist
-	}
-	defaultGlossar, err := os.ReadFile("templates/default/paris/glossar.json")
-	if err != nil {
-		return ErrDefaultTemplateDoesNotExist
-	}
-
 	tmplSet, err := tmplSetRepo.Create(ctx, &template.SetToCreate{
 		Name:        "PARIS",
 		Version:     "0.6.2",
@@ -158,33 +141,35 @@ func ImportDefaultParisTemplates(ctx context.Context, tmplSetRepo template.SetRe
 		return web.ErrInternal
 	}
 
-	_, err = tmplRepo.Create(ctx, &template.ToCreate{
-		TemplateSet: tmplSet.ID,
-		Type:        eiffel.BasicTemplateType,
-		Config:      string(defaultAK),
-		CreatedBy:   usrID,
-	})
+	// read each json file from the default paris template directory for import and create a template from it
+	dir, err := os.ReadDir("docs/templates/paris")
+	if err != nil {
+		return ErrDefaultTemplateDoesNotExist
+	}
 
-	_, err = tmplRepo.Create(ctx, &template.ToCreate{
-		TemplateSet: tmplSet.ID,
-		Type:        eiffel.BasicTemplateType,
-		Config:      string(defaultESFA),
-		CreatedBy:   usrID,
-	})
+	for _, file := range dir {
+		if file.IsDir() {
+			continue
+		}
 
-	_, err = tmplRepo.Create(ctx, &template.ToCreate{
-		TemplateSet: tmplSet.ID,
-		Type:        eiffel.BasicTemplateType,
-		Config:      string(defaultESQUA),
-		CreatedBy:   usrID,
-	})
+		jsonCfg, err := os.ReadFile(filepath.Join("docs/templates/paris/", file.Name()))
+		if err != nil {
+			return ErrDefaultTemplateDoesNotExist
+		}
 
-	_, err = tmplRepo.Create(ctx, &template.ToCreate{
-		TemplateSet: tmplSet.ID,
-		Type:        eiffel.BasicTemplateType,
-		Config:      string(defaultGlossar),
-		CreatedBy:   usrID,
-	})
+		tmpl, err := template.ToCreateFromConfig(string(jsonCfg))
+		if err != nil {
+			return ErrDefaultTemplateDoesNotExist
+		}
+
+		tmpl.TemplateSet = tmplSet.ID
+		tmpl.CreatedBy = usrID
+
+		_, err = tmplRepo.Create(ctx, tmpl)
+		if err != nil {
+			return web.ErrInternal
+		}
+	}
 
 	return nil
 }

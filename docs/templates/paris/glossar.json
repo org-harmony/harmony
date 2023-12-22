@@ -61,11 +61,23 @@
       "size": "small"
     },
     "bereich": {
-      "name": "Bereich",
+      "name": "Eigenname",
       "type": "placeholder",
       "hint": "Wird für welchen Bereich?",
-      "explanation": "Bezug, auf den sich der zu erklärende Begriff bezieht. Beispiel: im System Libri",
-      "size": "small"
+      "explanation": "Eigenname des Bereichs, auf den sich der zu erklärende Begriff bezieht. Beispiel: Libri",
+      "size": "medium"
+    },
+    "geltungsbereich": {
+      "name": "Bezug",
+      "type": "equalsAny",
+      "hint": "Wird für welchen Bereich?",
+      "explanation": "Bezug, auf den sich der zu erklärende Begriff bezieht. Beispiel: im System",
+      "value": [
+        "Domäne"
+      ],
+      "size": "medium",
+      "optional": true,
+      "ignoreMissingWhenOptional": true
     },
     "bereich-vereinfacht": {
       "name": "Bereich",
@@ -91,6 +103,13 @@
       "hint": "Wie definiert?",
       "explanation": "Erklärung des zu erklärenden Begriffs. Beispiel: eine natürliche Person,",
       "size": "medium"
+    },
+    "definiens-large": {
+      "name": "Definiens",
+      "type": "placeholder",
+      "hint": "Wie definiert?",
+      "explanation": "Erklärung des zu erklärenden Begriffs. Beispiel: eine natürliche Person, die berechtigt ist, Medien auszuleihen,",
+      "size": "large"
     },
     "spezifikation-definiens": {
       "name": "Spezifikation des Definiens",
@@ -131,9 +150,10 @@
         "uebersetzung",
         "bedeutet",
         "prae-bereich",
+        "geltungsbereich",
         "bereich",
         "prae-definiens",
-        "definiens",
+        "definiens-large",
         "spezifikation-definiens",
         "begruendung",
         "punkt"

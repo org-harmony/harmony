@@ -1,0 +1,234 @@
+{
+  "id": "dienstleistung",
+  "type": "ebt",
+  "name": "Dienstleistung",
+  "version": "0.1.0",
+  "authors": [
+    "Jens Heise",
+    "Oliver Linssen"
+  ],
+  "license": "MIT",
+  "description": "Dienstleistung bedeutet in PARIS eine Anforderung im Bezug auf das Ergebnis eines Verhaltens oder einer Tätigkeit, die durch eine Person, eine Personengruppe, eine Körperschaft, Organisation oder Institution bereitgestellt wird.",
+  "rules": {
+    "bedingung": {
+      "name": "Bedingung",
+      "type": "placeholder",
+      "hint": "Unter welcher Bedingung wird etwas getan?",
+      "explanation": "Beschreibung der Bedingung, unter der die Dienstleistung erbracht wird. Beispiel: Während der Durchführung des Auftrags",
+      "size": "full"
+    },
+    "bedingung-large": {
+      "name": "Bedingung",
+      "type": "placeholder",
+      "hint": "Unter welcher Bedingung wird etwas getan?",
+      "explanation": "Beschreibung der Bedingung, unter der die Dienstleistung erbracht wird. Beispiel: Während der Durchführung des Auftrags",
+      "size": "large"
+    },
+    "modalitaet": {
+      "name": "Modalität",
+      "type": "equalsAny",
+      "value": [
+        "muss",
+        "soll",
+        "sollte",
+        "kann",
+        "wird"
+      ],
+      "size": "small"
+    },
+    "diensterbringer": {
+      "name": "Diensterbringer",
+      "type": "placeholder",
+      "hint": "Wer tut es?",
+      "explanation": "Beschreibung des Diensterbringers. Beispiel: der Auftragnehmer",
+      "size": "medium"
+    },
+    "fuer": {
+      "name": "für",
+      "type": "equalsAny",
+      "value": [
+        "für den",
+        "für die",
+        "dem",
+        "den"
+      ],
+      "size": "small"
+    },
+    "dienstabnehmer": {
+      "name": "Dienstabnehmer",
+      "type": "placeholder",
+      "hint": "Für wen wird es getan?",
+      "explanation": "Beschreibung des Dienstabnehmers. Beispiel: für den Auftraggeber",
+      "size": "medium"
+    },
+    "ermoeglichen": {
+      "name": "ermöglichen",
+      "type": "equalsAny",
+      "value": [
+        "ermöglichen,"
+      ],
+      "size": "medium",
+      "optional": true
+    },
+    "in-der-lage-sein": {
+      "name": "In der Lage sein",
+      "type": "equals",
+      "value": "in der Lage sein,",
+      "size": "medium"
+    },
+    "in-der-lage-sein-small": {
+      "name": "In der Lage sein",
+      "type": "equals",
+      "value": "in der Lage sein,",
+      "size": "small"
+    },
+    "selbstaendig": {
+      "name": "selbständig",
+      "type": "equalsAny",
+      "value": [
+        "selbständig"
+      ],
+      "optional": true,
+      "size": "medium"
+    },
+    "selbstaendig-small": {
+      "name": "selbständig",
+      "type": "equalsAny",
+      "value": [
+        "selbständig"
+      ],
+      "optional": true,
+      "size": "small"
+    },
+    "objektbeschreibung": {
+      "name": "Objektbeschreibung",
+      "type": "placeholder",
+      "hint": "Woran / Womit wird es getan?",
+      "explanation": "Beschreibung des Objekts der Dienstleistung. Beispiel: das Ergebnis seiner Arbeit",
+      "size": "medium"
+    },
+    "objektbeschreibung-optional": {
+      "name": "Objektbeschreibung",
+      "type": "placeholder",
+      "hint": "Woran / Womit wird es getan?",
+      "explanation": "Beschreibung des Objekts der Dienstleistung. Beispiel: das Ergebnis seiner Arbeit",
+      "size": "medium",
+      "optional": true
+    },
+    "prozessbeschreibung": {
+      "name": "Prozessbeschreibung",
+      "type": "placeholder",
+      "hint": "Was wird getan?",
+      "explanation": "Beschreibung des Prozesses. Beispiel: dokumentieren,",
+      "size": "medium"
+    },
+    "begruendung": {
+      "name": "Begründung",
+      "type": "placeholder",
+      "hint": "Warum wird es getan?",
+      "explanation": "Begründung für die Dienstleistung. Beispiel: damit der Auftraggeber für erbrachte Leistungen Teilzahlungen bezahlt",
+      "optional": true,
+      "ignoreMissingWhenOptional": true,
+      "size": "large"
+    },
+    "punkt": {
+      "name": "Punkt",
+      "type": "equals",
+      "value": ".",
+      "size": "small"
+    }
+  },
+  "variants": {
+    "dienstleistung-mit-bedingung": {
+      "name": "Dienstleistung mit Bedingung",
+      "description": "Eine Dienstleistung, die unter einer bestimmten Bedingung erbracht wird.",
+      "example": "Während der Durchführung des Auftrags muss der Auftragnehmer für den Auftraggeber das Ergebnis seiner Arbeit dokumentieren, damit der Auftraggeber für erbrachte Leistungen Teilzahlungen bezahlt.",
+      "rules": [
+        "bedingung",
+        "modalitaet",
+        "diensterbringer",
+        "fuer",
+        "dienstabnehmer",
+        "ermoeglichen",
+        "objektbeschreibung",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "dienstleistung-ohne-bedingung": {
+      "name": "Dienstleistung ohne Bedingung",
+      "description": "Eine Dienstleistung, die ohne Bedingung erbracht wird.",
+      "example": "Der Auftragnehmer muss für den Auftraggeber das Ergebnis seiner Arbeit dokumentieren, damit der Auftraggeber für erbrachte Leistungen Teilzahlungen bezahlt.",
+      "rules": [
+        "diensterbringer",
+        "modalitaet",
+        "fuer",
+        "dienstabnehmer",
+        "ermoeglichen",
+        "objektbeschreibung",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "dienstleistungs-schnittstelle-mit-bedingung": {
+      "name": "Dienstleistungs-Schnittstelle mit Bedingung",
+      "description": "Eine Dienstleistung die unter einer bestimmten Bedingung für beliebige Personen erbracht wird.",
+      "example": "Bei allen abgerechneten Leistungen muss der Auftragnehmer in der Lage sein, Arbeitsberichte zu liefern, damit der Auftraggeber für erbrachte Leistungen Teilzahlungen bezahlt.",
+      "rules": [
+        "bedingung-large",
+        "modalitaet",
+        "diensterbringer",
+        "in-der-lage-sein",
+        "objektbeschreibung-optional",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "dienstleistungs-schnittstelle-ohne-bedingung": {
+      "name": "Dienstleistungs-Schnittstelle ohne Bedingung",
+      "description": "Eine Dienstleistung die ohne Bedingung für beliebige Personen erbracht wird.",
+      "example": "Der Auftragnehmer muss in der Lage sein, Arbeitsberichte zu liefern, damit der Auftraggeber für erbrachte Leistungen Teilzahlungen bezahlt.",
+      "rules": [
+        "diensterbringer",
+        "modalitaet",
+        "in-der-lage-sein-small",
+        "objektbeschreibung-optional",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "selbstaendige-dienstleistung-mit-bedingung": {
+      "name": "Selbständige Dienstleistung mit Bedingung",
+      "description": "Eine Dienstleistung, die unter einer Vorbedingung, selbständig von einem Diensterbringer ausgeführt wird.",
+      "example": "Bei allen Arbeiten mit Säuren muss der Auftragnehmer selbständig für das Tragen der Schutzkleidung gem. XXX sorgen, um Arbeitsunfälle zu verhindern.",
+      "rules": [
+        "bedingung-large",
+        "modalitaet",
+        "diensterbringer",
+        "selbstaendig",
+        "objektbeschreibung-optional",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    },
+    "selbstaendige-dienstleistung-ohne-bedingung": {
+      "name": "Selbständige Dienstleistung ohne Bedingung",
+      "description": "Eine Dienstleistung, die ohne Vorbedingung, selbständig von einem Diensterbringer ausgeführt wird.",
+      "example": "Der Auftragnehmer muss selbständig für das Tragen der Schutzkleidung gem. XXX sorgen, um Arbeitsunfälle zu verhindern.",
+      "rules": [
+        "diensterbringer",
+        "modalitaet",
+        "selbstaendig-small",
+        "objektbeschreibung-optional",
+        "prozessbeschreibung",
+        "begruendung",
+        "punkt"
+      ]
+    }
+  }
+}

@@ -52,6 +52,13 @@
       "explanation": "Beispiel: das System Libri",
       "size": "medium"
     },
+    "system-2": {
+      "name": "System",
+      "type": "placeholder",
+      "hint": "Wer tut es?",
+      "explanation": "Beispiel: das System Rep2Print",
+      "size": "medium"
+    },
     "benutzer": {
       "name": "Benutzer",
       "type": "placeholder",
@@ -75,6 +82,7 @@
       "name": "Selbständig",
       "type": "equals",
       "value": "selbständig",
+      "optional": true,
       "size": "small"
     },
     "objektbeschreibung": {
@@ -152,7 +160,7 @@
         "bedingung",
         "modalitaet",
         "system",
-        "system",
+        "system-2",
         "ermoeglichen",
         "objektbeschreibung",
         "prozessbeschreibung",
@@ -167,7 +175,7 @@
       "rules": [
         "system",
         "modalitaet",
-        "system",
+        "system-2",
         "ermoeglichen",
         "objektbeschreibung",
         "prozessbeschreibung",
