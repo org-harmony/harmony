@@ -135,7 +135,11 @@
       "name": "Punkt",
       "type": "equals",
       "value": ".",
-      "size": "small"
+      "size": "small",
+      "extra": {
+        "before": "",
+        "after": ""
+      }
     }
   },
   "variants": {

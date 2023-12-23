@@ -81,8 +81,8 @@ type BasicRule struct {
 	// However, if this flag is set to true, the segment will not be displayed at all.
 	IgnoreMissingWhenOptional bool `json:"ignoreMissingWhenOptional"`
 	// Size is the expected size of the rule's value. It is optional. Possible values are:
-	//  - "small" (default): The value is expected to be a short string. 1/4 of the input field width.
-	//  - "medium": The value is expected to be a medium-sized string. 2/4 of the input field width.
+	//  - "small": The value is expected to be a short string. 1/4 of the input field width.
+	//  - "medium" (default): The value is expected to be a medium-sized string. 2/4 of the input field width.
 	//  - "large": The value is expected to be a large string. 3/4 of the input field width.
 	//  - "full": The value is expected to be a very large string. 4/4 of the input field (this will be a textarea) width.
 	// For now this should not be overcomplicated.
