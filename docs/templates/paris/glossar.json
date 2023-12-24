@@ -73,7 +73,14 @@
       "hint": "Wird für welchen Bereich?",
       "explanation": "Bezug, auf den sich der zu erklärende Begriff bezieht. Beispiel: im System",
       "value": [
-        "Domäne"
+        "Domäne",
+        "System",
+        "Subsystem",
+        "Baugruppe",
+        "Komponente",
+        "Modul",
+        "Objekt",
+        "Service"
       ],
       "size": "medium",
       "optional": true,
