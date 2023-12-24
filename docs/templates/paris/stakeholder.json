@@ -18,10 +18,10 @@
       "size": "large"
     },
     "stakeholder": {
-      "name": "Stakeholder",
+      "name": "Stakeholder/Quelle",
       "type": "placeholder",
       "hint": "Fordert wer?",
-      "explanation": "Beschreibung des Stakeholders, der die Anforderung stellt. Beispiel: der Gesetzgeber",
+      "explanation": "Beschreibung des Stakeholders, der die Anforderung stellt, der Herkunft, des Ursprungs, der Quelle oder des Ortes der Forderung. Beispiel: der Gesetzgeber",
       "size": "small"
     },
     "forderung": {
