@@ -45,7 +45,8 @@
       "value": [
         "Ereignis:",
         "Wenn",
-        "Prüfe"
+        "Prüfe",
+        "Prüfe,"
       ],
       "optional": true,
       "ignoreMissingWhenOptional": true,
