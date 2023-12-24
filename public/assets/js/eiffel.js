@@ -29,7 +29,9 @@ registerCopyToClipboard();
 function registerFocuses() {
     // focus search input when search form is loaded (in the case bootstrap finishes showing the modal before the form is loaded)
     document.addEventListener('htmx:afterSettle', function(event) {
-        if (event.detail.elt.id !== 'eiffelTemplateSearch') return;
+        // focus search input if the search modal was loaded or the search results were loaded
+        // unfortunately, chromium takes the focus from the input when the results are loaded, so we need to refocus
+        if (event.detail.elt.id !== 'eiffelTemplateSearch' && event.detail.elt.id !== 'eiffelTemplateSearchResults') return;
         focusSearchInput();
     })
 
