@@ -164,7 +164,7 @@
                                             {{ end }}
                                             {{ if $rule.Explanation }}
                                                 <dt>{{ t "eiffel.elicitation.form.explanation" }}</dt>
-                                                <dd>{{ $rule.Explanation }}</dd>
+                                                <dd class="eiffel-rule-explanation">{{ $rule.Explanation }}</dd>
                                             {{ end }}
                                             {{ if and (not $rule.Hint) (not $rule.Explanation) }}
                                                 <dd>{{ t "eiffel.elicitation.form.no-further-info" }}</dd>

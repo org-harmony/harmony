@@ -30,3 +30,7 @@
     border-color: var(--bs-gray-400);
     opacity: 0.75;
 }
+
+.eiffel-rule-explanation {
+    white-space: pre-wrap;
+}

@@ -57,6 +57,8 @@
     "modalitaet": {
       "name": "Modalität",
       "type": "equalsAny",
+      "hint": "Mit welcher Verbindlichkeit wird es getan?",
+      "explanation": "( \"MUSS\" | \"SOLL\" | \"SOLLTE\" | \"KANN\" | \"WIRD\" ) [Ergänzung];\nDie [Ergänzung] ist späteren Erweiterungen vorbehalten und wird aktuell nicht verwendet.",
       "value": [
         "muss",
         "soll",
