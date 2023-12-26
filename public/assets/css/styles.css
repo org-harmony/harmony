@@ -21,3 +21,12 @@
 .eiffel-requirements-list-item:hover {
     background-color: rgba(var(--bs-light-rgb), 0.1);
 }
+
+#eiffelElicitationForm.eiffel-neglect-optional input, #eiffelElicitationForm.eiffel-neglect-optional textarea {
+    border-color: var(--bs-gray-700);
+}
+
+#eiffelElicitationForm.eiffel-neglect-optional :optional {
+    border-color: var(--bs-gray-400);
+    opacity: 0.75;
+}
