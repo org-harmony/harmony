@@ -1,2 +1,1 @@
-[output]
-base_dir = "files/eiffel"
+neglect_optional = true

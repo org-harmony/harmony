@@ -61,6 +61,8 @@ type TemplateFormData struct {
 	// SegmentMap is a map of rule names to their corresponding segment value.
 	// This is used to fill the segments with their values after parsing.
 	SegmentMap map[string]string
+	// NeglectOptional is a flag indicating if optional rules (inputs) should be displayed different from non-optional rules.
+	NeglectOptional bool
 }
 
 // SearchTemplateData contains templates to render as search results and a flag indicating if the query was too short.
@@ -85,14 +87,14 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 
 	router := webCtx.Router.With(user.LoggedInMiddleware(appCtx))
 
-	router.Get("/eiffel", eiffelElicitationPage(appCtx, webCtx).ServeHTTP)
-	router.Get("/eiffel/{templateID}", eiffelElicitationPage(appCtx, webCtx).ServeHTTP)
-	router.Get("/eiffel/{templateID}/{variant}", eiffelElicitationPage(appCtx, webCtx).ServeHTTP)
+	router.Get("/eiffel", eiffelElicitationPage(cfg, appCtx, webCtx).ServeHTTP)
+	router.Get("/eiffel/{templateID}", eiffelElicitationPage(cfg, appCtx, webCtx).ServeHTTP)
+	router.Get("/eiffel/{templateID}/{variant}", eiffelElicitationPage(cfg, appCtx, webCtx).ServeHTTP)
 	router.Get("/eiffel/elicitation/templates/search/modal", searchModal(appCtx, webCtx).ServeHTTP)
 	router.Post("/eiffel/elicitation/templates/search", searchTemplate(appCtx, webCtx).ServeHTTP)
-	router.Get("/eiffel/elicitation/{templateID}", elicitationTemplate(appCtx, webCtx, true).ServeHTTP)
-	router.Get("/eiffel/elicitation/{templateID}/{variant}", elicitationTemplate(appCtx, webCtx, false).ServeHTTP)
-	router.Post("/eiffel/elicitation/{templateID}/{variant}", parseRequirement(appCtx, webCtx, cfg).ServeHTTP)
+	router.Get("/eiffel/elicitation/{templateID}", elicitationTemplate(cfg, appCtx, webCtx, true).ServeHTTP)
+	router.Get("/eiffel/elicitation/{templateID}/{variant}", elicitationTemplate(cfg, appCtx, webCtx, false).ServeHTTP)
+	router.Post("/eiffel/elicitation/{templateID}/{variant}", parseRequirement(cfg, appCtx, webCtx).ServeHTTP)
 }
 
 func subscribeEvents(appCtx *hctx.AppCtx) {
@@ -139,7 +141,7 @@ func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	})
 }
 
-func eiffelElicitationPage(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+func eiffelElicitationPage(cfg Cfg, appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
 	sessionStore := util.UnwrapType[user.SessionRepository](appCtx.Repository(user.SessionRepositoryName))
 
@@ -147,7 +149,7 @@ func eiffelElicitationPage(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 		templateID := web.URLParam(io.Request(), "templateID")
 		variantKey := web.URLParam(io.Request(), "variant")
 		if templateID == "" {
-			return renderElicitationPage(io, TemplateFormData{}, nil, nil)
+			return renderElicitationPage(io, TemplateFormData{NeglectOptional: cfg.NeglectOptional}, nil, nil)
 		}
 
 		formData, err := TemplateFormFromRequest(
@@ -160,6 +162,7 @@ func eiffelElicitationPage(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 			true,
 		)
 
+		formData.NeglectOptional = cfg.NeglectOptional
 		formData.CopyAfterParse = CopyAfterParseSetting(io.Request(), sessionStore, true)
 
 		return renderElicitationPage(io, formData, nil, []error{err})
@@ -216,7 +219,7 @@ func searchTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	})
 }
 
-func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVariant bool) http.Handler {
+func elicitationTemplate(cfg Cfg, appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVariant bool) http.Handler {
 	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
 	sessionStore := util.UnwrapType[user.SessionRepository](appCtx.Repository(user.SessionRepositoryName))
 
@@ -239,6 +242,7 @@ func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVaria
 			return io.InlineError(err)
 		}
 
+		formData.NeglectOptional = cfg.NeglectOptional
 		formData.CopyAfterParse = CopyAfterParseSetting(io.Request(), sessionStore, true)
 
 		io.Response().Header().Set("HX-Push-URL", fmt.Sprintf("/eiffel/%s/%s", templateID, formData.VariantKey))
@@ -252,7 +256,7 @@ func elicitationTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx, defaultFirstVaria
 	})
 }
 
-func parseRequirement(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handler {
+func parseRequirement(cfg Cfg, appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
 	sessionStore := util.UnwrapType[user.SessionRepository](appCtx.Repository(user.SessionRepositoryName))
 
@@ -305,6 +309,7 @@ func parseRequirement(appCtx *hctx.AppCtx, webCtx *web.Ctx, cfg Cfg) http.Handle
 			io.Response().Header().Set("ParsingSuccessEvent", base64.URLEncoding.EncodeToString(triggerEventJSON))
 		}
 
+		formData.NeglectOptional = cfg.NeglectOptional
 		formData.CopyAfterParse = CopyAfterParseSetting(request, sessionStore, false)
 
 		return io.Render(web.NewFormData(formData, s, err), "eiffel.elicitation.form", "eiffel/_form-elicitation.go.html")

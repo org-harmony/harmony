@@ -9,7 +9,8 @@
         hx-target=".eiffel-elicitation-template-variant-form"
         hx-disabled-elt=".eiffel-elicitation-form-fieldset"
         autocomplete="off"
-        id="eiffelElicitationForm">
+        id="eiffelElicitationForm"
+        {{ if .Data.Form.NeglectOptional }}class="eiffel-neglect-optional"{{ end }}>
         <fieldset class="eiffel-elicitation-form-fieldset">
             <div class="row">
                 {{/* TODO beautify this code and improve readability - good templating is hard :/ */}}
