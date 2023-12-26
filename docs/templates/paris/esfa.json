@@ -21,7 +21,7 @@
       "name": "Modalität",
       "type": "equalsAny",
       "hint": "Mit welcher Verbindlichkeit wird es getan?",
-      "explanation": "Beispiel: muss",
+      "explanation": "( \"MUSS\" | \"SOLL\" | \"SOLLTE\" | \"KANN\" | \"WIRD\" ) [Ergänzung];\nDie [Ergänzung] ist späteren Erweiterungen vorbehalten und wird aktuell nicht verwendet.",
       "value": [
         "muss",
         "soll",
@@ -35,7 +35,7 @@
       "name": "Modalität",
       "type": "equalsAny",
       "hint": "Mit welcher Verbindlichkeit wird es getan?",
-      "explanation": "Beispiel: muss",
+      "explanation": "( \"MUSS\" | \"SOLL\" | \"SOLLTE\" | \"KANN\" | \"WIRD\" ) [Ergänzung];\nDie [Ergänzung] ist späteren Erweiterungen vorbehalten und wird aktuell nicht verwendet.",
       "value": [
         "muss",
         "soll",
@@ -63,7 +63,7 @@
       "name": "Benutzer",
       "type": "placeholder",
       "hint": "Für wen wird es getan?",
-      "explanation": "Beispiel: dem Administrator",
+      "explanation": "Benutzer gehören zu den Stakeholdern eines Systems:\n - Stakeholder (=Beteiligte) sind alle Menschen, Menschengruppen, Organisationen, Institutionen\n - Benutzer ⊆ Stakeholder.\n - Stakeholder ist definiert als:\n    Stakeholder = [Artikel][Ergänzung] <Person, Personengruppe, Organisation oder Institution> [Ergänzung]\n - Vor oder hinter der Person, Personengruppe etc. kann eine Ergänzung hinzugefügt werden.\n\nBeispiele:\n\"dem Anwender\" → \"dem hierfür berechtigten Anwender\"\n\"dem Anwender\" → \"dem Anwender, der die entsprechenden Rechte hat\"",
       "size": "medium"
     },
     "ermoeglichen": {
