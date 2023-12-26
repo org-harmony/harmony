@@ -23,12 +23,20 @@
 }
 
 #eiffelElicitationForm.eiffel-neglect-optional input, #eiffelElicitationForm.eiffel-neglect-optional textarea {
-    border-color: var(--bs-gray-700);
+    border-color: var(--bs-gray-600);
+}
+
+#eiffelElicitationForm.eiffel-neglect-optional input::placeholder, #eiffelElicitationForm.eiffel-neglect-optional textarea::placeholder {
+    font-weight: 500;
 }
 
 #eiffelElicitationForm.eiffel-neglect-optional :optional {
-    border-color: var(--bs-gray-400);
-    opacity: 0.75;
+    border-color: var(--bs-gray-300);
+}
+
+#eiffelElicitationForm.eiffel-neglect-optional :optional::placeholder {
+    color: var(--bs-gray-600);
+    font-weight: 300;
 }
 
 .eiffel-rule-explanation {
