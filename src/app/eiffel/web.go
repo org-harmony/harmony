@@ -67,7 +67,8 @@ type TemplateFormData struct {
 
 // SearchTemplateData contains templates to render as search results and a flag indicating if the query was too short.
 type SearchTemplateData struct {
-	Templates     []*template.Template
+	Templates []*template.Template
+	// Deprecated this is expected to be unnecessary with the current implementation of EIFFEL
 	QueryTooShort bool
 }
 
@@ -181,8 +182,21 @@ func renderElicitationPage(io web.IO, data TemplateFormData, success []string, e
 }
 
 func searchModal(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
+
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
-		return io.Render(nil, "eiffel.template.search.modal", "eiffel/_modal-template-search.go.html")
+		ctx := io.Context()
+		templates, err := templateRepository.FindByQueryForTypeAndUser(ctx, "", BasicTemplateType, user.MustCtxUser(ctx))
+		if err != nil && !errors.Is(err, persistence.ErrNotFound) {
+			return io.InlineError(web.ErrInternal, err)
+		}
+
+		return io.Render(
+			&SearchTemplateData{Templates: templates},
+			"eiffel.template.search.modal",
+			"eiffel/_modal-template-search.go.html",
+			"eiffel/_template-search-result.go.html",
+		)
 	})
 }
 
@@ -197,13 +211,7 @@ func searchTemplate(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 		}
 
 		query := request.FormValue("search")
-		if len(query) < 3 {
-			return io.Render(
-				&SearchTemplateData{QueryTooShort: true},
-				"eiffel.template.search.result",
-				"eiffel/_template-search-result.go.html",
-			)
-		}
+		// query too short was removed as it is expected to be unnecessary
 
 		ctx := io.Context()
 		templates, err := templateRepository.FindByQueryForTypeAndUser(ctx, query, BasicTemplateType, user.MustCtxUser(ctx))
