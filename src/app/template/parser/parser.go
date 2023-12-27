@@ -1,9 +1,7 @@
 package parser
 
 import (
-	"context"
 	"github.com/org-harmony/harmony/src/core/trans"
-	"github.com/org-harmony/harmony/src/core/validation"
 )
 
 const (
@@ -52,12 +50,6 @@ type ParsingLog struct {
 	// Downgrade indicates that the parsing log was downgraded to a lower level.
 	// This is usually the case when parsing errors occur on optional rules.
 	Downgrade bool
-}
-
-// ParsableTemplate is a template that can be validated and parsed.
-type ParsableTemplate interface {
-	Validate(v validation.V) []error
-	Parse(ctx context.Context, variation string, segments ...ParsingSegment) (ParsingResult, error)
 }
 
 // String on ParsingLog returns the message of the log.

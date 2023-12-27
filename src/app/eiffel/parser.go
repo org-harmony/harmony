@@ -23,7 +23,7 @@ var (
 	ErrNotAString = errors.New("eiffel.parser.error.not-a-string")
 )
 
-// BasicTemplate is the basic EIFFEL template. It is parsable by implementing the template.ParsableTemplate interface.
+// BasicTemplate is the basic EIFFEL template.
 //
 // A basic template is a template that defines a set of rules and a set of variants.
 // Each variant contains rules that are to be applied to a requirement in the parsing step to validate the requirement.
@@ -182,7 +182,7 @@ func RuleParsers() *RuleParserProvider {
 	}
 }
 
-// Parse implements the template.ParsableTemplate interface for the BasicTemplate. It is used to parse requirements in the form of segments.
+// Parse is used to parse requirements in the form of segments.
 // Each segment is a part of the requirement that is to be parsed. For the EIFFEL basic template (EBT), each segment is an input from auto-generated
 // input field based on the rules defined in the template. Therefore, each segment will be validated by the corresponding rule.
 // It is recommended to validate the template before parsing requirements.

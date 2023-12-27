@@ -18,8 +18,7 @@ var (
 )
 
 // ValidateTemplateConfigEvent is published to validate a template config. It allows for other modules to validate
-// specific parts or entire templates based on their own rules. This is helpful if a module defines a template.ParsableTemplate
-// and the template should be validated against the rules of the parser.
+// specific parts or entire templates based on their own rules. This is helpful if a template should be validated against the rules of the parser.
 type ValidateTemplateConfigEvent struct {
 	Config         string
 	TemplateType   string
@@ -29,8 +28,7 @@ type ValidateTemplateConfigEvent struct {
 
 // ValidateTemplateToCreate validates the template to create against the template set's rules and publishes an event
 // to validate the template config. The event allows for other modules to validate specific parts or entire templates
-// based on their own rules. This is helpful if a module defines a template.ParsableTemplate and the template should be
-// validated against the rules of the parser.
+// based on their own rules. This is helpful if a template should be validated against the rules of the parser.
 func ValidateTemplateToCreate(toCreate *ToCreate, validator validation.V, em event.Manager, logger trace.Logger) ([]error, error) {
 	err, validationErrs := validator.ValidateStruct(toCreate)
 	if err != nil {
@@ -52,8 +50,7 @@ func ValidateTemplateToCreate(toCreate *ToCreate, validator validation.V, em eve
 
 // ValidateTemplateToUpdate validates the template to update against the template set's rules and publishes an event
 // to validate the template config. The event allows for other modules to validate specific parts or entire templates
-// based on their own rules. This is helpful if a module defines a template.ParsableTemplate and the template should be
-// validated against the rules of the parser.
+// based on their own rules. This is helpful if a template should be validated against the rules of the parser.
 func ValidateTemplateToUpdate(toUpdate *ToUpdate, validator validation.V, em event.Manager, logger trace.Logger) ([]error, error) {
 	err, validationErrs := validator.ValidateStruct(toUpdate)
 	if err != nil {
