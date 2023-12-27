@@ -28,6 +28,7 @@
 
 #eiffelElicitationForm.eiffel-neglect-optional input::placeholder, #eiffelElicitationForm.eiffel-neglect-optional textarea::placeholder {
     font-weight: 500;
+    text-decoration: underline;
 }
 
 #eiffelElicitationForm.eiffel-neglect-optional :optional {
@@ -37,6 +38,7 @@
 #eiffelElicitationForm.eiffel-neglect-optional :optional::placeholder {
     color: var(--bs-gray-600);
     font-weight: 300;
+    text-decoration: none;
 }
 
 .eiffel-rule-explanation {
