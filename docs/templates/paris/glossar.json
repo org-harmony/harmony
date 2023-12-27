@@ -65,6 +65,7 @@
       "type": "placeholder",
       "hint": "Wird für welchen Bereich?",
       "explanation": "Eigenname des Bereichs, auf den sich der zu erklärende Begriff bezieht. Beispiel: Libri",
+      "optional": true,
       "size": "medium"
     },
     "geltungsbereich": {
@@ -91,6 +92,7 @@
       "type": "placeholder",
       "hint": "Wird für welchen Bereich?",
       "explanation": "Bezug, auf den sich der zu erklärende Begriff bezieht. Beispiel: im System Libri",
+      "optional": true,
       "size": "medium"
     },
     "prae-definiens": {
