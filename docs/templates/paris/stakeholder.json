@@ -66,9 +66,10 @@
         "kann",
         "wird"
       ],
-      "size": "small",
-      "optional": true,
-      "ignoreMissingWhenOptional": true
+      "extra": {
+        "allowOthers": true
+      },
+      "size": "small"
     },
     "begruendung": {
       "name": "Begründung",
