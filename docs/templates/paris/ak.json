@@ -8,7 +8,7 @@
     "Oliver Linssen"
   ],
   "license": "MIT",
-  "description": "Abnahme-/Abnahmekriterium bedeutet in PARIS ein Merkmal, mit dessen Hilfe entschieden wird, ob eine Anforderung erfüllt ist. Abnahmekriterien werden – insbesondere zu Beginn der Anforderungsanalyse – häufig formfrei formuliert.",
+  "description": "Abnahme-/Akzeptanzkriterium bedeutet in PARIS ein Merkmal, mit dessen Hilfe entschieden wird, ob eine Anforderung oder ein anderes RE-Artefakt erfüllt ist. Abnahmekriterien werden – insbesondere zu Beginn der Anforderungsanalyse – häufig formfrei formuliert.",
   "rules": {
     "prae-bedingung": {
       "name": "Prä-Bedingung",
@@ -110,7 +110,7 @@
   "variants": {
     "akzeptanzkriterium": {
       "name": "Strukturiertes Abnahme-/Akzeptanzkriterium",
-      "description": "Ein Abnahme-/Akzeptanzkriterium ist ein Merkmal, mit dessen Hilfe entschieden wird, ob eine Anforderung erfüllt ist. Abnahmekriterien werden – insbesondere zu Beginn der Anforderungsanalyse – häufig formfrei formuliert.",
+      "description": "Ein strukturiertes Abnahme-/Akzeptanzkriterium mit Bedingung, Ereignis und Ergebnis.",
       "example": "Angenommen, der Anwender X hat ein Meeting für den Anwender X für den 1.3.201x von 13:00 bis 15:00 angelegt. Wenn ein anderer Anwender Y für den Anwender X ein zweites Meeting für den 1.3.201x von 13:00 bis 15:00 anlegen will, dann wird kein zweites Meeting angelegt, weil ein Anwender immer nur in einem Meeting gleichzeitig anwesend sein kann.",
       "rules": [
         "prae-bedingung",
@@ -125,7 +125,7 @@
     },
     "akzeptankriterium-vereinfacht": {
       "name": "Strukturiertes Abnahme-/Akzeptanzkriterium (vereinfacht)",
-      "description": "Ein Abnahme-/Akzeptanzkriterium ist ein Merkmal, mit dessen Hilfe entschieden wird, ob eine Anforderung erfüllt ist. Abnahmekriterien werden – insbesondere zu Beginn der Anforderungsanalyse – häufig formfrei formuliert.",
+      "description": "Ein vereinfachtes strukturiertes Abnahme-/Akzeptanzkriterium mit Bedingung, Ereignis, Ergebnis und festen Präfixen.",
       "example": "Angenommen, der Anwender X hat ein Meeting für den Anwender X für den 1.3.201x von 13:00 bis 15:00 angelegt. Wenn ein anderer Anwender Y für den Anwender X ein zweites Meeting für den 1.3.201x von 13:00 bis 15:00 anlegen will, dann wird kein zweites Meeting angelegt, weil ein Anwender immer nur in einem Meeting gleichzeitig anwesend sein kann.",
       "rules": [
         "prae-bedingung-kurz",
@@ -140,7 +140,7 @@
     },
     "formfreies-ak": {
       "name": "Formfreies Abnahme-/Akzeptanzkriterium",
-      "description": "Ein Abnahme-/Akzeptanzkriterium ist ein Merkmal, mit dessen Hilfe entschieden wird, ob eine Anforderung erfüllt ist. Abnahmekriterien werden – insbesondere zu Beginn der Anforderungsanalyse – häufig formfrei formuliert.",
+      "description": "Ein formfrei formuliertest Abnahme-/Akzeptanzkriterium.",
       "example": "Wenn ein Anwender ein Meeting für einen anderen Anwender anlegt, dann wird das Meeting im Kalender des anderen Anwenders angezeigt.",
       "rules": [
         "formfreies-ak",
