@@ -61,7 +61,9 @@
         "Ziel",
         "Projektziel"
       ],
-      "optional": true,
+      "extra": {
+        "allowOthers": true
+      },
       "size": "small"
     },
     "des-der": {
@@ -87,7 +89,9 @@
         "Service",
         "Stakeholders"
       ],
-      "optional": true,
+      "extra": {
+        "allowOthers": true
+      },
       "size": "small"
     },
     "eigenname": {
