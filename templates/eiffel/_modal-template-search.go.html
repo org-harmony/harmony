@@ -1,5 +1,5 @@
 {{ define "eiffel.template.search.modal" }}
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h1 class="modal-title fs-5" id="eiffelTemplateSearchLabel">{{ t "eiffel.elicitation.template.search.title" }}</h1>
@@ -8,7 +8,7 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <input id="eiffelTemplateSearchInput"
-                       name="search" type="search" class="form-control"
+                       name="search" type="search" class="form-control border-dark-subtle"
                        hx-post="/eiffel/elicitation/templates/search"
                        hx-trigger="input changed delay:300ms, search"
                        hx-target="#eiffelTemplateSearchResults"
@@ -26,9 +26,13 @@
                         </tr>
                     </thead>
                     <tbody id="eiffelTemplateSearchResults">
-                        <tr>
-                            <td class="text-center" colspan="4">{{ t "eiffel.elicitation.template.search.start" }}</td>
-                        </tr>
+                        {{ if not .Data.Templates }}
+                            <tr>
+                                <td class="text-center" colspan="4">{{ t "eiffel.elicitation.template.search.start" }}</td>
+                            </tr>
+                        {{ else }}
+                            {{ template "eiffel.template.search.result" . }}
+                        {{ end }}
                     </tbody>
                 </table>
             </div>
