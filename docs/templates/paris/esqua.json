@@ -49,14 +49,14 @@
       "name": "System/Stakeholder",
       "type": "placeholder",
       "hint": "Muss was oder wer?",
-      "explanation": "Beispiel: der Kantine",
+      "explanation": "Beschreibung des Systems oder Stakeholders. Beispiel: der Kantine",
       "size": "medium"
     },
     "was-oder-wer-full": {
       "name": "System/Stakeholder",
       "type": "placeholder",
       "hint": "Muss was oder wer?",
-      "explanation": "Beispiel: die Kantine",
+      "explanation": "Beschreibung des Systems oder Stakeholders. Beispiel: die Kantine",
       "size": "full"
     },
     "qualitaetsmerkmal-besitzen": {
