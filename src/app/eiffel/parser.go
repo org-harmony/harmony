@@ -494,10 +494,19 @@ func (p EqualsRuleParser) DisplayType(rule BasicRule) TemplateDisplayType {
 // Parse implements the RuleParser interface for the EqualsAnyRuleParser. It is used to parse rules of the type 'equalsAny'.
 // The equalsAny rule expects a slice of strings as value, converts each string to lowercase and compares it to the lowercase segment's value.
 // If any of the values are equal, no parsing error is reported.
+//
+// The equalsAny rule has an extra property 'allowOthers' that can be set to true or false.
+// If set to true, the equalsAny rule will allow any other value than the ones defined in the rule's value, as long as the segment's value is not empty.
+// For allowing empty use the optional + ignoreMissingWhenOptional flags.
 func (p EqualsAnyRuleParser) Parse(ctx context.Context, rule BasicRule, segment parser.ParsingSegment) ([]parser.ParsingLog, error) {
 	rv, err := toStringSlice(rule.Value)
 	if err != nil {
 		return nil, RuleInvalidValueError{Rule: &rule, Msg: err.Error()}
+	}
+
+	allowOthers, ok := rule.Extra["allowOthers"].(bool)
+	if !ok {
+		allowOthers = false
 	}
 
 	segmentValue := strings.ToLower(segment.Value)
@@ -509,6 +518,10 @@ func (p EqualsAnyRuleParser) Parse(ctx context.Context, rule BasicRule, segment 
 		}
 	}
 
+	if allowOthers && segmentValue != "" {
+		return nil, nil
+	}
+
 	return []parser.ParsingLog{{
 		Segment:         &segment,
 		Level:           parser.ParsingLogLevelError,
@@ -518,8 +531,13 @@ func (p EqualsAnyRuleParser) Parse(ctx context.Context, rule BasicRule, segment 
 }
 
 // Validate implements the RuleParser interface for the EqualsAnyRuleParser. It is used to validate rules of the type 'equalsAny'.
-// The equalsAny rule expects a slice of strings as value.
+// The equalsAny rule expects a slice of strings as value. If the 'allowOthers' extra property is set it expects a boolean value.
 func (p EqualsAnyRuleParser) Validate(v validation.V, rule BasicRule) []error {
+	allowExtra, ok := rule.Extra["allowOthers"]
+	if _, aeOk := allowExtra.(bool); ok && !aeOk {
+		return []error{RuleInvalidValueError{Rule: &rule, Msg: "eiffel.parser.equals-any.invalid-allow-others"}}
+	}
+
 	_, err := toStringSlice(rule.Value)
 	if err == nil {
 		return nil

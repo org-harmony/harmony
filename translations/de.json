@@ -113,7 +113,10 @@
         "not-a-string": "Der Wert \"value\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" sollte aus einer Zeichenkette oder einer Liste an Zeichenketten bestehen, jedoch wurde ein anderer Typ gefunden. Bitte überprüfen Sie die Schablonen-Dokumentation."
       },
       "equals.error": "Erwarteter Wert: \"{{ .expected }}\".",
-      "equals-any.error": "Erwarteter Wert: {{ .expected }}."
+      "equals-any": {
+        "error": "Erwarteter Wert: {{ .expected }}.",
+        "invalid-allow-others": "Der Wert \"allowOthers\" für die Regel \"{{ .rule }}\" vom Typ \"{{ .type }}\" ist ungültig. Es wird ein Boolean (true/false) erwartet."
+      }
     },
     "elicitation": {
       "call-to-action": "Anforderungen mit EIFFEL erfassen",
