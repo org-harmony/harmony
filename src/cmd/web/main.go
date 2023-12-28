@@ -30,6 +30,8 @@ import (
 // TODO add more loading indications, especially for loading body changes
 // TODO improve user logged out handling during requests/responses and general site interaction/navigation
 // TODO add cleanup task for expired sessions
+// TODO add info for esfa about prozessbeschreibung being potentially long
+// TODO add info for esfa about potentially complex <System> definition
 
 func main() {
 	logger := trace.NewLogger()
