@@ -39,6 +39,7 @@
       "hint": "Wo?",
       "explanation": "Spezifikation der Anforderungsquelle. Beispiel: in § 235 des Luftfahrtsicherheitsgesetzes,",
       "optional": true,
+      "ignoreMissingWhenOptional": true,
       "size": "medium"
     },
     "dass": {
