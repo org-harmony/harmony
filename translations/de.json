@@ -135,6 +135,8 @@
         "no-further-info": "Es wurden keine weiteren Informationen für diese Regel hinterlegt.",
         "value": "Erwartet",
         "value-single-select": "Ein Wert aus",
+        "value-single-select-empty": "Keine Werte in der Schablone vordefiniert.",
+        "value-single-select-allow-others": "beliebiger Wert",
         "copy-and-clear": "Kopieren und leeren"
       },
       "template": {

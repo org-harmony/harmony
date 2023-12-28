@@ -152,9 +152,15 @@
                                             {{ if eq $displayType "input-single-select" }}
                                                 <dt>{{ t "eiffel.elicitation.form.value-single-select" }}</dt>
                                                 <dd>
+                                                    {{ $allowOthers := index $rule.Extra "allowOthers" }}
                                                     {{ $valueLength := len $rule.Value }}
                                                     {{ range $i, $val := $rule.Value }}
-                                                        "{{ $val }}"{{ if lt (add $i 1) $valueLength }}, {{ end }}
+                                                        "{{ $val }}"{{ if or (lt (add $i 1) $valueLength) $allowOthers }}, {{ end }}
+                                                    {{ end }}
+                                                    {{ if $allowOthers }}
+                                                        {{- t "eiffel.elicitation.form.value-single-select-allow-others" -}}
+                                                    {{ else if lt $valueLength 1 }}
+                                                        {{ t "eiffel.elicitation.form.value-single-select-empty" }}
                                                     {{ end }}
                                                 </dd>
                                             {{ end }}
