@@ -110,7 +110,7 @@
       "name": "Definiens",
       "type": "placeholder",
       "hint": "Wie definiert?",
-      "explanation": "Erklärung des zu erklärenden Begriffs. Beispiel: eine natürliche Person,",
+      "explanation": "Kunde bedeutet eine natürliche Person.\nKunde = Definiendum\neine natürliche Person = Definiens\n\nKunde bedeutet eine natürliche Person, die bei uns einkauft.\n, die bei uns einkauft = Spezifikation des Definiens",
       "size": "medium"
     },
     "definiens-large": {
