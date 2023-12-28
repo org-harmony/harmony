@@ -10,11 +10,11 @@ import (
 
 const Pkg = "sys.event"
 
-// DefaultEventPriority can be used as a general default priority for an event subscriber.
+// DefaultPriority can be used as a general default priority for an event subscriber.
 // The priority is used to determine the order in which subscribers are called.
 // A higher priority means that the subscriber is called earlier.
 // If you do not care about the order in which subscribers are called, use this constant.
-const DefaultEventPriority = 0
+const DefaultPriority = 0
 
 // BufferSize is the size of the buffer for event channels.
 // The buffer size is used when creating channels for events.

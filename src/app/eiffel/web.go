@@ -128,7 +128,7 @@ func subscribeEvents(appCtx *hctx.AppCtx) {
 		}
 
 		return nil
-	}, event.DefaultEventPriority)
+	}, event.DefaultPriority)
 }
 
 func registerNavigation(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
