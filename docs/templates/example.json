@@ -11,33 +11,37 @@
   "format": "Wird nicht an der Schablone gesetzt, sondern an den Varianten. Hat aktuell keine Verwendung im EBT.",
   "example": "Wird nicht an der Schablone gesetzt, sondern an den Varianten. Hat aktuell keine Verwendung im EBT.",
   "rules": {
-    "equals-regel": {
-      "name": "Equals-Regel",
+    "ein-bestimmter-wert": {
+      "name": "Ein bestimmter Wert",
       "type": "equals",
-      "hint": "Ein Hint ist eine kurze Beschreibung, die dem Benutzer hilft, die Regel zu verstehen.",
-      "explanation": "Eine Erklärung ist eine ausführliche Beschreibung, die dem Benutzer hilft, die Regel zu verstehen.",
-      "value": "ein bestimmter Wert",
+      "hint": "Ein Hint ist eine kurze Beschreibung (z.B. eine Frage), die dem Benutzer hilft, die Regel zu verstehen.",
+      "explanation": "Dies ist eine Equals-Regel. Eine Erklärung ist eine ausführlichere Beschreibung, die dem Benutzer hilft, die Regel zu verstehen.",
+      "value": "Ein bestimmter Wert,",
       "size": "medium"
     },
-    "equals-any-regel": {
-      "name": "Equals-Any-Regel",
+    "folgt-worauf": {
+      "name": "Folgt worauf",
       "type": "equalsAny",
-      "hint": "Diese Regel ist optional und kann dementsprechend weggelassen werden.",
-      "explanation": "Wenn die Regel weggelassen wird, wird ein Warnhinweis angezeigt, weil die Regel optional ist, jedoch nicht ignoreMissingWhenOptional auf true gesetzt wurde.",
+      "hint": "Worauf folgt der bestimmte Wert?",
+      "explanation": "Wenn diese EqualsAny-Regel weggelassen wird, wird ein Fehler angezeigt, weil die Regel nicht optional ist. Die Regel schlägt in der Darstellung Werte zur Auswahl vor. Jedoch akzeptiert diese EqualsAny-Regel andere Werte, die nicht in der Liste stehen, dank der extra.allowOthers Option.",
       "value": [
-        "ein bestimmter Wert",
-        "ein anderer bestimmter Wert"
+        "folgt",
+        "folgt auf einen",
+        "folgt auf einen anderen Wert"
       ],
-      "optional": true,
-      "size": "large"
+      "extra": {
+        "allowOthers": true
+      },
+      "size": "medium"
     },
-    "placeholder-regel": {
-      "name": "Placeholder-Regel",
+    "begruendung": {
+      "name": "Begruendung",
       "type": "placeholder",
-      "hint": "Diese Regel kann ohne Fehler oder Hinweis weggelassen werden.",
-      "explanation": "Wenn die Regel weggelassen wird, wird kein Warnhinweis angezeigt, weil die Regel optional ist und ignoreMissingWhenOptional auf true gesetzt wurde.",
+      "hint": "Wieso folgt der eine auf den anderen Wert?",
+      "explanation": "Wenn diese Placeholder-Regel weggelassen wird, wird kein Warnhinweis angezeigt, weil die Regel optional ist und ignoreMissingWhenOptional auf true gesetzt wurde.",
       "optional": true,
-      "size": "small"
+      "ignoreMissingWhenOptional": true,
+      "size": "large"
     },
     "punkt": {
       "name": "Punkt",
@@ -53,13 +57,12 @@
   "variants": {
     "standard": {
       "name": "Standard Beispielschablone",
-      "description": "Dies ist die Standardvariante der Beispielschablone. Sie hat keinen weiteren Nutzen, außer der Erklärung zu dienen.",
-      "format": "Wenn dieser Wert nicht gesetzt wird, wird das Format automatisch durch die Regeln der Variante bestimmt.",
-      "example": "Hier könnte ein Beispielsatz mit 'ein bestimmter Wert' und 'ein anderer bestimmter Wert' stehen.",
+      "description": "Dies ist die Standardvariante der Beispielschablone. Sie hat keinen weiteren Nutzen, außer der Erklärung zu dienen. Das Feld 'format' wird hier nicht gesetzt, stattdessen wird es automatisch durch EIFFEL generiert.",
+      "example": "Ein bestimmter Wert, folgt auf einen anderen Wert, den ich nicht kenne.",
       "rules": [
-        "equals-regel",
-        "equals-any-regel",
-        "placeholder-regel",
+        "ein-bestimmter-wert",
+        "folgt-worauf",
+        "begruendung",
         "punkt"
       ]
     }
