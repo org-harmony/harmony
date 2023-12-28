@@ -113,7 +113,10 @@
         "not-a-string": "The value \"value\" for the rule \"{{ .rule }}\" of type \"{{ .type }}\" should consist of a string or a list of strings, but another type was found. Please check the template documentation."
       },
       "equals.error": "Expected value: \"{{ .expected }}\".",
-      "equals-any.error": "Expected value: {{ .expected }}."
+      "equals-any": {
+        "error": "Expected value: {{ .expected }}.",
+        "invalid-allow-others": "The value \"allowOthers\" for the rule \"{{ .rule }}\" of type \"{{ .type }}\" is invalid. A boolean (true/false) is expected."
+      }
     },
     "elicitation": {
       "call-to-action": "Capture requirements with EIFFEL",
@@ -132,6 +135,8 @@
         "no-further-info": "No further information has been provided for this rule.",
         "value": "Expected",
         "value-single-select": "A value from",
+        "value-single-select-empty": "No values defined in the template.",
+        "value-single-select-allow-others": "any value",
         "copy-and-clear": "Copy and clear"
       },
       "template": {
