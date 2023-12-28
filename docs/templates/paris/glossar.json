@@ -117,14 +117,14 @@
       "name": "Definiens",
       "type": "placeholder",
       "hint": "Wie definiert?",
-      "explanation": "Erklärung des zu erklärenden Begriffs. Beispiel: eine natürliche Person, die berechtigt ist, Medien auszuleihen,",
+      "explanation": "Kunde bedeutet eine natürliche Person.\nKunde = Definiendum\neine natürliche Person = Definiens\n\nKunde bedeutet eine natürliche Person, die bei uns einkauft.\n, die bei uns einkauft = Spezifikation des Definiens",
       "size": "large"
     },
     "spezifikation-definiens": {
       "name": "Spezifikation des Definiens",
       "type": "placeholder",
       "hint": "Was bedeutet das?",
-      "explanation": "Spezifikation des Definiens. Beispiel: die berechtigt ist, Medien auszuleihen,",
+      "explanation": "Kunde bedeutet eine natürliche Person.\nKunde = Definiendum\neine natürliche Person = Definiens\n\nKunde bedeutet eine natürliche Person, die bei uns einkauft.\n, die bei uns einkauft = Spezifikation des Definiens",
       "optional": true,
       "size": "full"
     },
