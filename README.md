@@ -1,12 +1,36 @@
 # HARMONY & EIFFEL
 Highly Adaptable Requirements Management and OrganizatioN sYstem - HARMONY
-
 Elicitation Interface for eFFectivE Language - EIFFEL
 
-The idea is to simplify requirements elicitation using templates by supplying user's with a way to input and validate template based requirements more conveniently. The templates in mind for the system's design were by the German PARIS pattern language. This is an approach and also a research project by Prof. Dr. Oliver Linssen.
-However, the design supports various other templates. Templates can be defined using JSON configurations, examples for already designed templates can be found in docs/templates/.
+HARMONY and EIFFEL were created as part of a research project.
+The idea is to simplify the elicitation of requirements by using templates, by providing users with a way to enter
+and validate template-based requirements more easily.
+The requirement templates used here are based on the pattern language PARIS (PATTERNS FOR REQUIREMENTS
+SPECIFICATION) by Prof. Dr. Oliver Linssen. The basics of PARIS are documented in:
 
-HARMONY will further be extended to suit more needs of requirements engineering.
-Join us during this journey, no matter if you're a contributor, user or just watching!
+Linssen, O. (2022). Anforderungen strukturiert mit Schablonen dokumentieren in PARIS. Fazal-Baqaie, M., Linssen
+O., Volland, A., Yigitbas, E., Engstler, M., Bertram, M., Kalenborn, A. (Hrsg.): Projektmanagement und
+Vorgehensmodelle 2022 (PVM 2022). Virtuelle Zusammenarbeit und verlorene Kulturen?, P-327, 109–140.
+[https://www.researchgate.net/publication/363630019_Anforderungen_strukturiert_mit_Schablonen_dokumentieren_in_PARIS](https://www.researchgate.net/publication/363630019_Anforderungen_strukturiert_mit_Schablonen_dokumentieren_in_PARIS)
 
-The project and everybody involved in it is looking forward for your feedback, as we continuously strive to improve HARMONY and EIFFEL. The project is under active development.
+Linssen, O. (2020). PARIS - Die Entwicklung einer Mustersprache zur Dokumentation von Anforderungen.
+Rundbrief GI-Fachausschuß Management der Anwendungsentwicklung und -wartung, 26(44), 7–24.
+[https://www.researchgate.net/publication/363631106_PARIS_-_Die_Entwicklung_einer_Mustersprache_zur_Dokumentation_von_Anforderungen](https://www.researchgate.net/publication/363631106_PARIS_-_Die_Entwicklung_einer_Mustersprache_zur_Dokumentation_von_Anforderungen)
+
+However, the design supports various other templates. Templates can be defined with JSON configurations, examples
+of already designed templates can be found in [docs/templates/](docs/templates/).
+
+For reasons of data economy, HARMONY does not store requirements on the server.
+Only templates and minimal user information to enable login are stored on the server.
+All entered and checked requirements are stored locally in the browser.
+These locally stored requirements can be deleted at any time.
+
+The use of HARMONY and EIFFEL is at your own risk. The developers and operators assume no liability for
+damages caused by the use of HARMONY and EIFFEL.
+
+HARMONY will be further expanded to meet more needs of requirements management.
+Join us on this journey, whether you are a contributor, user or just a spectator!
+
+The project and all participants are looking forward to your feedback, as we are continuously working to improve
+HARMONY and EIFFEL. The project is in active development.
+
