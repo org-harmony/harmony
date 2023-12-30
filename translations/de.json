@@ -122,7 +122,13 @@
       "call-to-action": "Anforderungen mit EIFFEL erfassen",
       "parse": {
         "flawless-success": "Die Anforderung ist fehlerfrei.",
-        "success": "Die Anforderung ist gültig, jedoch wurden potentielle Probleme gefunden."
+        "success": "Die Anforderung ist gültig, jedoch wurden potentielle Probleme gefunden.",
+        "result": {
+          "success-prefix": "Erfolg:",
+          "warning-prefix": "Warnung:",
+          "error-prefix": "Fehler:",
+          "notice-prefix": "Hinweis:"
+        }
       },
       "form": {
         "title": "Anforderung erfassen (Alt + P)",

@@ -193,17 +193,17 @@
             <div class="row mt-2">
                 {{ range .Data.Successes }}
                     <div class="col-12">
-                        <div class="alert alert-success" role="alert">{{ t . }}</div>
+                        <div class="alert alert-success" role="alert">{{ t "eiffel.elicitation.parse.result.success-prefix" }} {{ t . }}</div>
                     </div>
                 {{ end }}
                 {{ range .Data.AllViolations }}
                     <div class="col-12">
-                        <div class="alert alert-danger" role="alert">{{ tryTranslate . }}</div>
+                        <div class="alert alert-danger" role="alert">{{ t "eiffel.elicitation.parse.result.error-prefix" }} {{ tryTranslate . }}</div>
                     </div>
                 {{ end }}
                 {{ range .Data.AllValidationErrors }}
                     <div class="col-12">
-                        <div class="alert alert-danger" role="alert">{{ t .FieldErrorKey }}</div>
+                        <div class="alert alert-danger" role="alert">{{ t "eiffel.elicitation.parse.result.error-prefix" }} {{ t .FieldErrorKey }}</div>
                     </div>
                 {{ end }}
 
@@ -216,13 +216,13 @@
 
                     {{ range .Data.Form.ParsingResult.Warnings }}
                         <div class="col-12">
-                            <div class="alert alert-warning" role="alert">{{ tryTranslate . }}</div>
+                            <div class="alert alert-warning" role="alert">{{ t "eiffel.elicitation.parse.result.warning-prefix" }} {{ tryTranslate . }}</div>
                         </div>
                     {{ end }}
 
                     {{ range .Data.Form.ParsingResult.Notices }}
                         <div class="col-12">
-                            <div class="alert alert-info" role="alert">{{ tryTranslate . }}</div>
+                            <div class="alert alert-info" role="alert">{{ t "eiffel.elicitation.parse.result.notice-prefix" }} {{ tryTranslate . }}</div>
                         </div>
                     {{ end }}
 

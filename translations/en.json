@@ -122,7 +122,13 @@
       "call-to-action": "Capture requirements with EIFFEL",
       "parse": {
         "flawless-success": "The requirement is flawless.",
-        "success": "The requirement is valid, but potential problems were found."
+        "success": "The requirement is valid, but potential problems were found.",
+        "result": {
+          "success-prefix": "Success:",
+          "warning-prefix": "Warning:",
+          "error-prefix": "Error:",
+          "notice-prefix": "Notice:"
+        }
       },
       "form": {
         "title": "Capture Requirement (Alt + P)",
