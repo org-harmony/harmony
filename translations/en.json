@@ -56,7 +56,7 @@
         "updated": "The template set has been updated."
       },
       "import": {
-        "paris": "Import PARIS"
+        "paris": "Import PARIS (ver. {{ .version }})"
       }
     },
     "title": "Template",

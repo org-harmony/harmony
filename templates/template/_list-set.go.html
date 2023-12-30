@@ -6,7 +6,7 @@
             </div>
             <div class="col">
                 <a href="/template-set/new" hx-boost="true" hx-target="body" class="btn btn-secondary">{{ "template.set.new" | t }}</a>
-                <button hx-post="/template-set/import/default-paris" hx-target=".template-set-list" hx-swap="outerHTML" class="btn btn-secondary mt-1">{{ "template.set.import.paris" | t }}</button>
+                <button hx-post="/template-set/import/default-paris" hx-target=".template-set-list" hx-swap="outerHTML" class="btn btn-secondary mt-1">{{ tf "template.set.import.paris" "version" .Data.PARISVersion }}</button>
             </div>
             <div class="col">
                 <button hx-get="/template-set/list" hx-target="body" class="btn btn-secondary">
@@ -26,13 +26,13 @@
             </tr>
             </thead>
             <tbody>
-                {{ if not .Data }}
+                {{ if not .Data.TemplateSets }}
                     <tr class="text-center">
                         <td colspan="3">{{ "template.set.list.empty" | t }}</td>
                     </tr>
                 {{ end }}
 
-                {{ range .Data }}
+                {{ range .Data.TemplateSets }}
                     <tr>
                         <td><a class="template-set-view" href="/template-set/{{ .ID }}/list" hx-boost="true" hx-target="body">{{ .Name }}</a></td>
                         <td>{{ .Version }}</td>
