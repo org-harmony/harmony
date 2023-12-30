@@ -28,6 +28,12 @@ type TemplateCopyFormData struct {
 	Copied        bool
 }
 
+// TemplateSetListData is passed to the template set list and contains the additional paris version.
+type TemplateSetListData struct {
+	TemplateSets []*template.Set
+	PARISVersion string
+}
+
 // RegisterController registers the controllers and navigation for the template module.
 func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	registerNavigation(appCtx, webCtx)
@@ -71,12 +77,15 @@ func templateSetListController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handle
 			return io.Error(web.ErrInternal, err)
 		}
 
-		return io.Render(
-			templateSets,
-			"template.set.list.page",
-			"template/set-list-page.go.html",
-			"template/_list-set.go.html",
-		)
+		ver, err := LatestPARISVersion("docs/templates/paris")
+		if err != nil {
+			return io.Error(ErrDefaultTemplateDoesNotExist, err)
+		}
+
+		return io.Render(TemplateSetListData{
+			TemplateSets: templateSets,
+			PARISVersion: ver,
+		}, "template.set.list.page", "template/set-list-page.go.html", "template/_list-set.go.html")
 	})
 }
 
@@ -168,7 +177,15 @@ func templateSetDeleteController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Hand
 			return err
 		}
 
-		return io.Render(templateSets, "template.set.list", "template/_list-set.go.html")
+		ver, err := LatestPARISVersion("docs/templates/paris")
+		if err != nil {
+			return io.InlineError(ErrDefaultTemplateDoesNotExist, err)
+		}
+
+		return io.Render(TemplateSetListData{
+			TemplateSets: templateSets,
+			PARISVersion: ver,
+		}, "template.set.list", "template/_list-set.go.html")
 	})
 }
 
@@ -402,7 +419,7 @@ func templateSetImportDefaultParisController(appCtx *hctx.AppCtx, webCtx *web.Ct
 	return web.NewController(appCtx, webCtx, func(io web.IO) error {
 		ctx := io.Context()
 
-		err := ImportDefaultParisTemplates(ctx, templateSetRepository, templateRepository, user.MustCtxUser(ctx).ID)
+		err := ImportDefaultPARISTemplates(ctx, "docs/templates/paris", templateSetRepository, templateRepository, user.MustCtxUser(ctx).ID)
 		if err != nil {
 			return io.InlineError(err)
 		}
@@ -412,6 +429,14 @@ func templateSetImportDefaultParisController(appCtx *hctx.AppCtx, webCtx *web.Ct
 			return io.InlineError(web.ErrInternal, err)
 		}
 
-		return io.Render(templateSets, "template.set.list", "template/_list-set.go.html")
+		ver, err := LatestPARISVersion("docs/templates/paris")
+		if err != nil {
+			return io.InlineError(ErrDefaultTemplateDoesNotExist, err)
+		}
+
+		return io.Render(TemplateSetListData{
+			TemplateSets: templateSets,
+			PARISVersion: ver,
+		}, "template.set.list", "template/_list-set.go.html")
 	})
 }

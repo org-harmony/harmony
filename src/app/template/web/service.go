@@ -130,10 +130,58 @@ func CopyTemplate(ctx context.Context, tmpl *template.Template, tmplSetID, usrID
 	return newTmpl, nil
 }
 
-func ImportDefaultParisTemplates(ctx context.Context, tmplSetRepo template.SetRepository, tmplRepo template.Repository, usrID uuid.UUID) error {
+func LatestPARISVersion(baseDir string) (string, error) {
+	dir, err := os.ReadDir(baseDir)
+	if err != nil {
+		return "", err
+	}
+
+	var currentVersion string
+	var latestVersion string
+	for _, file := range dir {
+		if !file.IsDir() {
+			continue
+		}
+
+		if file.Name()[0] == 'v' {
+			currentVersion = file.Name()[1:]
+		}
+
+		if validation.Validate("semVer", "PARIS", currentVersion, validation.SemanticVersion()) != nil {
+			continue
+		}
+
+		if latestVersion == "" {
+			latestVersion = currentVersion
+			continue
+		}
+
+		if currentVersion > latestVersion {
+			latestVersion = currentVersion
+		}
+	}
+
+	if latestVersion == "" {
+		return "", ErrDefaultTemplateDoesNotExist
+	}
+
+	return latestVersion, nil
+}
+
+func ImportDefaultPARISTemplates(ctx context.Context, baseDir string, tmplSetRepo template.SetRepository, tmplRepo template.Repository, usrID uuid.UUID) error {
+	latestVersion, err := LatestPARISVersion(baseDir)
+	if err != nil {
+		return ErrDefaultTemplateDoesNotExist
+	}
+
+	versionDir, err := os.ReadDir(filepath.Join(baseDir, "v"+latestVersion))
+	if err != nil {
+		return ErrDefaultTemplateDoesNotExist
+	}
+
 	tmplSet, err := tmplSetRepo.Create(ctx, &template.SetToCreate{
 		Name:        "PARIS",
-		Version:     "0.6.2",
+		Version:     latestVersion,
 		CreatedBy:   usrID,
 		Description: "Default PARIS templates. Change description and templates as needed.",
 	})
@@ -141,18 +189,12 @@ func ImportDefaultParisTemplates(ctx context.Context, tmplSetRepo template.SetRe
 		return web.ErrInternal
 	}
 
-	// read each json file from the default paris template directory for import and create a template from it
-	dir, err := os.ReadDir("docs/templates/paris")
-	if err != nil {
-		return ErrDefaultTemplateDoesNotExist
-	}
-
-	for _, file := range dir {
+	for _, file := range versionDir {
 		if file.IsDir() {
 			continue
 		}
 
-		jsonCfg, err := os.ReadFile(filepath.Join("docs/templates/paris/", file.Name()))
+		jsonCfg, err := os.ReadFile(filepath.Join(baseDir, "v"+latestVersion, file.Name()))
 		if err != nil {
 			return ErrDefaultTemplateDoesNotExist
 		}

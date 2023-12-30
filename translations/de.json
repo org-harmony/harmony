@@ -56,7 +56,7 @@
         "updated": "Der Schablonensatz wurde aktualisiert."
       },
       "import": {
-        "paris": "PARIS importieren"
+        "paris": "PARIS importieren (Ver.: {{ .version }})"
       }
     },
     "title": "Schablone",
