@@ -3,7 +3,7 @@ package eiffel
 
 // Cfg is EIFFEL's configuration struct. This can be used to unmarshal a TOML configuration file into.
 type Cfg struct {
-	NeglectOptional bool `toml:"neglect_optional"`
+	NeglectOptional bool `toml:"neglect_optional" env:"EIFFEL_NEGLECT_OPTIONAL"`
 }
 
 // TODO add tests for service, web and output
