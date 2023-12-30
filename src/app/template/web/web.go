@@ -47,7 +47,7 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	router.Put("/template-set/{id}", templateSetEditController(appCtx, webCtx).ServeHTTP)
 	router.Delete("/template-set/{id}", templateSetDeleteController(appCtx, webCtx).ServeHTTP)
 	// TODO generalize this
-	router.Post("/template-set/import/default-paris", templateSetImportDefaultParisController(appCtx, webCtx).ServeHTTP)
+	router.Post("/template-set/import/default-paris", templateSetImportDefaultPARISController(appCtx, webCtx).ServeHTTP)
 
 	router.Get("/template-set/{id}/list", templateListController(appCtx, webCtx).ServeHTTP)
 	router.Get("/template-set/{id}/new", templateNewController(appCtx, webCtx).ServeHTTP)
@@ -412,7 +412,7 @@ func templateCopyController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	})
 }
 
-func templateSetImportDefaultParisController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
+func templateSetImportDefaultPARISController(appCtx *hctx.AppCtx, webCtx *web.Ctx) http.Handler {
 	templateSetRepository := util.UnwrapType[template.SetRepository](appCtx.Repository(template.SetRepositoryName))
 	templateRepository := util.UnwrapType[template.Repository](appCtx.Repository(template.RepositoryName))
 
