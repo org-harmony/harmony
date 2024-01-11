@@ -15,9 +15,9 @@ Dates are displayed in the format YYYY-MM-DD.
 
 - Initial release of HARMONY & EIFFEL
 - Default templates for PARIS (PAtterns for RequIrements Specification) by Oliver Linssen (see [README.md](README.md))
-- EIFFEL (app/eiffel) for requirements elicitation
+- EIFFEL ([app/eiffel](src/app/eiffel)) for requirements elicitation
 - Functionality for creating, editing and deleting templates and template sets (for grouping templates)
-- Functionality for OAuth2 login with GitHub and Google
+- Functionality for OAuth 2.0 login with GitHub and Google
 - Functionality for editing user information
 - Main command for running the application as a web server
 - Migrations command with initial migration for creating database schema
