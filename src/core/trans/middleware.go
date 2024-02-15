@@ -6,8 +6,6 @@ import (
 	"net/http"
 )
 
-// TODO add tests
-
 // Middleware is part of the trans package and sets the locale in the request context.
 // It requires a TranslatorProvider to be passed and uses it to choose the actual locale after checking the request.
 // The locale is extracted from the request's cookie. If no cookie is present or the cookie is empty, the default locale is used.
