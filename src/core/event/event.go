@@ -1,244 +1,227 @@
-// Package event provides an event manager that allows for events to be published and subscribed to.
+// Package event provides an event manager that allows others to publish and listen to events.
+// Events are the primary means of (decoupled) communication between components in HARMONY.
 package event
 
 import (
-	"fmt"
-	"github.com/org-harmony/harmony/src/core/trace"
+	"context"
+	"errors"
 	"sort"
 	"sync"
 )
 
-const Pkg = "sys.event"
+var (
+	// ErrDuplicateRegistration might indicate that the Bus has a duplicate registration for an Event or Listener.
+	ErrDuplicateRegistration = errors.New("attempt for duplicate registration")
+	// ErrNotFound might indicate that a Listener or Event is not found in the Bus.
+	ErrNotFound = errors.New("item not found")
+)
 
-// DefaultPriority can be used as a general default priority for an event subscriber.
-// The priority is used to determine the order in which subscribers are called.
-// A higher priority means that the subscriber is called earlier.
-// If you do not care about the order in which subscribers are called, use this constant.
-const DefaultPriority = 0
+// ID is a unique identification for Events and Listeners.
+type ID string
 
-// BufferSize is the size of the buffer for event channels.
-// The buffer size is used when creating channels for events.
-// If the buffer size is too small publishing an event will block until the event is handled.
-// If the buffer size is too large publishing an event will use more memory.
-const BufferSize = 100
-
-// Event makes a type publishable through the HManager.
-type Event interface {
-	// ID returns the unique ID of the event.
-	// This ID is used to identify the event and route it to the correct subscribers.
-	// The ID should be unique across all events.
-	//
-	// The ID should be built using the [BuildEventID] function.
-	ID() string
-	// Payload returns the payload of the event. The payload can be any type.
-	// The payload is, as part of the event, passed to the subscribers of an event.
-	// The payload can be used to pass data to subscribers.
-	//
-	// The payload can also be pointer and allow subscribers to modify the data.
-	// While this is absolutely viable in many situations it can be a potential risk to be aware of.
-	// Deep copying or not passing a reference as the payload is a way to mitigate this risk.
-	Payload() any
-}
-
-// Manager manages events and their subscribers.
-type Manager interface {
-	// Subscribe subscribes to an event with the given event ID.
-	// The publish function is called when the event is published.
-	// The priority is used to determine the order in which subscribers are called.
-	Subscribe(eventID string, publish func(Event, *PublishArgs) error, priority int)
-	// Publish publishes an event and allows for errors to be returned through the done channel.
-	Publish(event Event, doneChan chan []error)
-}
-
-// subscriber is a struct that holds information about a subscriber.
-type subscriber struct {
-	// eventID that the subscriber is subscribed to.
-	eventID string
-	// publish function that is called when the event is published.
-	publish func(Event, *PublishArgs) error
-	//priority is used to determine the order in which subscribers are called.
-	//
-	// A higher priority means that the subscriber is called earlier.
-	priority int
-}
-
-// pc (publish container) holds information about a published event.
-// It captures the event, subscribers that are subscribed to the event and the done channel.
-type pc struct {
-	e  Event
-	s  []subscriber
-	dc chan []error
-}
-
-// PublishArgs holds arguments that are passed to subscribers when an event is published.
-type PublishArgs struct {
-	// StopPropagation can be set to true to stop the propagation of an event.
-	// When set to true, the event manager will stop calling subscribers for the event.
-	// Stopping propagation will be logged.
-	StopPropagation bool
-}
-
-// BuildEventID builds an event ID from the given module, namespace and action.
-// The event ID is built using the following format: <module>.<namespace>.<action>
+// Event is something that happens.
+// Anyone can publish an event using the Bus. Anyone can listen to events using the Bus.
 //
-// Example: "sys.auth.user.repository.created" or "sys.mailer.send.std-service.sent"
-func BuildEventID(module, namespace, action string) string {
-	return fmt.Sprintf("%s.%s.%s", module, namespace, action)
+// A listener can use the event's payload to:
+//  1. get information about something that happened. E.g. the username of someone who just logged in.
+//  2. modify referenced data that the publisher of the event passed in as a payload.
+//  3. do nothing, in that case the publisher might pass a nil-payload.
+//
+// Event contains meta information for better debugging and DX of the Bus.
+// Theoretically, the Bus could function without registering events and listeners first.
+type Event struct {
+	ID   ID
+	Name string
+	Desc string
 }
 
-// HManager is the standard implementation of the Manager interface.
-// The HManager is safe to use concurrently and pass to multiple goroutines.
-type HManager struct {
-	mu sync.Mutex
-	// events is a map of event IDs to channels.
-	// The channels are used to publish events to subscribers.
-	events map[string]chan pc
-	// subscriber is a map of event IDs to subscribers.
-	// The subscribers are called when an event is published.
-	subscriber map[string][]subscriber
-	logger     trace.Logger
+// Listener reacts to an Event after the Bus informs them. The Bus uses the listener's ID to identify them.
+// The Bus uses the listener's event ID to inform them when some component publishes the corresponding event.
+//
+// Bus executes listener's Func and passes the payload on. If the payload is a reference, the listener can modify
+// its content. For that reason async listeners (not yet added!) will/should not gain access to payload data via
+// references to prevent unexpected behaviour because sequential execution of listeners will not be guaranteed.
+//
+// Bus uses Prio to prioritize listeners when calling their Func.
+//
+// Listener can stop further propagation of the event by setting StopProp to true. This can be helpful
+// when a Listener should disable all following listeners e.g. to overwrite functionality.
+// However, handle StopProp with great care. With great power comes great responsibility!
+type Listener struct {
+	ID       ID
+	EventID  ID
+	Func     func(context.Context, any) error
+	Prio     int
+	StopProp bool
+	// TODO add support for async listeners => events is fired, listener is sent to separate queue and processed
+	//  asynchronously, errors are logged and further ignored for async listeners.
+	//  Important: No references! Sequential processing can not be guaranteed.
+	// Async    bool
 }
 
-// NewManager creates a new event manager.
-func NewManager(l trace.Logger) *HManager {
-	return &HManager{
-		events:     make(map[string]chan pc),
-		subscriber: make(map[string][]subscriber),
-		logger:     l,
-	}
+// HBus is HARMONY's standard implementation of the Bus interface.
+//
+// HBus saves events in a map by event ID. HBus saves listeners in a map of lists of listeners by event ID.
+// It also maps the listener ID to the event ID for finding a Listeners in the corresponding list by event ID
+// through lstToEvt.
+//
+// HBus is safe for concurrent use by multiple goroutines.
+//
+// See Bus for more details.
+type HBus struct {
+	events   map[ID]Event
+	lstByEvt map[ID][]Listener
+	lstToEvt map[ID]ID
+	mu       sync.RWMutex
 }
 
-// Subscribe subscribes to an event with the given event ID.
-func (em *HManager) Subscribe(eventID string, publish func(Event, *PublishArgs) error, priority int) {
-	em.mu.Lock()
-	defer em.mu.Unlock()
+// Bus allows anyone with access to register events and attach listeners for them.
+// Components can publish an event with a context, the event ID, any payload and an error channel.
+//
+// If you pass a nil error channel to publish it proceeds in a fire and forget manner.
+// Otherwise, you can wait for event processing to finish by idling until the Bus closes the error channel.
+type Bus interface {
+	Listener(ID) (Listener, bool)
+	Event(ID) (Event, bool)
+	ListenersForEvent(ID) ([]Listener, bool)
+	Attach(Listener) error
+	Register(Event) error
+	Publish(context.Context, ID, any, chan<- error) error
+}
 
-	subscriber := subscriber{
-		eventID:  eventID,
-		publish:  publish,
-		priority: priority,
+// Listener looks up the event listener by its ID in the Bus.
+func (b *HBus) Listener(id ID) (Listener, bool) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	evtID, ok := b.lstToEvt[id]
+	if !ok {
+		return Listener{}, false
 	}
 
-	em.subscriber[eventID] = append(em.subscriber[eventID], subscriber)
+	lsts, ok := b.lstByEvt[evtID]
+	if !ok {
+		return Listener{}, false
+	}
 
-	// sort subscribers by ascending priority
-	sort.Slice(em.subscriber[eventID], func(i, j int) bool {
-		return em.subscriber[eventID][i].priority < em.subscriber[eventID][j].priority
-	})
+	for _, lst := range lsts {
+		if lst.ID != id {
+			continue
+		}
 
-	em.logger.Debug(Pkg, "subscribed to event", "eventID", eventID, "priority", priority)
+		return lst, true
+	}
+
+	return Listener{}, false
 }
 
-// Publish publishes an event to the event's channel.
-// Leading to the event being handled by the subscribers of the event within a separate goroutine.
-// Therefore, the Publish function is non-blocking.
-//
-// Callers can use the done channel to wait for the event to be handled.
-// Through the done channel the caller may retrieve any errors from execution of the subscribers.
-//
-// Awaiting the done channel is optional but the only way to be sure all subscribers have handled the
-// event before proceeding. Still, it is very viable not to wait for the done channel and continue:
-// "fire and forget".
-//
-// Furthermore, Events are lazily registered.
-// Meaning the channel for event publishing is created when the event is published for the first time.
-//
-// If a nil event is passed to the Publish function, the function will return immediately.
-func (em *HManager) Publish(event Event, doneChan chan []error) {
-	if event == nil {
-		return
-	}
+// Event looks up the event by its ID in the Bus.
+func (b *HBus) Event(id ID) (Event, bool) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
 
-	em.logger.Debug(Pkg, "publishing event", "eventID", event.ID())
+	evt, ok := b.events[id]
 
-	em.mu.Lock()
-	defer em.mu.Unlock()
-
-	if _, exists := em.events[event.ID()]; !exists {
-		em.register(event)
-	}
-
-	em.events[event.ID()] <- pc{
-		e:  event,
-		s:  em.subscriber[event.ID()],
-		dc: doneChan,
-	}
-
-	em.logger.Debug(Pkg, "published event", "eventID", event.ID())
+	return evt, ok
 }
 
-// register registers an event with the event manager and creates a channel for the event.
-// Also, register boots up a goroutine to handle published events for the event ID.
-//
-// Register is *NOT* safe to call concurrently. It is expected that the caller locks the event manager beforehand.
-func (em *HManager) register(e Event) {
-	if _, exists := em.events[e.ID()]; exists {
-		return
+// ListenersForEvent looks up all event listeners for a certain event ID in the Bus.
+// Function returns false when the Bus does not contain the event ID.
+// Listeners are copied and not passed by reference.
+func (b *HBus) ListenersForEvent(id ID) ([]Listener, bool) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	lsts, ok := b.lstByEvt[id]
+	if !ok {
+		return nil, false
 	}
 
-	// create a buffered channel to publish events to
-	em.events[e.ID()] = make(chan pc, BufferSize)
+	listeners := make([]Listener, len(lsts))
+	copy(listeners, lsts)
 
-	// start a goroutine to handle published events for a given event ID through the channel
-	go handle(em.events[e.ID()], em.logger)
-
-	em.logger.Debug(Pkg, "registered event and created channel", "eventID", e.ID())
+	return listeners, true
 }
 
-// handle handles events published to the given channel.
-// Through the channel the handle function receives a [pc] and publishes the event to the subscribers.
-// If the done channel is not nil, the handle function will signal that the event has been handled through the done channel.
-// After the event has been handled, the done channel is closed.
-func handle(e chan pc, l trace.Logger) {
-	for {
-		pc := <-e
+// Attach registers an event listener with the Bus. If the Bus already contains a listener with the same ID,
+// the function returns ErrDuplicateRegistration. Function saves listeners for an event in a list of listeners.
+// Function sorts listeners in this list descending by their Listener.Prio (higher prio, earlier call).
+//
+// Attach indexes a lookup array of listener IDs to event IDs for easier lookup, as it saves listeners in a list
+// by their corresponding event ID.
+func (b *HBus) Attach(listener Listener) error {
+	if _, exists := b.Listener(listener.ID); exists {
+		return ErrDuplicateRegistration
+	}
 
-		l.Debug(Pkg, "handling event", "eventID", pc.e.ID())
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
-		var errs []error
-		args := &PublishArgs{}
+	listeners, ok := b.lstByEvt[listener.EventID]
+	if !ok {
+		listeners = make([]Listener, 1)
+	}
 
-		// publish event to subscribers
-		for _, subscriber := range pc.s {
-			if args.StopPropagation {
-				l.Debug(Pkg, "stopping propagation of event", "eventID", pc.e.ID())
+	listeners = append(listeners, listener)
+	sort.Slice(listeners, func(i, j int) bool { return listeners[i].Prio > listeners[j].Prio })
+
+	b.lstByEvt[listener.EventID] = listeners
+	b.lstToEvt[listener.ID] = listener.EventID
+
+	return nil
+}
+
+// Register registers an Event with the Bus and returns ErrDuplicateRegistration if someone already registered the same Event.
+func (b *HBus) Register(event Event) error {
+	if _, exists := b.Event(event.ID); exists {
+		return ErrDuplicateRegistration
+	}
+
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.events[event.ID] = event
+
+	return nil
+}
+
+// Publish informs all Listener`s of an Event in their sequential order by priority that something happened.
+// Function does not recalculate the order, Bus does this when it Attach`es a Listener.
+//
+// Returns ErrNotFound if Bus does not know an Event with the ID you passed in.
+//
+// Publish passes the ctx and payload to Listener.Func. If func returns an error, publish propagates it through
+// the error channel. Publish closes the error channel when it is done processing the Event.
+// TODO maybe add some sort of statistics for publishing?
+func (b *HBus) Publish(ctx context.Context, id ID, payload any, errs chan<- error) error {
+	if _, exists := b.Event(id); !exists {
+		return ErrNotFound
+	}
+
+	lsts, exist := b.ListenersForEvent(id)
+	if !exist {
+		if errs != nil {
+			close(errs)
+		}
+
+		return nil
+	}
+
+	go func() {
+		for _, lst := range lsts {
+			err := lst.Func(ctx, payload)
+
+			if err != nil {
+				errs <- err
+			}
+
+			if lst.StopProp {
 				break
 			}
-
-			err := safePublish(subscriber, pc.e, args)
-			if err != nil {
-				errs = append(errs, err)
-			}
 		}
 
-		if len(errs) > 0 {
-			l.Info(Pkg, fmt.Sprintf("handled event with %d error(s)", len(errs)), "eventID", pc.e.ID(), "errors", errs)
-		} else {
-			l.Debug(Pkg, "handled event without errors", "eventID", pc.e.ID())
-		}
-
-		dc := pc.dc
-		if dc == nil {
-			l.Debug(Pkg, "no done channel for event", "eventID", pc.e.ID())
-			return
-		}
-
-		// signal that the event has been handled
-		dc <- errs
-		close(dc)
-	}
-}
-
-// safePublish is a wrapper around the publish function of a subscriber.
-// It recovers from panics in the subscriber and returns an error if a panic occurred.
-func safePublish(s subscriber, e Event, args *PublishArgs) (err error) {
-	// recover from panics in subscribers
-	// the named return value err is necessary to return the error from the deferred function,
-	// as the return value from the deferred function is discarded
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("subscriber panicked: %v", r)
-		}
+		close(errs)
 	}()
-	return s.publish(e, args)
+
+	return nil
 }
