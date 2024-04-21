@@ -16,7 +16,7 @@ var (
 	ErrNotFound = errors.New("item not found")
 )
 
-// ID is a unique identification for Events and Listeners.
+// ID is a unique identification for Event and Listener.
 type ID string
 
 // Event is something that happens.
