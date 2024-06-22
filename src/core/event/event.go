@@ -2,6 +2,8 @@
 // Events are the primary means of (decoupled) communication between components in HARMONY.
 package event
 
+// TODO events for informing, services for returning stuff
+
 import (
 	"context"
 	"errors"
