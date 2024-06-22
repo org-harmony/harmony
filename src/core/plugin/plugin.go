@@ -5,8 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/org-harmony/harmony/src/core/event"
-	"github.com/org-harmony/harmony/src/core/trace"
 	"sync"
 )
 
@@ -58,7 +56,7 @@ type HManager struct {
 	bus     event.Bus
 }
 
-// tbd
+// Plugin
 type Plugin struct {
 	ID        ID
 	Build     func(context.Context, BuildOpts) error
