@@ -1,0 +1,42 @@
+services:
+  dev-pg:
+    image: postgres:latest
+    container_name: harmony-dev-pg
+    environment:
+      POSTGRES_USER: harmony
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: harmony
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - harmony-dev-pg-data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U harmony"]
+      interval: 1s
+      timeout: 1s
+      retries: 15
+
+  dev-app:
+    build:
+      context: .
+    container_name: harmony-dev-app
+    volumes:
+      - ../..:/app
+    environment:
+      DB_HOST: dev-pg
+      DB_PORT: 5432
+      DB_USER: harmony
+      DB_PASS: devpassword
+      DB_NAME: harmony
+      PORT: 8080
+      RUN_MIGRATIONS: true
+    ports:
+      - "8080:8080"
+    depends_on:
+      dev-pg:
+        condition: service_healthy
+
+volumes:
+  harmony-dev-pg-data:
+    name: harmony-dev-pg-data

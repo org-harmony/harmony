@@ -35,3 +35,7 @@ Join us on this journey, whether you are a contributor, user or just a spectator
 The project and all participants are looking forward to your feedback, as we are continuously working to improve
 HARMONY and EIFFEL. The project is in active development.
 
+---
+
+For a simple development environment, consult [docker/dev](docker/dev/README.md).
+
