@@ -1,41 +1,36 @@
 # First stage: build the application
-FROM golang:1.21.5-alpine3.18 as builder
+# Docker will pull the version matching our build host.
+FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.23 AS builder
 
+ARG TARGETARCH
 WORKDIR /app
 
-# Copy go.mod, go.sum and vendor directory
 COPY go.mod go.sum ./
-COPY vendor/ vendor/
-
-# Copy the source code
 COPY src/ src/
 
-# Build the 'web' and 'migrate' executables
-RUN CGO_ENABLED=0 GOOS=linux go build -o web src/cmd/web/*.go
-RUN CGO_ENABLED=0 GOOS=linux go build -o migrate src/cmd/migrate/*.go
+# $TARGETARCH so the binary matches the destination, not necessarily the build machine
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o web src/cmd/web/*.go && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o migrate src/cmd/migrate/*.go
 
-# Second stage: setup the runtime environment
-FROM alpine:3.19
+# Second stage: runtime
+# Use generic alpine image. Docker will automatically pull the arm64 version when necessary.
+FROM alpine:3.23
 
+RUN addgroup -S harmonygroup && adduser -S harmonyuser -G harmonygroup
 WORKDIR /app
+RUN apk --no-cache add ca-certificates tzdata
 
-# Copy the pre-built binary files from the previous stage
-COPY --from=builder /app/web .
-COPY --from=builder /app/migrate .
+COPY --from=builder --chown=harmonyuser:harmonygroup /app/web .
+COPY --from=builder --chown=harmonyuser:harmonygroup /app/migrate .
+COPY --chown=harmonyuser:harmonygroup config/ config/
+COPY --chown=harmonyuser:harmonygroup migrations/ migrations/
+COPY --chown=harmonyuser:harmonygroup public/ public/
+COPY --chown=harmonyuser:harmonygroup templates/ templates/
+COPY --chown=harmonyuser:harmonygroup translations/ translations/
+COPY --chown=harmonyuser:harmonygroup docs/templates/paris docs/templates/paris
 
-# Copy configuration files and directories
-COPY config/ config/
-COPY migrations/ migrations/
-COPY public/ public/
-COPY templates/ templates/
-COPY translations/ translations/
-COPY docs/templates/paris docs/templates/paris
-
-# Set environment variables
-ENV PORT 8213
-
-# Expose the application on port 8213
+USER harmonyuser
+ENV PORT=8213
 EXPOSE 8213
 
-# Command to run the 'web' executable
 ENTRYPOINT ["./web"]
