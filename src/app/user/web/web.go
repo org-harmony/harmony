@@ -2,6 +2,9 @@ package web
 
 import (
 	"errors"
+	"net/http"
+	"time"
+
 	"github.com/org-harmony/harmony/src/app/user"
 	"github.com/org-harmony/harmony/src/core/auth"
 	"github.com/org-harmony/harmony/src/core/config"
@@ -9,8 +12,6 @@ import (
 	"github.com/org-harmony/harmony/src/core/trans"
 	"github.com/org-harmony/harmony/src/core/util"
 	"github.com/org-harmony/harmony/src/core/web"
-	"net/http"
-	"time"
 )
 
 const Pkg = "app.user.web"
@@ -41,6 +42,11 @@ func RegisterController(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 	router.Get("/user/me/language/{locale}", userLanguageController(appCtx, webCtx).ServeHTTP)
 	router.Get("/auth/login", loginController(appCtx, webCtx, authCfg).ServeHTTP)
 	router.Get("/auth/logout", logoutController(appCtx, webCtx).ServeHTTP)
+
+	if authCfg.EnablePwdLogin {
+		router.Post("/auth/magic/login", postMagicLoginController(appCtx, webCtx, authCfg).ServeHTTP)
+		router.Post("/auth/magic/login/{id}", postMagicLoginExecController(appCtx, webCtx, authCfg).ServeHTTP)
+	}
 
 	userRouter := router.With(user.LoggedInMiddleware(appCtx))
 	userRouter.Get("/user/me", userProfileController(appCtx, webCtx).ServeHTTP)
@@ -121,6 +127,18 @@ func registerTemplateDataExtensions(appCtx *hctx.AppCtx, webCtx *web.Ctx) {
 
 		data.Extra["User"] = u
 		return nil
+	})
+}
+
+func postMagicLoginController(appCtx *hctx.AppCtx, webCtx *web.Ctx, authCfg *auth.Cfg) http.Handler {
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		return io.Render(authCfg, "auth.magic.login", "user/auth/magic-login.go.html")
+	})
+}
+
+func postMagicLoginExecController(appCtx *hctx.AppCtx, webCtx *web.Ctx, authCfg *auth.Cfg) http.Handler {
+	return web.NewController(appCtx, webCtx, func(io web.IO) error {
+		return io.Redirect("/user/me", http.StatusTemporaryRedirect)
 	})
 }
 

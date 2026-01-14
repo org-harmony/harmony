@@ -13,6 +13,18 @@
         "error": {
           "oauth": "Fehler bei der Anmeldung mit OAuth. Bitte erneut versuchen.",
           "invalid-provider": "Dieser Anbieter wird nicht für den OAuth-Login unterstützt."
+        },
+        "magic": {
+          "title": "Anmelden mit Magic Link",
+          "email": "E-Mail-Adresse",
+          "action": "Magic Link senden",
+          "placeholder": "Geben Sie Ihre E-Mail-Adresse ein",
+          "help": "Geben Sie Ihre E-Mail-Adresse ein, um einen Magic Link zum Anmelden zu erhalten.",
+          "sent": "Ein Magic Link wurde an Ihre E-Mail-Adresse gesendet. Bitte überprüfen Sie Ihren Posteingang.",
+          "error": {
+            "send-failed": "Der Magic Link konnte nicht gesendet werden. Bitte erneut versuchen.",
+            "invalid-token": "Der Magic Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+          }
         }
       }
     },
