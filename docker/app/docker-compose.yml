@@ -1,8 +1,6 @@
-version: "3.8"
-
 services:
   pg:
-    image: postgres:16.1-alpine3.19
+    image: postgres:17-alpine
     # The container restarts automatically unless you stop it with "docker compose down"
     restart: unless-stopped
     networks:

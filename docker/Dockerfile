@@ -1,5 +1,5 @@
 # First stage: build the application
-FROM golang:1.21.5-alpine3.18 as builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o web src/cmd/web/*.go
 RUN CGO_ENABLED=0 GOOS=linux go build -o migrate src/cmd/migrate/*.go
 
 # Second stage: setup the runtime environment
-FROM alpine:3.19
+FROM alpine:latest
 
 WORKDIR /app
 
@@ -29,10 +29,10 @@ COPY migrations/ migrations/
 COPY public/ public/
 COPY templates/ templates/
 COPY translations/ translations/
-COPY docs/templates/paris docs/templates/paris
+COPY docs/templates/paris/ docs/templates/paris/
 
 # Set environment variables
-ENV PORT 8213
+ENV PORT=8213
 
 # Expose the application on port 8213
 EXPOSE 8213

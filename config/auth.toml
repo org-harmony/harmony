@@ -1,3 +1,4 @@
+enable_pwd_login = true
 enable_oauth2 = true
 
 [provider.github]

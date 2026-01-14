@@ -2,16 +2,14 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/org-harmony/harmony/src/core/persistence"
-	"golang.org/x/oauth2"
 	"net/http"
 	"time"
-)
 
-import (
-	"context"
+	"github.com/org-harmony/harmony/src/core/persistence"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -26,8 +24,9 @@ var (
 
 // Cfg is the config for the auth package. It contains necessary information about the OAuth2 providers.
 type Cfg struct {
-	Providers    map[string]*ProviderCfg `toml:"provider"` // Providers contains a list of OAuth2 providers.
-	EnableOAuth2 bool                    `toml:"enable_oauth2"`
+	Providers      map[string]*ProviderCfg `toml:"provider"` // Providers contains a list of OAuth2 providers.
+	EnablePwdLogin bool                    `toml:"enable_pwd_login"`
+	EnableOAuth2   bool                    `toml:"enable_oauth2"`
 }
 
 // ProviderCfg is the config for an OAuth2 provider.

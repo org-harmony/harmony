@@ -22,17 +22,15 @@
                         {{ if not $noProviders }}
                             <hr/>
                         {{ end }}
+                    
                         {{ $noProviders = false }}
-                        <form hx-post="/auth/magic/login">
-                            <h3>{{ t "user.auth.login.magic.title" }}</h3>
-                            <div id="magic-login-form">
-                                <label for="email" class="form-label">{{ t "user.auth.login.magic.email" }}</label>
-                                <input type="email" class="form-control" id="email" aria-describedby="emailHelp" placeholder="{{ t "user.auth.login.magic.placeholder" }}" name="email" required>
-                                <div id="emailHelp" class="form-text">{{ t "user.auth.login.magic.help" }}</div>
-
-                                <button type="submit" class="btn btn-primary mt-3">{{ t "user.auth.login.magic.action" }}</button>
-                            </div>
-                        </form>
+                        <a href="/auth/pwd/login" class="btn btn-outline-secondary auth-pwd-login my-1">
+                            {{ t "user.auth.login.pwd" }}
+                        </a>
+                        
+                        <a href="/auth/pwd/register" class="btn btn-outline-secondary auth-pwd-login my-1">
+                            {{ t "user.auth.register.pwd" }}
+                        </a>
                     {{ end }}
 
                     {{ if $noProviders }}

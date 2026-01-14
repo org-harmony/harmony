@@ -13,6 +13,18 @@
         "error": {
           "oauth": "Error signing in with OAuth. Please try again.",
           "invalid-provider": "This provider is not supported for OAuth login."
+        },
+        "magic": {
+          "title": "Magic Link Sign In",
+          "email": "Email Address",
+          "action": "Send Magic Link",
+          "placeholder": "Enter your email address",
+          "help": "Enter your email address to receive a magic link for signing in.",
+          "sent": "A magic link has been sent to your email address. Please check your inbox.",
+          "error": {
+            "send-failed": "The magic link could not be sent. Please try again later.",
+            "invalid-token": "The magic link is invalid or has expired. Please request a new magic link."
+          }
         }
       }
     },
