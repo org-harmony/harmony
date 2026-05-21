@@ -38,4 +38,7 @@ jobs:
             ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
 
       - name: Trigger Coolify deploy
-        run: curl -fsSL -X GET -H "Authorization: Bearer ${{ secrets.COOLIFY_DEPLOY_TOKEN }}" "${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}"
+        env:
+          WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
+          TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+        run: curl -fsSL -X GET -H "Authorization: Bearer $TOKEN" "$WEBHOOK"
