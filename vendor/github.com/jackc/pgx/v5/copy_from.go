@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// CopyFromRows returns a CopyFromSource interface over the provided rows slice
-// making it usable by *Conn.CopyFrom.
+// CopyFromRows returns a [CopyFromSource] interface over the provided rows slice
+// making it usable by [Conn.CopyFrom].
 func CopyFromRows(rows [][]any) CopyFromSource {
 	return &copyFromRows{rows: rows, idx: -1}
 }
@@ -34,8 +34,8 @@ func (ctr *copyFromRows) Err() error {
 	return nil
 }
 
-// CopyFromSlice returns a CopyFromSource interface over a dynamic func
-// making it usable by *Conn.CopyFrom.
+// CopyFromSlice returns a [CopyFromSource] interface over a dynamic func
+// making it usable by [Conn.CopyFrom].
 func CopyFromSlice(length int, next func(int) ([]any, error)) CopyFromSource {
 	return &copyFromSlice{next: next, idx: -1, len: length}
 }
@@ -64,7 +64,34 @@ func (cts *copyFromSlice) Err() error {
 	return cts.err
 }
 
-// CopyFromSource is the interface used by *Conn.CopyFrom as the source for copy data.
+// CopyFromFunc returns a [CopyFromSource] interface that relies on nxtf for values.
+// nxtf returns rows until it either signals an 'end of data' by returning row=nil and err=nil,
+// or it returns an error. If nxtf returns an error, the copy is aborted.
+func CopyFromFunc(nxtf func() (row []any, err error)) CopyFromSource {
+	return &copyFromFunc{next: nxtf}
+}
+
+type copyFromFunc struct {
+	next     func() ([]any, error)
+	valueRow []any
+	err      error
+}
+
+func (g *copyFromFunc) Next() bool {
+	g.valueRow, g.err = g.next()
+	// only return true if valueRow exists and no error
+	return g.valueRow != nil && g.err == nil
+}
+
+func (g *copyFromFunc) Values() ([]any, error) {
+	return g.valueRow, g.err
+}
+
+func (g *copyFromFunc) Err() error {
+	return g.err
+}
+
+// CopyFromSource is the interface used by [Conn.CopyFrom] as the source for copy data.
 type CopyFromSource interface {
 	// Next returns true if there is another row and makes the next row data
 	// available to Values(). When there are no more rows available or an error
@@ -233,8 +260,8 @@ func (ct *copyFrom) buildCopyBuf(buf []byte, sd *pgconn.StatementDescription) (b
 // CopyFrom requires all values use the binary format. A pgtype.Type that supports the binary format must be registered
 // for the type of each column. Almost all types implemented by pgx support the binary format.
 //
-// Even though enum types appear to be strings they still must be registered to use with CopyFrom. This can be done with
-// Conn.LoadType and pgtype.Map.RegisterType.
+// Even though enum types appear to be strings they still must be registered to use with [Conn.CopyFrom]. This can be done with
+// [Conn.LoadType] and [pgtype.Map.RegisterType].
 func (c *Conn) CopyFrom(ctx context.Context, tableName Identifier, columnNames []string, rowSrc CopyFromSource) (int64, error) {
 	ct := &copyFrom{
 		conn:          c,

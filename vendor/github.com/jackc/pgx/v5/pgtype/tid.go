@@ -35,16 +35,18 @@ type TID struct {
 	Valid        bool
 }
 
+// ScanTID implements the [TIDScanner] interface.
 func (b *TID) ScanTID(v TID) error {
 	*b = v
 	return nil
 }
 
+// TIDValue implements the [TIDValuer] interface.
 func (b TID) TIDValue() (TID, error) {
 	return b, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (dst *TID) Scan(src any) error {
 	if src == nil {
 		*dst = TID{}
@@ -59,7 +61,7 @@ func (dst *TID) Scan(src any) error {
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (src TID) Value() (driver.Value, error) {
 	if !src.Valid {
 		return nil, nil
@@ -131,7 +133,6 @@ func (encodePlanTIDCodecText) Encode(value any, buf []byte) (newBuf []byte, err 
 }
 
 func (TIDCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
 		switch target.(type) {
@@ -205,17 +206,17 @@ func (scanPlanTextAnyToTIDScanner) Scan(src []byte, dst any) error {
 		return fmt.Errorf("invalid length for tid: %v", len(src))
 	}
 
-	parts := strings.SplitN(string(src[1:len(src)-1]), ",", 2)
-	if len(parts) < 2 {
+	block, offset, found := strings.Cut(string(src[1:len(src)-1]), ",")
+	if !found {
 		return fmt.Errorf("invalid format for tid")
 	}
 
-	blockNumber, err := strconv.ParseUint(parts[0], 10, 32)
+	blockNumber, err := strconv.ParseUint(block, 10, 32)
 	if err != nil {
 		return err
 	}
 
-	offsetNumber, err := strconv.ParseUint(parts[1], 10, 16)
+	offsetNumber, err := strconv.ParseUint(offset, 10, 16)
 	if err != nil {
 		return err
 	}

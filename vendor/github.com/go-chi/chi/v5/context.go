@@ -3,15 +3,13 @@ package chi
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strings"
 )
 
 // URLParam returns the url parameter from a http.Request object.
 func URLParam(r *http.Request, key string) string {
-	if rctx := RouteContext(r.Context()); rctx != nil {
-		return rctx.URLParam(key)
-	}
-	return ""
+	return URLParamFromCtx(r.Context(), key)
 }
 
 // URLParamFromCtx returns the url parameter from a http.Request Context.
@@ -42,6 +40,8 @@ var (
 // Context is the default routing context set on the root node of a
 // request context to track route patterns, URL parameters and
 // an optional routing path.
+//
+// NOTE: New reference fields (slices, maps, pointers) must be deep-copied in Clone.
 type Context struct {
 	Routes Routes
 
@@ -60,7 +60,7 @@ type Context struct {
 	URLParams RouteParams
 
 	// Route parameters matched for the current sub-router. It is
-	// intentionally unexported so it cant be tampered.
+	// intentionally unexported so it can't be tampered.
 	routeParams RouteParams
 
 	// The endpoint routing pattern that matched the request URI path
@@ -74,9 +74,8 @@ type Context struct {
 	// patterns across a stack of sub-routers.
 	RoutePatterns []string
 
-	// methodNotAllowed hint
-	methodNotAllowed bool
 	methodsAllowed   []methodTyp // allowed methods in case of a 405
+	methodNotAllowed bool
 }
 
 // Reset a routing context to its initial state.
@@ -92,15 +91,40 @@ func (x *Context) Reset() {
 	x.routeParams.Keys = x.routeParams.Keys[:0]
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
+	x.methodsAllowed = x.methodsAllowed[:0]
 	x.parentCtx = nil
+}
+
+// Clone a routing context so that it may be used outside of the request/response
+// lifecycle, e.g. in a goroutine that outlives the request handler.
+//
+// Clone must be called before the request handler returns; after that, the
+// original context is reset and put back into the pool for reuse by another
+// request, racing with the copy.
+func (x *Context) Clone() *Context {
+	clone := *x
+
+	// Detach from the request's context, which is canceled once the request finishes.
+	clone.parentCtx = nil
+
+	clone.URLParams.Keys = slices.Clone(x.URLParams.Keys)
+	clone.URLParams.Values = slices.Clone(x.URLParams.Values)
+
+	clone.routeParams.Keys = slices.Clone(x.routeParams.Keys)
+	clone.routeParams.Values = slices.Clone(x.routeParams.Values)
+
+	clone.RoutePatterns = slices.Clone(x.RoutePatterns)
+	clone.methodsAllowed = slices.Clone(x.methodsAllowed)
+
+	return &clone
 }
 
 // URLParam returns the corresponding URL parameter value from the request
 // routing context.
 func (x *Context) URLParam(key string) string {
-	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
-		if x.URLParams.Keys[k] == key {
-			return x.URLParams.Values[k]
+	for i, k := range slices.Backward(x.URLParams.Keys) {
+		if k == key {
+			return x.URLParams.Values[i]
 		}
 	}
 	return ""
@@ -109,30 +133,36 @@ func (x *Context) URLParam(key string) string {
 // RoutePattern builds the routing pattern string for the particular
 // request, at the particular point during routing. This means, the value
 // will change throughout the execution of a request in a router. That is
-// why its advised to only use this value after calling the next handler.
+// why it's advised to only use this value after calling the next handler.
 //
 // For example,
 //
-//   func Instrument(next http.Handler) http.Handler {
-//     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//       next.ServeHTTP(w, r)
-//       routePattern := chi.RouteContext(r.Context()).RoutePattern()
-//       measure(w, r, routePattern)
-//   	 })
-//   }
+//	func Instrument(next http.Handler) http.Handler {
+//		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//			next.ServeHTTP(w, r)
+//			routePattern := chi.RouteContext(r.Context()).RoutePattern()
+//			measure(w, r, routePattern)
+//		})
+//	}
 func (x *Context) RoutePattern() string {
+	if x == nil {
+		return ""
+	}
 	routePattern := strings.Join(x.RoutePatterns, "")
 	routePattern = replaceWildcards(routePattern)
-	routePattern = strings.TrimSuffix(routePattern, "//")
-	routePattern = strings.TrimSuffix(routePattern, "/")
+	if routePattern != "/" {
+		routePattern = strings.TrimSuffix(routePattern, "//")
+		routePattern = strings.TrimSuffix(routePattern, "/")
+	}
 	return routePattern
 }
 
-// replaceWildcards takes a route pattern and recursively replaces all
-// occurrences of "/*/" to "/".
+// replaceWildcards takes a route pattern and replaces all occurrences of
+// "/*/" with "/". It iteratively runs until no wildcards remain to
+// correctly handle consecutive wildcards.
 func replaceWildcards(p string) string {
-	if strings.Contains(p, "/*/") {
-		return replaceWildcards(strings.Replace(p, "/*/", "/", -1))
+	for strings.Contains(p, "/*/") {
+		p = strings.ReplaceAll(p, "/*/", "/")
 	}
 	return p
 }

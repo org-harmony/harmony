@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"math"
 
 	"github.com/jackc/pgx/v5/internal/pgio"
 )
@@ -29,16 +31,13 @@ func (dst *DataRow) Decode(src []byte) error {
 	// large reallocate. This is too avoid one row with many columns from
 	// permanently allocating memory.
 	if cap(dst.Values) < fieldCount || cap(dst.Values)-fieldCount > 32 {
-		newCap := 32
-		if newCap < fieldCount {
-			newCap = fieldCount
-		}
+		newCap := max(32, fieldCount)
 		dst.Values = make([][]byte, fieldCount, newCap)
 	} else {
 		dst.Values = dst.Values[:fieldCount]
 	}
 
-	for i := 0; i < fieldCount; i++ {
+	for i := range fieldCount {
 		if len(src[rp:]) < 4 {
 			return &invalidMessageFormatErr{messageType: "DataRow"}
 		}
@@ -63,11 +62,12 @@ func (dst *DataRow) Decode(src []byte) error {
 }
 
 // Encode encodes src into dst. dst will include the 1 byte message type identifier and the 4 byte message length.
-func (src *DataRow) Encode(dst []byte) []byte {
-	dst = append(dst, 'D')
-	sp := len(dst)
-	dst = pgio.AppendInt32(dst, -1)
+func (src *DataRow) Encode(dst []byte) ([]byte, error) {
+	dst, sp := beginMessage(dst, 'D')
 
+	if len(src.Values) > math.MaxUint16 {
+		return nil, errors.New("too many values")
+	}
 	dst = pgio.AppendUint16(dst, uint16(len(src.Values)))
 	for _, v := range src.Values {
 		if v == nil {
@@ -79,9 +79,7 @@ func (src *DataRow) Encode(dst []byte) []byte {
 		dst = append(dst, v...)
 	}
 
-	pgio.SetInt32(dst[sp:], int32(len(dst[sp:])))
-
-	return dst
+	return finishMessage(dst, sp)
 }
 
 // MarshalJSON implements encoding/json.Marshaler.
