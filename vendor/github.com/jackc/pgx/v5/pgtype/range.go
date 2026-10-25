@@ -40,7 +40,7 @@ func parseUntypedTextRange(src string) (*untypedTextRange, error) {
 
 	r, _, err := buf.ReadRune()
 	if err != nil {
-		return nil, fmt.Errorf("invalid lower bound: %v", err)
+		return nil, fmt.Errorf("invalid lower bound: %w", err)
 	}
 	switch r {
 	case '(':
@@ -53,7 +53,7 @@ func parseUntypedTextRange(src string) (*untypedTextRange, error) {
 
 	r, _, err = buf.ReadRune()
 	if err != nil {
-		return nil, fmt.Errorf("invalid lower value: %v", err)
+		return nil, fmt.Errorf("invalid lower value: %w", err)
 	}
 	buf.UnreadRune()
 
@@ -62,13 +62,13 @@ func parseUntypedTextRange(src string) (*untypedTextRange, error) {
 	} else {
 		utr.Lower, err = rangeParseValue(buf)
 		if err != nil {
-			return nil, fmt.Errorf("invalid lower value: %v", err)
+			return nil, fmt.Errorf("invalid lower value: %w", err)
 		}
 	}
 
 	r, _, err = buf.ReadRune()
 	if err != nil {
-		return nil, fmt.Errorf("missing range separator: %v", err)
+		return nil, fmt.Errorf("missing range separator: %w", err)
 	}
 	if r != ',' {
 		return nil, fmt.Errorf("missing range separator: %v", r)
@@ -76,7 +76,7 @@ func parseUntypedTextRange(src string) (*untypedTextRange, error) {
 
 	r, _, err = buf.ReadRune()
 	if err != nil {
-		return nil, fmt.Errorf("invalid upper value: %v", err)
+		return nil, fmt.Errorf("invalid upper value: %w", err)
 	}
 
 	if r == ')' || r == ']' {
@@ -85,12 +85,12 @@ func parseUntypedTextRange(src string) (*untypedTextRange, error) {
 		buf.UnreadRune()
 		utr.Upper, err = rangeParseValue(buf)
 		if err != nil {
-			return nil, fmt.Errorf("invalid upper value: %v", err)
+			return nil, fmt.Errorf("invalid upper value: %w", err)
 		}
 
 		r, _, err = buf.ReadRune()
 		if err != nil {
-			return nil, fmt.Errorf("missing upper bound: %v", err)
+			return nil, fmt.Errorf("missing upper bound: %w", err)
 		}
 		switch r {
 		case ')':
@@ -191,11 +191,13 @@ type untypedBinaryRange struct {
 // 18 = [      = 10010
 // 24 =        = 11000
 
-const emptyMask = 1
-const lowerInclusiveMask = 2
-const upperInclusiveMask = 4
-const lowerUnboundedMask = 8
-const upperUnboundedMask = 16
+const (
+	emptyMask          = 1
+	lowerInclusiveMask = 2
+	upperInclusiveMask = 4
+	lowerUnboundedMask = 8
+	upperUnboundedMask = 16
+)
 
 func parseUntypedBinaryRange(src []byte) (*untypedBinaryRange, error) {
 	ubr := &untypedBinaryRange{}
@@ -273,7 +275,6 @@ func parseUntypedBinaryRange(src []byte) (*untypedBinaryRange, error) {
 	}
 
 	return ubr, nil
-
 }
 
 // Range is a generic range type.

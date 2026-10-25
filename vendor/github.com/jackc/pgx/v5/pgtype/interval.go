@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	microsecondsPerSecond = 1000000
+	microsecondsPerSecond = 1_000_000
 	microsecondsPerMinute = 60 * microsecondsPerSecond
 	microsecondsPerHour   = 60 * microsecondsPerMinute
 	microsecondsPerDay    = 24 * microsecondsPerHour
@@ -33,16 +33,18 @@ type Interval struct {
 	Valid        bool
 }
 
+// ScanInterval implements the [IntervalScanner] interface.
 func (interval *Interval) ScanInterval(v Interval) error {
 	*interval = v
 	return nil
 }
 
+// IntervalValue implements the [IntervalValuer] interface.
 func (interval Interval) IntervalValue() (Interval, error) {
 	return interval, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (interval *Interval) Scan(src any) error {
 	if src == nil {
 		*interval = Interval{}
@@ -57,7 +59,7 @@ func (interval *Interval) Scan(src any) error {
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (interval Interval) Value() (driver.Value, error) {
 	if !interval.Valid {
 		return nil, nil
@@ -144,15 +146,19 @@ func (encodePlanIntervalCodecText) Encode(value any, buf []byte) (newBuf []byte,
 	hours := absMicroseconds / microsecondsPerHour
 	minutes := (absMicroseconds % microsecondsPerHour) / microsecondsPerMinute
 	seconds := (absMicroseconds % microsecondsPerMinute) / microsecondsPerSecond
-	microseconds := absMicroseconds % microsecondsPerSecond
 
-	timeStr := fmt.Sprintf("%02d:%02d:%02d.%06d", hours, minutes, seconds, microseconds)
+	timeStr := fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
 	buf = append(buf, timeStr...)
+
+	microseconds := absMicroseconds % microsecondsPerSecond
+	if microseconds != 0 {
+		buf = append(buf, fmt.Sprintf(".%06d", microseconds)...)
+	}
+
 	return buf, nil
 }
 
 func (IntervalCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
 		switch target.(type) {
@@ -179,7 +185,7 @@ func (scanPlanBinaryIntervalToIntervalScanner) Scan(src []byte, dst any) error {
 	}
 
 	if len(src) != 16 {
-		return fmt.Errorf("Received an invalid size for a interval: %d", len(src))
+		return fmt.Errorf("Received an invalid size for an interval: %d", len(src))
 	}
 
 	microseconds := int64(binary.BigEndian.Uint64(src))
@@ -217,6 +223,8 @@ func (scanPlanTextAnyToIntervalScanner) Scan(src []byte, dst any) error {
 			months += int32(scalar)
 		case "day", "days":
 			days = int32(scalar)
+		default:
+			return fmt.Errorf("bad interval format: %q", parts[i+1])
 		}
 	}
 
@@ -242,21 +250,21 @@ func (scanPlanTextAnyToIntervalScanner) Scan(src []byte, dst any) error {
 			return fmt.Errorf("bad interval minute format: %s", timeParts[1])
 		}
 
-		secondParts := strings.SplitN(timeParts[2], ".", 2)
+		sec, secFrac, secFracFound := strings.Cut(timeParts[2], ".")
 
-		seconds, err := strconv.ParseInt(secondParts[0], 10, 64)
+		seconds, err := strconv.ParseInt(sec, 10, 64)
 		if err != nil {
-			return fmt.Errorf("bad interval second format: %s", secondParts[0])
+			return fmt.Errorf("bad interval second format: %s", sec)
 		}
 
 		var uSeconds int64
-		if len(secondParts) == 2 {
-			uSeconds, err = strconv.ParseInt(secondParts[1], 10, 64)
+		if secFracFound {
+			uSeconds, err = strconv.ParseInt(secFrac, 10, 64)
 			if err != nil {
-				return fmt.Errorf("bad interval decimal format: %s", secondParts[1])
+				return fmt.Errorf("bad interval decimal format: %s", secFrac)
 			}
 
-			for i := 0; i < 6-len(secondParts[1]); i++ {
+			for i := 0; i < 6-len(secFrac); i++ {
 				uSeconds *= 10
 			}
 		}

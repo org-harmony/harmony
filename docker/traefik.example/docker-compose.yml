@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v3.7.16
     container_name: traefik
     # Restart the container automatically unless you stop it with "docker compose down"
     restart: unless-stopped

@@ -10,7 +10,12 @@ import (
 	"github.com/jackc/pgx/v5/internal/pgio"
 )
 
-const ProtocolVersionNumber = 196608 // 3.0
+const (
+	ProtocolVersion30     = 196608            // 3.0
+	ProtocolVersion32     = 196610            // 3.2
+	ProtocolVersionLatest = ProtocolVersion32 // Latest is 3.2
+	ProtocolVersionNumber = ProtocolVersion30 // Default is still 3.0
+)
 
 type StartupMessage struct {
 	ProtocolVersion uint32
@@ -30,22 +35,22 @@ func (dst *StartupMessage) Decode(src []byte) error {
 	dst.ProtocolVersion = binary.BigEndian.Uint32(src)
 	rp := 4
 
-	if dst.ProtocolVersion != ProtocolVersionNumber {
-		return fmt.Errorf("Bad startup message version number. Expected %d, got %d", ProtocolVersionNumber, dst.ProtocolVersion)
+	if dst.ProtocolVersion != ProtocolVersion30 && dst.ProtocolVersion != ProtocolVersion32 {
+		return fmt.Errorf("Bad startup message version number. Expected %d or %d, got %d", ProtocolVersion30, ProtocolVersion32, dst.ProtocolVersion)
 	}
 
 	dst.Parameters = make(map[string]string)
 	for {
 		idx := bytes.IndexByte(src[rp:], 0)
 		if idx < 0 {
-			return &invalidMessageFormatErr{messageType: "StartupMesage"}
+			return &invalidMessageFormatErr{messageType: "StartupMessage"}
 		}
 		key := string(src[rp : rp+idx])
 		rp += idx + 1
 
 		idx = bytes.IndexByte(src[rp:], 0)
 		if idx < 0 {
-			return &invalidMessageFormatErr{messageType: "StartupMesage"}
+			return &invalidMessageFormatErr{messageType: "StartupMessage"}
 		}
 		value := string(src[rp : rp+idx])
 		rp += idx + 1
@@ -64,7 +69,7 @@ func (dst *StartupMessage) Decode(src []byte) error {
 }
 
 // Encode encodes src into dst. dst will include the 1 byte message type identifier and the 4 byte message length.
-func (src *StartupMessage) Encode(dst []byte) []byte {
+func (src *StartupMessage) Encode(dst []byte) ([]byte, error) {
 	sp := len(dst)
 	dst = pgio.AppendInt32(dst, -1)
 
@@ -77,9 +82,7 @@ func (src *StartupMessage) Encode(dst []byte) []byte {
 	}
 	dst = append(dst, 0)
 
-	pgio.SetInt32(dst[sp:], int32(len(dst[sp:])))
-
-	return dst
+	return finishMessage(dst, sp)
 }
 
 // MarshalJSON implements encoding/json.Marshaler.

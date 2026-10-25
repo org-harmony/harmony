@@ -1,3 +1,257 @@
+# 5.9.2 (April 18, 2026)
+
+Fix SQL Injection via placeholder confusion with dollar quoted string literals (GHSA-j88v-2chj-qfwx)
+
+SQL injection can occur when:
+
+1. The non-default simple protocol is used.
+2. A dollar quoted string literal is used in the SQL query.
+3. That query contains text that would be would be interpreted outside as a placeholder outside of a string literal.
+4. The value of that placeholder is controllable by the attacker.
+
+e.g.
+
+```go
+attackValue := `$tag$; drop table canary; --`
+_, err = tx.Exec(ctx, `select $tag$ $1 $tag$, $1`, pgx.QueryExecModeSimpleProtocol, attackValue)
+```
+
+This is unlikely to occur outside of a contrived scenario.
+
+# 5.9.1 (March 22, 2026)
+
+* Fix: batch result format corruption when using cached prepared statements (reported by Dirkjan Bussink)
+
+# 5.9.0 (March 21, 2026)
+
+This release includes a number of new features such as SCRAM-SHA-256-PLUS support, OAuth authentication support, and
+PostgreSQL protocol 3.2 support.
+
+It significantly reduces the amount of network traffic when using prepared statements (which are used automatically by
+default) by avoiding unnecessary Describe Portal messages. This also reduces local memory usage.
+
+It also includes multiple fixes for potential DoS due to panic or OOM if connected to a malicious server that sends
+deliberately malformed messages.
+
+* Require Go 1.25+
+* Add SCRAM-SHA-256-PLUS support (Adam Brightwell)
+* Add OAuth authentication support for PostgreSQL 18 (David Schneider)
+* Add PostgreSQL protocol 3.2 support (Dirkjan Bussink)
+* Add tsvector type support (Adam Brightwell)
+* Skip Describe Portal for cached prepared statements reducing network round trips
+* Make LoadTypes query easier to support on "postgres-like" servers (Jelte Fennema-Nio)
+* Default empty user to current OS user matching libpq behavior (ShivangSrivastava)
+* Optimize LRU statement cache with custom linked list and node pooling (Mathias Bogaert)
+* Optimize date scanning by replacing regex with manual parsing (Mathias Bogaert)
+* Optimize pgio append/set functions with direct byte shifts (Mathias Bogaert)
+* Make RowsAffected faster (Abhishek Chanda)
+* Fix: Pipeline.Close panic when server sends multiple FATAL errors (Varun Chawla)
+* Fix: ContextWatcher goroutine leak (Hank Donnay)
+* Fix: stdlib discard connections with open transactions in ResetSession (Jeremy Schneider)
+* Fix: pipelineBatchResults.Exec silently swallowing lastRows error
+* Fix: ColumnTypeLength using BPCharArrayOID instead of BPCharOID
+* Fix: TSVector text encoding returning nil for valid empty tsvector
+* Fix: wrong error messages for Int2 and Int4 underflow
+* Fix: Numeric nil Int pointer dereference with Valid: true
+* Fix: reversed strings.ContainsAny arguments in Numeric.ScanScientific
+* Fix: message length parsing on 32-bit platforms
+* Fix: FunctionCallResponse.Decode mishandling of signed result size
+* Fix: returning wrong error in configTLS when DecryptPEMBlock fails (Maxim Motyshen)
+* Fix: misleading ParseConfig error when default_query_exec_mode is invalid (Skarm)
+* Fix: missed Unwatch in Pipeline error paths
+* Clarify too many failed acquire attempts error message
+* Better error wrapping with context and SQL statement (Aneesh Makala)
+* Enable govet and ineffassign linters (Federico Guerinoni)
+* Guard against various malformed binary messages (arrays, hstore, multirange, protocol messages)
+* Fix various godoc comments (ferhat elmas)
+* Fix typos in comments (Oleksandr Redko)
+
+# 5.8.0 (December 26, 2025)
+
+* Require Go 1.24+
+* Remove golang.org/x/crypto dependency
+* Add OptionShouldPing to control ResetSession ping behavior (ilyam8)
+* Fix: Avoid overflow when MaxConns is set to MaxInt32
+* Fix: Close batch pipeline after a query error (Anthonin Bonnefoy)
+* Faster shutdown of pgxpool.Pool background goroutines (Blake Gentry)
+* Add pgxpool ping timeout (Amirsalar Safaei)
+* Fix: Rows.FieldDescriptions for empty query
+* Scan unknown types into *any as string or []byte based on format code
+* Optimize pgtype.Numeric (Philip Dubé)
+* Add AfterNetConnect hook to pgconn.Config
+* Fix: Handle for preparing statements that fail during the Describe phase
+* Fix overflow in numeric scanning (Ilia Demianenko)
+* Fix: json/jsonb sql.Scanner source type is []byte
+* Migrate from math/rand to math/rand/v2 (Mathias Bogaert)
+* Optimize internal iobufpool (Mathias Bogaert)
+* Optimize stmtcache invalidation (Mathias Bogaert)
+* Fix: missing error case in interval parsing (Maxime Soulé)
+* Fix: invalidate statement/description cache in Exec (James Hartig)
+* ColumnTypeLength method return the type length for varbit type (DengChan)
+* Array and Composite codecs handle typed nils
+
+# 5.7.6 (September 8, 2025)
+
+* Use ParseConfigError in pgx.ParseConfig and pgxpool.ParseConfig (Yurasov Ilia)
+* Add PrepareConn hook to pgxpool (Jonathan Hall)
+* Reduce allocations in QueryContext (Dominique Lefevre)
+* Add MarshalJSON and UnmarshalJSON for pgtype.Uint32 (Panos Koutsovasilis)
+* Configure ping behavior on pgxpool with ShouldPing (Christian Kiely)
+* zeronull int types implement Int64Valuer and Int64Scanner (Li Zeghong)
+* Fix panic when receiving terminate connection message during CopyFrom (Michal Drausowski)
+* Fix statement cache not being invalidated on error during batch (Muhammadali Nazarov)
+
+# 5.7.5 (May 17, 2025)
+
+* Support sslnegotiation connection option (divyam234)
+* Update golang.org/x/crypto to v0.37.0. This placates security scanners that were unable to see that pgx did not use the behavior affected by https://pkg.go.dev/vuln/GO-2025-3487.
+* TraceLog now logs Acquire and Release at the debug level (dave sinclair)
+* Add support for PGTZ environment variable
+* Add support for PGOPTIONS environment variable
+* Unpin memory used by Rows quicker
+* Remove PlanScan memoization. This resolves a rare issue where scanning could be broken for one type by first scanning another. The problem was in the memoization system and benchmarking revealed that memoization was not providing any meaningful benefit.
+
+# 5.7.4 (March 24, 2025)
+
+* Fix / revert change to scanning JSON `null` (Felix Röhrich)
+
+# 5.7.3 (March 21, 2025)
+
+* Expose EmptyAcquireWaitTime in pgxpool.Stat (vamshiaruru32)
+* Improve SQL sanitizer performance (ninedraft)
+* Fix Scan confusion with json(b), sql.Scanner, and automatic dereferencing (moukoublen, felix-roehrich)
+* Fix Values() for xml type always returning nil instead of []byte
+* Add ability to send Flush message in pipeline mode (zenkovev)
+* Fix pgtype.Timestamp's JSON behavior to match PostgreSQL (pconstantinou)
+* Better error messages when scanning structs (logicbomb)
+* Fix handling of error on batch write (bonnefoa)
+* Match libpq's connection fallback behavior more closely (felix-roehrich)
+* Add MinIdleConns to pgxpool (djahandarie)
+
+# 5.7.2 (December 21, 2024)
+
+* Fix prepared statement already exists on batch prepare failure
+* Add commit query to tx options (Lucas Hild)
+* Fix pgtype.Timestamp json unmarshal (Shean de Montigny-Desautels)
+* Add message body size limits in frontend and backend (zene)
+* Add xid8 type
+* Ensure planning encodes and scans cannot infinitely recurse
+* Implement pgtype.UUID.String() (Konstantin Grachev)
+* Switch from ExecParams to Exec in ValidateConnectTargetSessionAttrs functions (Alexander Rumyantsev)
+* Update golang.org/x/crypto
+* Fix json(b) columns prefer sql.Scanner interface like database/sql (Ludovico Russo)
+
+# 5.7.1 (September 10, 2024)
+
+* Fix data race in tracelog.TraceLog
+* Update puddle to v2.2.2. This removes the import of nanotime via linkname.
+* Update golang.org/x/crypto and golang.org/x/text
+
+# 5.7.0 (September 7, 2024)
+
+* Add support for sslrootcert=system (Yann Soubeyrand)
+* Add LoadTypes to load multiple types in a single SQL query (Nick Farrell)
+* Add XMLCodec supports encoding + scanning XML column type like json (nickcruess-soda)
+* Add MultiTrace (Stepan Rabotkin)
+* Add TraceLogConfig with customizable TimeKey (stringintech)
+* pgx.ErrNoRows wraps sql.ErrNoRows to aid in database/sql compatibility with native pgx functions (merlin)
+* Support scanning binary formatted uint32 into string / TextScanner (jennifersp)
+* Fix interval encoding to allow 0s and avoid extra spaces (Carlos Pérez-Aradros Herce)
+* Update pgservicefile - fixes panic when parsing invalid file
+* Better error message when reading past end of batch
+* Don't print url when url.Parse returns an error (Kevin Biju)
+* Fix snake case name normalization collision in RowToStructByName with db tag (nolandseigler)
+* Fix: Scan and encode types with underlying types of arrays
+
+# 5.6.0 (May 25, 2024)
+
+* Add StrictNamedArgs (Tomas Zahradnicek)
+* Add support for macaddr8 type (Carlos Pérez-Aradros Herce)
+* Add SeverityUnlocalized field to PgError / Notice
+* Performance optimization of RowToStructByPos/Name (Zach Olstein)
+* Allow customizing context canceled behavior for pgconn
+* Add ScanLocation to pgtype.Timestamp[tz]Codec
+* Add custom data to pgconn.PgConn
+* Fix ResultReader.Read() to handle nil values
+* Do not encode interval microseconds when they are 0 (Carlos Pérez-Aradros Herce)
+* pgconn.SafeToRetry checks for wrapped errors (tjasko)
+* Failed connection attempts include all errors
+* Optimize LargeObject.Read (Mitar)
+* Add tracing for connection acquire and release from pool (ngavinsir)
+* Fix encode driver.Valuer not called when nil
+* Add support for custom JSON marshal and unmarshal (Mitar)
+* Use Go default keepalive for TCP connections (Hans-Joachim Kliemeck)
+
+# 5.5.5 (March 9, 2024)
+
+Use spaces instead of parentheses for SQL sanitization.
+
+This still solves the problem of negative numbers creating a line comment, but this avoids breaking edge cases such as
+`set foo to $1` where the substitution is taking place in a location where an arbitrary expression is not allowed.
+
+# 5.5.4 (March 4, 2024)
+
+Fix CVE-2024-27304
+
+SQL injection can occur if an attacker can cause a single query or bind message to exceed 4 GB in size. An integer
+overflow in the calculated message size can cause the one large message to be sent as multiple messages under the
+attacker's control.
+
+Thanks to Paul Gerste for reporting this issue.
+
+* Fix behavior of CollectRows to return empty slice if Rows are empty (Felix)
+* Fix simple protocol encoding of json.RawMessage
+* Fix *Pipeline.getResults should close pipeline on error
+* Fix panic in TryFindUnderlyingTypeScanPlan (David Kurman)
+* Fix deallocation of invalidated cached statements in a transaction
+* Handle invalid sslkey file
+* Fix scan float4 into sql.Scanner
+* Fix pgtype.Bits not making copy of data from read buffer. This would cause the data to be corrupted by future reads.
+
+# 5.5.3 (February 3, 2024)
+
+* Fix: prepared statement already exists
+* Improve CopyFrom auto-conversion of text-ish values
+* Add ltree type support (Florent Viel)
+* Make some properties of Batch and QueuedQuery public (Pavlo Golub)
+* Add AppendRows function (Edoardo Spadolini)
+* Optimize convert UUID [16]byte to string (Kirill Malikov)
+* Fix: LargeObject Read and Write of more than ~1GB at a time (Mitar)
+
+# 5.5.2 (January 13, 2024)
+
+* Allow NamedArgs to start with underscore
+* pgproto3: Maximum message body length support (jeremy.spriet)
+* Upgrade golang.org/x/crypto to v0.17.0
+* Add snake_case support to RowToStructByName (Tikhon Fedulov)
+* Fix: update description cache after exec prepare (James Hartig)
+* Fix: pipeline checks if it is closed (James Hartig and Ryan Fowler)
+* Fix: normalize timeout / context errors during TLS startup (Samuel Stauffer)
+* Add OnPgError for easier centralized error handling (James Hartig)
+
+# 5.5.1 (December 9, 2023)
+
+* Add CopyFromFunc helper function. (robford)
+* Add PgConn.Deallocate method that uses PostgreSQL protocol Close message.
+* pgx uses new PgConn.Deallocate method. This allows deallocating statements to work in a failed transaction. This fixes a case where the prepared statement map could become invalid.
+* Fix: Prefer driver.Valuer over json.Marshaler for json fields. (Jacopo)
+* Fix: simple protocol SQL sanitizer previously panicked if an invalid $0 placeholder was used. This now returns an error instead. (maksymnevajdev)
+* Add pgtype.Numeric.ScanScientific (Eshton Robateau)
+
+# 5.5.0 (November 4, 2023)
+
+* Add CollectExactlyOneRow. (Julien GOTTELAND)
+* Add OpenDBFromPool to create *database/sql.DB from *pgxpool.Pool. (Lev Zakharov)
+* Prepare can automatically choose statement name based on sql. This makes it easier to explicitly manage prepared statements.
+* Statement cache now uses deterministic, stable statement names.
+* database/sql prepared statement names are deterministically generated.
+* Fix: SendBatch wasn't respecting context cancellation.
+* Fix: Timeout error from pipeline is now normalized.
+* Fix: database/sql encoding json.RawMessage to []byte.
+* CancelRequest: Wait for the cancel request to be acknowledged by the server. This should improve PgBouncer compatibility. (Anton Levakin)
+* stdlib: Use Ping instead of CheckConn in ResetSession
+* Add json.Marshaler and json.Unmarshaler for Float4, Float8 (Kirill Mironov)
+
 # 5.4.3 (August 5, 2023)
 
 * Fix: QCharArrayOID was defined with the wrong OID (Christoph Engelbert)

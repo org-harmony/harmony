@@ -5,7 +5,9 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math"
 
 	"github.com/jackc/pgx/v5/internal/pgio"
 )
@@ -52,7 +54,7 @@ func (dst *Bind) Decode(src []byte) error {
 		if len(src[rp:]) < len(dst.ParameterFormatCodes)*2 {
 			return &invalidMessageFormatErr{messageType: "Bind"}
 		}
-		for i := 0; i < parameterFormatCodeCount; i++ {
+		for i := range parameterFormatCodeCount {
 			dst.ParameterFormatCodes[i] = int16(binary.BigEndian.Uint16(src[rp:]))
 			rp += 2
 		}
@@ -67,7 +69,7 @@ func (dst *Bind) Decode(src []byte) error {
 	if parameterCount > 0 {
 		dst.Parameters = make([][]byte, parameterCount)
 
-		for i := 0; i < parameterCount; i++ {
+		for i := range parameterCount {
 			if len(src[rp:]) < 4 {
 				return &invalidMessageFormatErr{messageType: "Bind"}
 			}
@@ -80,7 +82,7 @@ func (dst *Bind) Decode(src []byte) error {
 				continue
 			}
 
-			if len(src[rp:]) < msgSize {
+			if msgSize < 0 || len(src[rp:]) < msgSize {
 				return &invalidMessageFormatErr{messageType: "Bind"}
 			}
 
@@ -99,7 +101,7 @@ func (dst *Bind) Decode(src []byte) error {
 	if len(src[rp:]) < len(dst.ResultFormatCodes)*2 {
 		return &invalidMessageFormatErr{messageType: "Bind"}
 	}
-	for i := 0; i < resultFormatCodeCount; i++ {
+	for i := range resultFormatCodeCount {
 		dst.ResultFormatCodes[i] = int16(binary.BigEndian.Uint16(src[rp:]))
 		rp += 2
 	}
@@ -108,21 +110,25 @@ func (dst *Bind) Decode(src []byte) error {
 }
 
 // Encode encodes src into dst. dst will include the 1 byte message type identifier and the 4 byte message length.
-func (src *Bind) Encode(dst []byte) []byte {
-	dst = append(dst, 'B')
-	sp := len(dst)
-	dst = pgio.AppendInt32(dst, -1)
+func (src *Bind) Encode(dst []byte) ([]byte, error) {
+	dst, sp := beginMessage(dst, 'B')
 
 	dst = append(dst, src.DestinationPortal...)
 	dst = append(dst, 0)
 	dst = append(dst, src.PreparedStatement...)
 	dst = append(dst, 0)
 
+	if len(src.ParameterFormatCodes) > math.MaxUint16 {
+		return nil, errors.New("too many parameter format codes")
+	}
 	dst = pgio.AppendUint16(dst, uint16(len(src.ParameterFormatCodes)))
 	for _, fc := range src.ParameterFormatCodes {
 		dst = pgio.AppendInt16(dst, fc)
 	}
 
+	if len(src.Parameters) > math.MaxUint16 {
+		return nil, errors.New("too many parameters")
+	}
 	dst = pgio.AppendUint16(dst, uint16(len(src.Parameters)))
 	for _, p := range src.Parameters {
 		if p == nil {
@@ -134,14 +140,15 @@ func (src *Bind) Encode(dst []byte) []byte {
 		dst = append(dst, p...)
 	}
 
+	if len(src.ResultFormatCodes) > math.MaxUint16 {
+		return nil, errors.New("too many result format codes")
+	}
 	dst = pgio.AppendUint16(dst, uint16(len(src.ResultFormatCodes)))
 	for _, fc := range src.ResultFormatCodes {
 		dst = pgio.AppendInt16(dst, fc)
 	}
 
-	pgio.SetInt32(dst[sp:], int32(len(dst[sp:])))
-
-	return dst
+	return finishMessage(dst, sp)
 }
 
 // MarshalJSON implements encoding/json.Marshaler.

@@ -1,6 +1,6 @@
 # First stage: build the application
 # Docker will pull the version matching our build host.
-FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.23 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.10-alpine3.23 AS builder
 
 ARG TARGETARCH
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o web src/cmd/web/*.go
 
 # Second stage: runtime
 # Use generic alpine image. Docker will automatically pull the arm64 version when necessary.
-FROM alpine:3.23
+FROM alpine:3.23.7
 
 RUN addgroup -S harmonygroup && adduser -S harmonyuser -G harmonygroup
 WORKDIR /app

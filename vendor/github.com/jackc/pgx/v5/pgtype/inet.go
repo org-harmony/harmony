@@ -24,7 +24,7 @@ type NetipPrefixValuer interface {
 	NetipPrefixValue() (netip.Prefix, error)
 }
 
-// InetCodec handles both inet and cidr PostgreSQL types. The preferred Go types are netip.Prefix and netip.Addr. If
+// InetCodec handles both inet and cidr PostgreSQL types. The preferred Go types are [netip.Prefix] and [netip.Addr]. If
 // IsValid() is false then they are treated as SQL NULL.
 type InetCodec struct{}
 
@@ -107,7 +107,6 @@ func (encodePlanInetCodecText) Encode(value any, buf []byte) (newBuf []byte, err
 }
 
 func (InetCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
 		switch target.(type) {
@@ -156,7 +155,7 @@ func (scanPlanBinaryInetToNetipPrefixScanner) Scan(src []byte, dst any) error {
 	}
 
 	if len(src) != 8 && len(src) != 20 {
-		return fmt.Errorf("Received an invalid size for a inet: %d", len(src))
+		return fmt.Errorf("Received an invalid size for an inet: %d", len(src))
 	}
 
 	// ignore family

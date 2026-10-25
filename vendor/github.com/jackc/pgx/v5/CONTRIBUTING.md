@@ -10,6 +10,18 @@ proposal. This will help to ensure your proposed change has a reasonable chance 
 Adding a dependency is a big deal. While on occasion a new dependency may be accepted, the default answer to any change
 that adds a dependency is no.
 
+## AI
+
+Using AI is acceptable (not that it can really be stopped) under one the following conditions.
+
+* AI was used, but you deeply understand the code and you can answer questions regarding your change. You are not going
+  to answer questions with "I don't know", AI did it. You are not going to "answer" questions by relaying them to your
+  agent. This is wasteful of the code reviewer's time.
+* AI was used to solve a problem without your deep understanding. This can still be a good starting point for a fix or
+  feature. But you need to clearly state that this is an AI proposal. You should include additional information such as
+  the AI used and what prompts were used. You should also be aware that large, complicated, or subtle changes may be
+  rejected simply because the reviewer is not confident in a change that no human understands.
+
 ## Development Environment Setup
 
 pgx tests naturally require a PostgreSQL database. It will connect to the database specified in the `PGX_TEST_DATABASE`
@@ -17,7 +29,12 @@ environment variable. The `PGX_TEST_DATABASE` environment variable can either be
 the standard `PG*` environment variables will be respected. Consider using [direnv](https://github.com/direnv/direnv) to
 simplify environment variable handling.
 
-### Using an Existing PostgreSQL Cluster
+### Devcontainer
+
+The easiest way to start development is with the included devcontainer. It includes containers for each supported
+PostgreSQL version as well as CockroachDB. `./test.sh all` will run the tests against all database types.
+
+### Using an Existing PostgreSQL Cluster Outside of a Devcontainer
 
 If you already have a PostgreSQL development server this is the quickest way to start and run the majority of the pgx
 test suite. Some tests will be skipped that require server configuration changes (e.g. those testing different
@@ -29,6 +46,7 @@ Create and setup a test database:
 export PGDATABASE=pgx_test
 createdb
 psql -c 'create extension hstore;'
+psql -c 'create extension ltree;'
 psql -c 'create domain uint64 as numeric(20,0);'
 ```
 
@@ -48,7 +66,7 @@ go test ./...
 
 This will run the vast majority of the tests, but some tests will be skipped (e.g. those testing different connection methods).
 
-### Creating a New PostgreSQL Cluster Exclusively for Testing
+### Creating a New PostgreSQL Cluster Exclusively for Testing Outside of a Devcontainer
 
 The following environment variables need to be set both for initial setup and whenever the tests are run. (direnv is
 highly recommended). Depending on your platform, you may need to change the host for `PGX_TEST_UNIX_SOCKET_CONN_STRING`.
@@ -62,10 +80,11 @@ export POSTGRESQL_DATA_DIR=postgresql
 export PGX_TEST_DATABASE="host=127.0.0.1 database=pgx_test user=pgx_md5 password=secret"
 export PGX_TEST_UNIX_SOCKET_CONN_STRING="host=/private/tmp database=pgx_test"
 export PGX_TEST_TCP_CONN_STRING="host=127.0.0.1 database=pgx_test user=pgx_md5 password=secret"
-export PGX_TEST_SCRAM_PASSWORD_CONN_STRING="host=127.0.0.1 user=pgx_scram password=secret database=pgx_test"
+export PGX_TEST_SCRAM_PASSWORD_CONN_STRING="host=127.0.0.1 user=pgx_scram password=secret database=pgx_test channel_binding=disable"
+export PGX_TEST_SCRAM_PLUS_CONN_STRING="host=localhost user=pgx_ssl password=secret sslmode=verify-full sslrootcert=`pwd`/.testdb/ca.pem database=pgx_test channel_binding=require"
 export PGX_TEST_MD5_PASSWORD_CONN_STRING="host=127.0.0.1 database=pgx_test user=pgx_md5 password=secret"
 export PGX_TEST_PLAIN_PASSWORD_CONN_STRING="host=127.0.0.1 user=pgx_pw password=secret"
-export PGX_TEST_TLS_CONN_STRING="host=localhost user=pgx_ssl password=secret sslmode=verify-full sslrootcert=`pwd`/.testdb/ca.pem"
+export PGX_TEST_TLS_CONN_STRING="host=localhost user=pgx_ssl password=secret sslmode=verify-full sslrootcert=`pwd`/.testdb/ca.pem channel_binding=disable"
 export PGX_SSL_PASSWORD=certpw
 export PGX_TEST_TLS_CLIENT_CONN_STRING="host=localhost user=pgx_sslcert sslmode=verify-full sslrootcert=`pwd`/.testdb/ca.pem database=pgx_test sslcert=`pwd`/.testdb/pgx_sslcert.crt sslkey=`pwd`/.testdb/pgx_sslcert.key"
 ```
@@ -79,31 +98,17 @@ echo "listen_addresses = '127.0.0.1'" >> .testdb/$POSTGRESQL_DATA_DIR/postgresql
 echo "port = $PGPORT" >> .testdb/$POSTGRESQL_DATA_DIR/postgresql.conf
 cat testsetup/postgresql_ssl.conf >> .testdb/$POSTGRESQL_DATA_DIR/postgresql.conf
 cp testsetup/pg_hba.conf .testdb/$POSTGRESQL_DATA_DIR/pg_hba.conf
-cp testsetup/ca.cnf .testdb
-cp testsetup/localhost.cnf .testdb
-cp testsetup/pgx_sslcert.cnf .testdb
 
 cd .testdb
 
-# Generate a CA public / private key pair.
-openssl genrsa -out ca.key 4096
-openssl req -x509 -config ca.cnf -new -nodes -key ca.key -sha256 -days 365 -subj '/O=pgx-test-root' -out ca.pem
-
-# Generate the certificate for localhost (the server).
-openssl genrsa -out localhost.key 2048
-openssl req -new -config localhost.cnf -key localhost.key -out localhost.csr
-openssl x509 -req -in localhost.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out localhost.crt -days 364 -sha256 -extfile localhost.cnf -extensions v3_req
+# Generate CA, server, and encrypted client certificates.
+go run ../testsetup/generate_certs.go
 
 # Copy certificates to server directory and set permissions.
 cp ca.pem $POSTGRESQL_DATA_DIR/root.crt
 cp localhost.key $POSTGRESQL_DATA_DIR/server.key
 chmod 600 $POSTGRESQL_DATA_DIR/server.key
 cp localhost.crt $POSTGRESQL_DATA_DIR/server.crt
-
-# Generate the certificate for client authentication.
-openssl genrsa -des3 -out pgx_sslcert.key -passout pass:certpw 2048
-openssl req -new -config pgx_sslcert.cnf -key pgx_sslcert.key -passin pass:certpw -out pgx_sslcert.csr
-openssl x509 -req -in pgx_sslcert.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out pgx_sslcert.crt -days 363 -sha256 -extfile pgx_sslcert.cnf -extensions v3_req
 
 cd ..
 ```
